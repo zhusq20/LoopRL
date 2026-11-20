@@ -1,7 +1,7 @@
 # Looped LM 上的 RL：实验计划
 
 - 状态：草案 v0，2026-11-20。还没有做任何实验，文中的预期都是假设。
-- 配套讲解页：https://claude.ai/artifact/T2yoo8F6J5rd6Ys3ivuUbD
+- 配套讲解页：LoopLM RL 设计笔记.md
 - 记号：`P_t` 是第 t 个 loop 的 next-token 分布，`q_t` 是 exit 分布，`ω` 是 RLTT 的 loop 权重，`ρ_t ∝ ω_t·P_t(y)` 是后验，`A` 是 advantage，`gap = log Σ_t ω_t P_t(y) − Σ_t ω_t log P_t(y)`。
 
 ## 1. 目标
