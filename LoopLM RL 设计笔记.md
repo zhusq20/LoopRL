@@ -109,7 +109,7 @@ surrogate 的大小里，gap 占 41%
 | loop | Pt(y) | ωt | ρt | ρt − ωt | RLTT 推力 | 方案 1 推力 |
 | --- | --- | --- | --- | --- | --- | --- |
 
-顶部三个数的单位是 nat。方案 1 在答对的样本上与 RLTT 相同，在答错的样本上改用 ρ。方案 2 里 exit 分布受到的 reward 梯度方向就是表里的 *ρ*t − *ω*t，四个 loop 一致时它恒为 0。“集中在 loop 2–3”的权重是示意值，不是 Ouro 的实测 exit 分布。
+顶部三个数的单位是 nat。方案 1 在答对的样本上与 RLTT 相同，在答错的样本上改用 ρ。方案 2 里 reward 把 exit 分布从先验推向后验，表里的 *ρ*t − *ω*t 就是这个方向，四个 loop 一致时它恒为 0；落到 Ouro 逐 loop 的 gate 上的写法见方案 2。“集中在 loop 2–3”的权重是示意值，不是 Ouro 的实测 exit 分布。
 
 ## 与这个解读一致的现象
 
@@ -159,9 +159,9 @@ RLTT 低于未训练的模型这一点也要打折扣。RSI Table 6 按解码上
 
 | dLLM RL 遇到的问题 | dLLM 的做法 | Looped LM 里的对应 |
 | --- | --- | --- |
-| 训练用的似然和真实采样过程不一致 | d1 用单步估计。TraceRL、d2、AGRPO 改为沿真实轨迹逐步计算。 | 混合策略的边缘似然只有 4 项，直接精确计算（方案 2） |
+| 训练用的似然和真实采样过程不一致 | d1 用单步估计。TraceRL、d2、AGRPO 改为沿真实轨迹逐步计算。 | 沿真实的早退轨迹，每一步的联合 log 概率是精确的，不用估计；本位置的 4 个 exit 还可以求和（方案 2） |
 | 下界适合往上推，不适合往下压 | SPG 对负样本改用证据上界 | 负样本直接用精确似然（方案 1） |
-| 解码顺序也是策略的一部分 | DCoLT、Mask-aware PG 采样 unmask 位置并写进似然 | exit 步是 4 选 1，可以求和掉，不用采样（方案 2） |
+| 解码顺序也是策略的一部分 | DCoLT、Mask-aware PG 采样 unmask 位置并写进似然 | exit 步是 4 选 1，写进似然；它对读出的影响可以求和掉（方案 2） |
 | RL 可以写成向 reward-tilted teacher 蒸馏 | wd1、GDSD | teacher 取模型自己更深的读出（方案 3） |
 | 训练步数可以少于推理步数 | Flow-GRPO 的 denoising reduction，TraceRL 的 block-size 适配 | 2 个 loop 做 rollout，4 个 loop 部署（方案 3） |
 | 中间步的输出可能比最终步好 | MDPO 观察到的 over-denoising | over-looping，用 reward 修正 teacher（方案 3） |
@@ -203,26 +203,42 @@ SPG 对正样本用 ELBO，对负样本用证据上界，因为把下界往下�
 
 ### 方案 2Exit-marginal RL
 
-把在第几个 loop 退出当作策略的一部分，从混合分布采样，对精确的混合似然求梯度。exit gate 第一次直接从答案对错里学习。
+把在第几个 loop 退出当作策略的一部分。rollout、update 和部署用同一个早退过程，梯度是这个过程的精确策略梯度，拆成对混合似然的一项和一个校正项。exit gate 第一次直接从答案对错里学习。
 
-*π*mix(*y*j) = ∑t *q*t *P*t(*y*j)\
-*r* = *π*mix,θ(*y*j) / *π*mix,old(*y*j)\
-loss = − min( *r* · *A*, clip(*r*, 1 − *ε*, 1 + *ε*) · *A* ) + *c* · ∑t *t* · *q*t\
-∇ log *π*mix(*y*j) = ∑t *ρ*t ( ∇ log *q*t + ∇ log *P*t(*y*j) )
+*e*j \~ *q*(· | *s*j)， *y*j \~ *P*e(· | *s*j)，*e* = *e*j\
+*π*mix(*y*j | *s*j) = ∑t *q*t *P*t(*y*j)， *ρ*t ∝ *q*t *P*t(*y*j)\
+lossj = − *A*j · ( log *π*mix(*y*j | *s*j) + *κ* · log *ρ*(*e*j | *s*j, *y*j) ) + *c* · ∑t *t* · *q*t\
+log *π*mix(*y*j) + log *ρ*(*e*j) = log *q*e *P*e(*y*j)
 
-*q*t 是 Ouro exit gate 给出的 exit 分布，这里保留梯度，此时 *ρ*t ∝ *q*t *P*t(*y*j)。*c* 是每多算一个 loop 的价格。
+*e*j 是第 *j* 个 token 的退出深度，*s*j 是它看到的历史：前面的 token，以及每个 token 到各自退出深度为止的 KV。*q*t 是 Ouro exit gate 给出的 exit 分布，这里保留梯度。Ouro 的 gate 在每个 loop 给出一个退出概率 *λ*t，*q*t = *λ*t ∏s\<t (1 − *λ*s)。Ouro 论文没有写最后一个 loop 怎么归一，这里令 *q*4 取剩余的 ∏s\<4 (1 − *λ*s)。
+
+*c* 是每多算一个 loop 的价格，loss 里的 *c* 项是本位置期望深度的精确梯度。*A*j 的 return 是答案对错减去 *c* 乘以其余位置的退出深度之和；本位置的深度已经由 *c* 项计入，不再放进 return。*κ* 取 1 或 0，见“梯度”。实现层面的细节在 README 第 8 节。
+
+策略
+
+逐 loop 执行：算完第 *t* 个 loop，以 *λ*t 的概率退出并从 *P*t 采样 token，否则继续，第 4 个 loop 必退。第 *t* 个 loop 的判定不需要更深的 loop。退出的 token 只留下 loop 1 到 *e*j 的 KV，后面的 token 在 loop *s* 读它在 loop min(*s*, *e*j) 的 KV，这是 Ragged KV 的规则。prompt 算满 4 个 loop。rollout、update 和部署都按这一套。
 
 Rollout
 
-forward 直接返回 log *π*mix 作为 logits，仍是固定 4 个 loop 的静态图。Ouro 论文把自适应 RL 的失败主要归因于动态计算图，这里不需要它。
+按上面的策略生成，记录每个 token 的退出深度。用真实早退的推理实现时，rollout 的计算量是各 token 退出深度之和。没有实现时用静态图模拟，语义相同，只是不省计算。
 
-梯度方差
+Update
 
-exit 被精确求和，不需要采样 exit 步。LoopRPT 也把 exit 当动作，但它采样 exit 并加高斯噪声，reward 是逐 token 的 next-token 概率，不是答案对错。
+一次 ragged teacher forcing：仍是 4 个 loop 的静态图，注意力按记录下来的退出深度取 KV。每个位置都把 4 个 loop 算完，得到四个读出和四个 gate 值；超出实际退出深度的 loop 只用来算 *π*mix 和 *ρ*，后面的位置读不到它们。一个 token 继续算深层时读的是自己的深层 KV，别的 token 读它时按补位规则，两种读法要分开实现。update 不省 loop，成本与 RLTT 相同。Ouro 论文把自适应 RL 的失败主要归因于动态计算图；这里求梯度的图是静态的，动态的部分只在 rollout 的推理引擎里。
+
+梯度
+
+如果每个位置都算满 4 个 loop，exit 只通过采到的 token 影响后面的位置，逐 token 的四项求和就是整条轨迹的边缘似然，只用 loss 的第一项就精确。这页早先的版本就是这样训练的。但部署时要早退，训练和部署成了两个策略，这个版本已删除。真实早退时 exit 还决定后面的 token 能看到哪些 KV，轨迹的边缘似然是 4^n 条 exit 路径的和，不能逐 token 分解。
+
+由 log *q*t *P*t(*y*) = log *π*mix(*y*) + log *ρ*t(*y*)，早退过程的精确策略梯度是
+
+E\[ *A* · ∑j ∇ log *π*mix(*y*j | *s*j) \] + E\[ *A* · ∑j ∇ log *ρ*(*e*j | *s*j, *y*j) \]
+
+第一项对本位置的退出深度求了和，方差低，管的是信哪个 loop 的读出。第二项是校正项，在后验 *ρ* 下均值为零，只有当回报在给定 token 之后还依赖退出深度时，它的期望才不为零；它管的是早退让后面的 token 少看了什么。*κ* = 1 时两项都在，梯度精确，合起来就是联合动作（退出深度和 token）的策略梯度。*κ* = 0 只留第一项，方差更低但有偏：gate 的退出决定拿不到早退伤到后文的信号，只有表示会经 KV 的梯度去适应。默认 *κ* = 1，*κ* = 0 作消融。这个分解用一个可以穷举的小过程核对过（2 个位置、4 个 exit、144 条路径，脚本是仓库里的 `scripts/exit_marginal_check.py`），校正项在 Ouro 上有多大未知。
 
 自适应从哪来
 
-exit 分布用 softmax 参数化时，reward 对 exit logit 的梯度是 *ρ*t − *q*t。四个 loop 一致的 token 上它恒为 0，只剩价格 *c* 在起作用，模型学会在这些 token 上早退。有分歧的 token 由 reward 决定信哪个 loop。Mishra 等人认为 Ouro 现有的 exit 分布在不同 token 上差别很小。
+reward 经第一项落到 gate 在第 *t* 个 loop 的 logit 上，梯度是 *ρ*≥t · ( *ρ*t / *ρ*≥t − *λ*t )，其中 *ρ*≥t = ∑s≥t *ρ*s。括号里是后验的退出概率减去 gate 给的退出概率。四个 loop 一致的 token 上 *ρ* = *q*，梯度恒为 0，只剩价格 *c* 在起作用，模型学会在这些 token 上早退。有分歧的 token 由 reward 决定信哪个 loop。这页早先写的是 softmax 参数化下的 *ρ*t − *q*t；softmax 要四个 logit 一起归一化，部署时不能逐 loop 判定，所以改用 Ouro 原生的形式。Mishra 等人认为 Ouro 现有的 exit 分布在不同 token 上差别很小。
 
 策略的来历
 
@@ -230,15 +246,25 @@ Ouro 预训练的任务项是各 loop 交叉熵按 *q* 的加权和。按 Jensen
 
 起步
 
-把 *q* 初始化成偏向最后一个 loop，此时等同 GRPO。再把 *c* 从 0 逐步调大。
+gate 的 logit 统一减一个常数，让初始的平均深度接近 4。这时几乎每个 token 都退在 loop 4，训练从接近 GRPO 的状态开始。不能直接按 Ouro 原生的 *q* 采样：它是给 Q-exit 阈值用的，没有被当作采样分布用过，Mishra 等说它在各 token 上熵都高，按它采样很可能有不少 token 退在很浅的 loop。常数也不能大到让 sigmoid 饱和，否则 gate 拿不到梯度。再把 *c* 从 0 逐步调大。gate 头的学习率要单独设，RLTT 的 1e-6 是给 LM 权重的。
 
-部署与风险
+部署
 
-推理时按 *q* 采样 exit，配合 Ragged KV 或 continuous depth batching 真正省掉计算。训练时后面的 token 能看到前面每个 token 的全部 4 个 loop 状态，部署时看不到被跳过的 loop。这个落差是主要风险。
+与 rollout 相同的策略，配合 Ragged KV 真正省掉计算。改用 Q-exit 阈值、换补位规则，或者引擎让退出延迟生效，都是另一个策略。Continuous depth batching 有两种缓存布局，last-exited 与 Ragged KV 语义相同；shared cache 每层只留一份，后面的 token 总是读到前面 token 最近一次写入的状态，语义不同。它的退出信号还要晚一步才生效。要用这样的引擎，训练就按它的规则来。一次训练对应一个 *c*，也就是计算量前沿上的一个点。
+
+风险
+
+Ragged KV 的现成证据不能直接用。Mishra 等报告 Ragged KV 不经训练就能用（macro pass@1，Table 1、2）：Ouro-2.6B-Thinking 固定 4 个 loop 是 62.1，阈值 .5 下 62.0 到 62.3，阈值 .3 下 58.5；Ouro-1.4B 固定 4 个 loop 是 64.2，阈值 .5 下 62.4 到 62.9（平均深度约 3.1 到 3.2），阈值 .3 下 58.0 到 59.5（平均深度约 2.4 到 2.6）。他们给的解释是，现有 gate 下相邻 token 的退出深度很少跳变。方案 2 的目的是让 *q* 随 token 变化，训练成功就会离开这个区间。另外 Ouro 论文 Table 14 里，只用 loop 1 的 KV 顶替全部深度时 GSM8K 从 78.92 掉到 18.73。价格 *c* 把 token 推得越浅，模型离预训练时的状态越远。
+
+另外两条是实现上的。update 的 ragged 重算要和 rollout 引擎的实际计算对得上，否则训练的又不是 rollout 的那个策略。校正项靠采样估计，方差多大要实测。Mishra 等第 5 节也有 ragged-aware 的训练，那一节我没有读到原文。
+
+与 LoopRPT 的关系
+
+LoopRPT 也采样 exit 并做策略梯度。差别有三处。这里的 reward 是答案对错，LoopRPT 是逐 token 的 next-token 概率。这里不给 hidden state 加噪声。这里本位置的 4 个 exit 在 loss 的第一项和价格项里被求和掉，只有校正项靠采样。另外，早退的 token 在训练时留给后文哪些状态，LoopRPT 的论文里我没有读到。
 
 dLLM 对应
 
-TraceRL 和 d2 沿真实生成轨迹计算似然。DCoLT 和 Mask-aware PG 把 unmask 位置的选择写进似然。它们必须采样这些选择再估计似然，这里 4 选 1 可以直接求和。
+TraceRL 和 d2 沿真实生成轨迹计算似然。DCoLT 和 Mask-aware PG 把 unmask 位置的选择写进似然。这里同样沿真实的早退轨迹，把 exit 写进似然；不同的是每一步的 log 概率是精确的，本位置的 4 选 1 还能求和掉一部分方差。
 
 ### 方案 3以更深的自己为参考的自蒸馏
 
@@ -282,7 +308,7 @@ loop 2 上的 reward 增益经共享权重传到 loop 4。在 over-looping 的�
 | RSI（D-LoopOPD） | P₂ | 不用 reward | 无 | 不用 | KL(P₂ ‖ sg P₄) |
 | LoopRPT | 逐 token 采样 exit 步 | exit 步 | 采样得到 | 采样式策略梯度 | reward 是 next-token 概率 |
 | 方案 1 | P₄ | P₁ 到 P₄ | A > 0 用 ω，A ≤ 0 用 ρ | 不学 | 只改 RLTT 的一行 |
-| 方案 2 | ∑ qt Pt | P₁ 到 P₄，以及 q | 后验 ρ | 精确梯度 ρ − q | rollout 仍算满 4 个 loop |
+| 方案 2 | gate 采样到的那个 loop 的读出 | P₁ 到 P₄，以及 gate | 后验 ρ，加退出深度上的校正项 | 精确策略梯度（κ = 1） | rollout、update、部署同一个早退过程；update 仍算满 4 个 loop |
 | 方案 3 | P₂ | P₂ | 无 | 不涉及 | 另加 KL(P₂ ‖ sg P₄) |
 
 ## 次要的映射
@@ -295,18 +321,20 @@ loop 2 上的 reward 增益经共享权重传到 loop 4。在 over-looping 的�
 
 ## 建议顺序
 
-1. **先测再训。**在 Ouro-Thinking 的 rollout 上做一次前向，统计三个数。gap 在 token 上的集中程度决定方案 2 的空间，答对与答错样本的 gap 差异对应方案 1，答案 token 上 loop 3 对而 loop 4 错的比例对应方案 3。
+1. **先测再训。**在 Ouro-Thinking 的 rollout 上做一次前向，统计四个数。gap 在 token 上的集中程度决定方案 2 的空间，答对与答错样本的 gap 差异对应方案 1，答案 token 上 loop 3 对而 loop 4 错的比例对应方案 3。同一条 rollout 在完整历史和 ragged 历史下 *π*mix 的差异，对应方案 2 的校正项有多重要。
 2. **实现顺序 1 → 3 → 2。**改动量依次增大。方案 3 先只跑 *ψ* = 0 的复现，确认它高于未训练的模型，再加 reward 项。
 3. **评测用长解码预算。**RLTT 的大部分优势出现在紧预算下，短预算会把回答变短和推理变好混在一起。
 4. **如果只写一篇。**恒等式加方案 1 和方案 2 是一个完整的故事。
 
 ## 不确定的地方
 
-- 三个方案都没有实验结果。恒等式和梯度是我推导的，可以用上面的计算器核对数值。
+- 三个方案都没有实验结果。恒等式和梯度是我推导的，可以用上面的计算器核对数值。方案 2 的 gate 梯度和“梯度”一段里的分解另用可穷举的小过程核对过（`scripts/exit_marginal_check.py`），没有在 Ouro 上验证。
+- 方案 2 的校正项靠采样估计，方差多大未知；去掉它（*κ* = 0）的偏差多大，取决于后面的读出对 KV 历史有多敏感。两者要等阶段 0 的测量和阶段 4 的消融。Ragged KV 不经训练就能用的结果量自现有的 gate，不能当作方案 2 训练之后的估计。
+- 方案 2 在 *κ* = 1 时就是对联合动作（退出深度和 token）的策略梯度，做法上离 LoopRPT 更近了，差别见方案 2 里“与 LoopRPT 的关系”一段。
 - *A* \< 0 时放大 gap 有害，以及 RLTT 的收益来自 *A* > 0 的 gap 项，这两点都是假设。
 - 没有检索到相同做法，但检索范围只到 2026 年 10 月的 arXiv 论文。方案 3 离 RSI 最近，最容易被抢先。
 - RSI 的基线在 OpenReview 上受到公开质疑，D-LoopOPD 的增益能否复现未知。本页依赖 RSI 数字的地方有两处：证据一节的第三组，以及方案 3 的动机。恒等式、方案 1 和方案 2 不依赖 RSI。
-- RLTT 的数字读自 PDF 原文。RSI、Ouro、TraceRL 和其余论文读的是 arXiv 的 HTML 版，部分只读了摘要和方法节。2026-11-20 重新逐字核对了 Ouro 的 Table 9、12、13（v1 的 HTML）和 RSI 的 Table 2、5、6（v2 的 HTML）。
+- RLTT 的数字读自 PDF 原文。RSI、Ouro、TraceRL 和其余论文读的是 arXiv 的 HTML 版，部分只读了摘要和方法节。2026-11-20 重新逐字核对了 Ouro 的 Table 9、12、13（v1 的 HTML）和 RSI 的 Table 2、5、6（v2 的 HTML）。同一天为方案 2 补读了 Ouro 的 3.2 节、4.5 节和 Table 14，Mishra 等的第 3、4 节和 Table 1、2，Continuous Depth Batching 的第 4 节（都是 v1 的 HTML）；Mishra 等第 5 节和 Continuous Depth Batching 附录里 shared cache 的精度数字没有读到原文。
 - Ouro 现有的 gate 是否随 token 难度变化，两篇论文说法不同（Mishra 等与 Popescu 等）。
 
 ## 参考文献
