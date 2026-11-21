@@ -1,0 +1,27 @@
+Traceback (most recent call last):
+  File "/ossfs/workspace/LoopRL/scripts/pause_native_2a_queue.py", line 73, in <module>
+    main()
+  File "/ossfs/workspace/LoopRL/scripts/pause_native_2a_queue.py", line 48, in main
+    _, alive = psutil.wait_procs([driver] + descendants, timeout=40)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/__init__.py", line 1647, in wait_procs
+    check_gone(proc, timeout)
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/__init__.py", line 1609, in check_gone
+    returncode = proc.wait(timeout=timeout)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/__init__.py", line 1374, in wait
+    self._exitcode = self._proc.wait(timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/_pslinux.py", line 1593, in wrapper
+    return fun(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/_pslinux.py", line 1846, in wait
+    return _psposix.wait_pid(self.pid, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/_psposix.py", line 304, in wait_pid
+    return wait_pid_pidfd_open(pid, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/psutil/_psposix.py", line 182, in wait_pid_pidfd_open
+    pidfd = os.pidfd_open(pid, 0)
+            ^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument

@@ -1,5 +1,39 @@
+diff --git a/slime/backends/megatron_utils/actor.py b/slime/backends/megatron_utils/actor.py
+index f4851ef5cf68b74ed833284117d122adaeac146e..51526db15a5168c85a45f91f4f2f264a5a84a2cb 100644
+--- a/slime/backends/megatron_utils/actor.py
++++ b/slime/backends/megatron_utils/actor.py
+@@ -448,6 +448,9 @@ class MegatronTrainRayActor(TrainRayActor):
+         return {}
+ 
+     def train_actor(self, rollout_id: int, rollout_data: RolloutBatch, external_data=None) -> None:
++        if getattr(self.args, "ouro_group_microbatches", False):
++            from slime_plugins.ouro_training import configure_microbatches
++            configure_microbatches(self.args, rollout_data)
+         # Create data iterator for log_probs and train.
+         data_iterator = get_data_iterator(rollout_data)
+         num_microbatches = rollout_data["num_microbatches"]
+@@ -485,6 +488,10 @@ class MegatronTrainRayActor(TrainRayActor):
+                     )
+ 
+                 self._switch_model("actor")
++                ouro_reuse = getattr(self.args, "ouro_reuse_old_log_probs", False)
++                if ouro_reuse:
++                    from slime_plugins.ouro_training import prepare_reuse
++                    prepare_reuse(self, rollout_data, data_iterator)
+                 can_reuse_log_probs_in_loss = (
+                     len(num_microbatches) == 1
+                     and self.args.loss_type == "policy_loss"
+@@ -498,7 +505,7 @@ class MegatronTrainRayActor(TrainRayActor):
+                 )
+                 if (
+                     not self.args.use_rollout_logprobs or self.args.get_mismatch_metrics
+-                ) and not can_reuse_log_probs_in_loss:
++                ) and not (can_reuse_log_probs_in_loss or ouro_reuse):
+                     if self.args.use_routing_replay:
+                         if self.args.use_rollout_routing_replay:
+                             os.environ["ROUTING_REPLAY_STAGE"] = "replay_forward"
 diff --git a/slime/backends/megatron_utils/arguments.py b/slime/backends/megatron_utils/arguments.py
-index c6bd7e5..6055c6d 100644
+index c6bd7e5e4d1d9a5483d307290e37bf8a7b4254d0..6055c6d0b4fb2d4598570c54858f3dd468193436 100644
 --- a/slime/backends/megatron_utils/arguments.py
 +++ b/slime/backends/megatron_utils/arguments.py
 @@ -175,11 +175,13 @@ def _set_default_megatron_args(args):
@@ -19,7 +53,7 @@ index c6bd7e5..6055c6d 100644
      # placeholders
      if args.seq_length is None:
 diff --git a/slime/backends/megatron_utils/hf_to_megatron/__init__.py b/slime/backends/megatron_utils/hf_to_megatron/__init__.py
-index b0f41a9..80d79ab 100644
+index b0f41a999e1c6cb0c7ab39ab570e7d79fa751727..80d79ab00c09905cc236c35585c054d7d6d84f3e 100644
 --- a/slime/backends/megatron_utils/hf_to_megatron/__init__.py
 +++ b/slime/backends/megatron_utils/hf_to_megatron/__init__.py
 @@ -8,6 +8,7 @@ from .glm import glm4_hf_tensor, glm4_moe_hf_tensor
@@ -40,7 +74,7 @@ index b0f41a9..80d79ab 100644
      "qwen3": qwen_hf_tensor,
 diff --git a/slime/backends/megatron_utils/hf_to_megatron/ouro.py b/slime/backends/megatron_utils/hf_to_megatron/ouro.py
 new file mode 100644
-index 0000000..bea63f0
+index 0000000000000000000000000000000000000000..bea63f03d7b87dfb0a0fc77de767b70787bbac56
 --- /dev/null
 +++ b/slime/backends/megatron_utils/hf_to_megatron/ouro.py
 @@ -0,0 +1,27 @@
@@ -71,8 +105,34 @@ index 0000000..bea63f0
 +    # Local Megatron layer specs keep the input norm separate from QKV.
 +    name = name.replace(".input_layernorm.weight", ".self_attention.linear_qkv.layer_norm_weight")
 +    return qwen_hf_tensor(name, reader, config)
+diff --git a/slime/backends/megatron_utils/loss.py b/slime/backends/megatron_utils/loss.py
+index 917a2b66986fba917614a07d4d81a55ed0f9d0b1..8f28e0dd682d019fce2359598d61640d2867647b 100644
+--- a/slime/backends/megatron_utils/loss.py
++++ b/slime/backends/megatron_utils/loss.py
+@@ -556,6 +556,7 @@ def get_log_probs_and_entropy(
+     assert logits.dtype == torch.float32, f"{logits.dtype}"
+     assert len(logits.shape) == 3, f"{logits.shape}"
+     assert logits.size(0) == 1, f"{logits.shape}"
++    exit_log_probs = getattr(logits, "ouro_exit_log_probs", None)
+     logits = logits.squeeze(0)
+ 
+     # Apply rollout temperature scaling to logits to match rollout-time log-probs.
+@@ -610,6 +611,13 @@ def get_log_probs_and_entropy(
+     )
+ 
+     res = {"log_probs": log_probs_list}
++    if getattr(args, "ouro_token_exit", False):
++        if exit_log_probs is None or args.allgather_cp or with_entropy:
++            raise ValueError("Token-exit scores require a gate trace, CP=1 and no entropy shortcut")
++        gates, _ = _extract_per_sample(exit_log_probs, None, total_lengths, response_lengths, False)
++        res["token_log_probs"] = log_probs_list
++        res["exit_log_probs"] = gates
++        res["log_probs"] = [token + gate for token, gate in zip(log_probs_list, gates, strict=True)]
+     if with_entropy:
+         res["entropy"] = entropy_list
+ 
 diff --git a/slime/backends/megatron_utils/megatron_to_hf/__init__.py b/slime/backends/megatron_utils/megatron_to_hf/__init__.py
-index 30c6615..11c2b22 100644
+index 30c6615bb000b4a507463b20ad86cdfc214ddab4..11c2b221c66e4d8eb8ad58d0b1e1bf091c797107 100644
 --- a/slime/backends/megatron_utils/megatron_to_hf/__init__.py
 +++ b/slime/backends/megatron_utils/megatron_to_hf/__init__.py
 @@ -7,6 +7,7 @@ from .mimo import convert_mimo_to_hf
@@ -96,7 +156,7 @@ index 30c6615..11c2b22 100644
          # otherwise reach the text-only converter and die on the first
 diff --git a/slime/backends/megatron_utils/megatron_to_hf/ouro.py b/slime/backends/megatron_utils/megatron_to_hf/ouro.py
 new file mode 100644
-index 0000000..dccef7c
+index 0000000000000000000000000000000000000000..dccef7c35758fb752ea08dcd539ccd57326ad487
 --- /dev/null
 +++ b/slime/backends/megatron_utils/megatron_to_hf/ouro.py
 @@ -0,0 +1,20 @@
@@ -121,7 +181,7 @@ index 0000000..dccef7c
 +    name = name.replace(".input_layernorm.weight", ".self_attention.linear_qkv.layer_norm_weight")
 +    return convert_llama_to_hf(args, f"module.module.{name}", param)
 diff --git a/slime/backends/megatron_utils/model.py b/slime/backends/megatron_utils/model.py
-index 51884e9..34d1584 100644
+index 51884e952eeb2863fe0b7307e7417b88acd9c239..0247a0bdb3cbe04fec2e35a0e381f14de3d0972b 100644
 --- a/slime/backends/megatron_utils/model.py
 +++ b/slime/backends/megatron_utils/model.py
 @@ -42,6 +42,19 @@ from .stateless_adam import StatelessAdam
@@ -149,7 +209,7 @@ index 51884e9..34d1584 100644
  
      optimizer_context = _patch_megatron_adam(StatelessAdam) if args.use_stateless_adam else nullcontext()
 +    optimizer_overrides = None
-+    if getattr(args, "ouro_learned_depth", False):
++    if getattr(args, "ouro_learned_depth", False) or getattr(args, "ouro_token_exit", False):
 +        from megatron.core.optimizer import get_standard_config_overrides, ParamKey
 +        optimizer_overrides = get_standard_config_overrides(config)
 +        optimizer_overrides[ParamKey(attr="ouro_depth_parameter")] = {
@@ -180,6 +240,15 @@ index 51884e9..34d1584 100644
          output_tensor = model(**forward_kwargs)
  
          output_kwargs = {
+@@ -519,7 +541,7 @@ def forward_only(
+                 assert isinstance(value[key], list)
+                 values += value[key]
+ 
+-            if args.use_dynamic_batch_size:
++            if args.use_dynamic_batch_size or getattr(args, "ouro_group_microbatches", False):
+                 # TODO: This is ugly... Find a better way to make the data have the same order.
+                 # TODO: move this out of the loop.
+                 origin_values = [None] * len(values)
 @@ -605,6 +627,7 @@ def train_one_step(
                  args,
                  [
@@ -188,7 +257,17 @@ index 51884e9..34d1584 100644
                      "multimodal_train_inputs",
                      "packed_seq_params",
                      "total_lengths",
-@@ -635,6 +658,8 @@ def train_one_step(
+@@ -623,7 +646,8 @@ def train_one_step(
+                     "rollout_mask_sums",
+                     # Only present when dumping train debug data; lets the loss
+                     # snapshot each sample's log_probs keyed by rollout position.
+-                    *(["partition"] if args.save_debug_train_data is not None else []),
++                    *(["partition"] if args.save_debug_train_data is not None
++                      or getattr(args, "ouro_reuse_old_log_probs", False) else []),
+                 ],
+             ),
+             args.data_pad_size_multiplier,
+@@ -635,6 +659,8 @@ def train_one_step(
              os.environ["ROUTING_REPLAY_STAGE"] = "replay_forward"
  
          if return_schedule_plan:
@@ -197,7 +276,7 @@ index 51884e9..34d1584 100644
              assert not args.enable_mtp_training, "MTP training should not be enabled when using combined 1f1b"
              position_ids = None
              output_tensor = model.build_schedule_plan(
-@@ -657,6 +682,7 @@ def train_one_step(
+@@ -657,6 +683,7 @@ def train_one_step(
  
              if batch["multimodal_train_inputs"] is not None:
                  forward_kwargs.update(batch["multimodal_train_inputs"])
@@ -205,13 +284,23 @@ index 51884e9..34d1584 100644
  
              if args.enable_mtp_training:
                  forward_kwargs["mtp_kwargs"] = {"mtp_labels": batch["tokens"]}
+@@ -681,6 +708,10 @@ def train_one_step(
+         forward_only=False,
+     )
+ 
++    if getattr(args, "ouro_reuse_old_log_probs", False):
++        from slime_plugins.ouro_training import finish_reuse_audit
++        finish_reuse_audit(args)
++
+     valid_step = True
+     grad_norm = float("nan")
+     if not getattr(args, "check_for_nan_in_loss_and_grad", True):
 diff --git a/slime/backends/sglang_utils/engine_group.py b/slime/backends/sglang_utils/engine_group.py
-index 1da05c4..e43557f 100644
+index 1da05c4d223ca64497136610c4eda1498f8d2c2e..e43557f176307f4d76535937649f03fcd5c9f27e 100644
 --- a/slime/backends/sglang_utils/engine_group.py
 +++ b/slime/backends/sglang_utils/engine_group.py
 @@ -238,7 +238,10 @@ class ServerGroup:
--
-+
+ 
          # Compute base_port from the maximum cursor across all nodes that
          # this group's engines may land on (conservative: just use global max).
 -        base_port = max(port_cursors.values()) if port_cursors else 15000
@@ -224,10 +313,10 @@ index 1da05c4..e43557f 100644
              rollout_engines=rollout_engines,
 diff --git a/slime/backends/sglang_utils/shared_weights.py b/slime/backends/sglang_utils/shared_weights.py
 new file mode 100644
-index 0000000..8856235
+index 0000000000000000000000000000000000000000..01c02115ee275b266d0b16def8ad7cefb322dcc1
 --- /dev/null
 +++ b/slime/backends/sglang_utils/shared_weights.py
-@@ -0,0 +1,17 @@
+@@ -0,0 +1,18 @@
 +"""Select serving groups that intentionally share one trainable Ouro policy."""
 +
 +
@@ -235,7 +324,8 @@ index 0000000..8856235
 +    selected = [(name, server) for name, server in servers.items() if server.update_weights]
 +    if not getattr(args, "ouro_shared_depth_engines", False):
 +        return selected[0][1] if selected else None
-+    expected = {"depth4"} if args.ouro_arm == "fixed" else {"depth2", "depth3", "depth4"}
++    expected = ({"token_exit"} if args.ouro_arm == "token_exit" else
++                {"depth4"} if args.ouro_arm == "fixed" else {"depth2", "depth3", "depth4"})
 +    if {name for name, _ in selected} != expected:
 +        raise ValueError(f"Ouro shared-weight engines must be exactly {sorted(expected)}")
 +    from .engine_group import RolloutServer
@@ -246,7 +336,7 @@ index 0000000..8856235
 +    return RolloutServer(server_groups=[g for _, server in selected for g in server.server_groups],
 +                         model_name="ouro_shared_depths", update_weights=True)
 diff --git a/slime/data/batch_builder.py b/slime/data/batch_builder.py
-index 3e178b7..f247a79 100644
+index 3e178b7007c14b3874172789d3ff19af4dc327a5..f247a79a6dba4003f8dc1e7b2530c05a591fda9a 100644
 --- a/slime/data/batch_builder.py
 +++ b/slime/data/batch_builder.py
 @@ -60,6 +60,9 @@ class BatchBuilder:
@@ -268,7 +358,7 @@ index 3e178b7..f247a79 100644
              "response_lengths",
              "rewards",
 diff --git a/slime/observability/train_metric_utils.py b/slime/observability/train_metric_utils.py
-index 07ddd93..03cd84a 100644
+index 07ddd931c5e3fb3147ed8bb86e25bf9c676a478b..03cd84afc0f93748c42ceaf80ff8af3681f03d7f 100644
 --- a/slime/observability/train_metric_utils.py
 +++ b/slime/observability/train_metric_utils.py
 @@ -161,6 +161,7 @@ def log_rollout_data(
@@ -280,7 +370,7 @@ index 07ddd93..03cd84a 100644
              "loss_masks",
              "sample_indices",
 diff --git a/slime/ray/rollout.py b/slime/ray/rollout.py
-index 07c83ab..f982c4e 100644
+index 07c83ab439b074ec2359833a172b5bb50f7af365..f982c4efc0c657b2fbcbe11e0f413643e1e2233f 100644
 --- a/slime/ray/rollout.py
 +++ b/slime/ray/rollout.py
 @@ -284,10 +284,11 @@ class RolloutManager:
@@ -299,7 +389,7 @@ index 07c83ab..f982c4e 100644
      @property
      def rollout_engines(self):
 diff --git a/slime/ray/serving.py b/slime/ray/serving.py
-index b7e979b..119db18 100644
+index b7e979b49e924c80b54d15dda1bd083fa21fcc36..119db18a35ec2fcfc6ad492cdcd693f628566782 100644
 --- a/slime/ray/serving.py
 +++ b/slime/ray/serving.py
 @@ -219,7 +219,8 @@ class ServingCluster:
@@ -313,7 +403,7 @@ index b7e979b..119db18 100644
      def get_updatable_engines_and_lock(self):
          server = self._updatable_server()
 diff --git a/slime/utils/arguments.py b/slime/utils/arguments.py
-index 269f968..ef02825 100644
+index 269f9683317898d49093c483a87a44a3d5ca215c..ef028252d689fec413a13979be2df0dba2bc3dc1 100644
 --- a/slime/utils/arguments.py
 +++ b/slime/utils/arguments.py
 @@ -106,6 +106,16 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
@@ -335,10 +425,10 @@ index 269f968..ef02825 100644
              reset_arg(parser, "--post-mlp-layernorm", action="store_true", default=False)
 diff --git a/slime_plugins/models/ouro.py b/slime_plugins/models/ouro.py
 new file mode 100644
-index 0000000..ee84aef
+index 0000000000000000000000000000000000000000..b053bcb926fdf9a69af826df397e935e825d58e3
 --- /dev/null
 +++ b/slime_plugins/models/ouro.py
-@@ -0,0 +1,203 @@
+@@ -0,0 +1,218 @@
 +"""Ouro's shared recurrent decoder on the native Megatron training backend.
 +
 +Use ``--spec slime_plugins.models.ouro get_ouro_model_provider``. Loop count
@@ -452,7 +542,7 @@ index 0000000..ee84aef
 +
 +
 +class OuroGPTModel(GPTModel):
-+    def __init__(self, *, total_ut_steps=4, learned_depth=False, **kwargs):
++    def __init__(self, *, total_ut_steps=4, learned_depth=False, token_exit=False, gate_shift=3., **kwargs):
 +        config = kwargs["config"]
 +        for name in ("tensor_model_parallel_size", "pipeline_model_parallel_size", "context_parallel_size"):
 +            if getattr(config, name) != 1:
@@ -468,9 +558,15 @@ index 0000000..ee84aef
 +        # Preserve the pretrained gate in checkpoints/sync. Sequence-depth RL
 +        # uses a separate policy; the native token gate is not optimized here.
 +        self.early_exit_gate = nn.Linear(config.hidden_size, 1, dtype=config.params_dtype)
-+        self.early_exit_gate.requires_grad_(False)
++        if token_exit and learned_depth:
++            raise ValueError("Sequence depth and token exit are distinct policies")
++        self.token_exit = token_exit
++        self.gate_shift = gate_shift
++        self.early_exit_gate.requires_grad_(token_exit)
 +        for parameter in self.early_exit_gate.parameters():
 +            parameter.tensor_model_parallel = False
++            if token_exit:
++                parameter.ouro_depth_parameter = True
 +        self.learned_depth = learned_depth
 +        if learned_depth:
 +            self.sequence_depth_head = nn.Linear(config.hidden_size, 3, dtype=config.params_dtype)
@@ -485,11 +581,18 @@ index 0000000..ee84aef
 +                labels=None, inference_context=None, packed_seq_params=None,
 +                extra_block_kwargs=None, runtime_gather_output=None, *, inference_params=None,
 +                loss_mask=None, padding_mask=None, ouro_depth=None, ouro_prompt_length=None,
-+                ouro_return_prompt_feature=False, **kwargs):
++                ouro_return_prompt_feature=False, ouro_exit_traces=None,
++                ouro_total_lengths=None, ouro_response_lengths=None, **kwargs):
 +        if inference_context is not None or inference_params is not None:
 +            raise ValueError("Ouro native trainer does not use Megatron's inference cache")
 +        if kwargs:
 +            raise ValueError(f"Unsupported Ouro forward options: {sorted(kwargs)}")
++        if self.token_exit:
++            if ouro_exit_traces is None:
++                raise ValueError("Token-exit training requires the actual sampled exit trace")
++            from .ouro_token_exit import forward
++            return forward(self, input_ids, packed_seq_params, ouro_total_lengths,
++                           ouro_response_lengths, ouro_exit_traces)
 +        depth = self.total_ut_steps if ouro_depth is None else ouro_depth
 +        if isinstance(depth, bool) or not isinstance(depth, int) or depth not in range(1, 5):
 +            raise ValueError("Each Ouro microbatch requires one integer depth in [1, 4]")
@@ -539,15 +642,121 @@ index 0000000..ee84aef
 +            share_embeddings_and_output_weights=hf.tie_word_embeddings,
 +            position_embedding_type="rope", rotary_base=hf.rope_theta,
 +            total_ut_steps=getattr(args, "ouro_depth", None) or hf.total_ut_steps,
-+            learned_depth=getattr(args, "ouro_learned_depth", False))
++            learned_depth=getattr(args, "ouro_learned_depth", False),
++            token_exit=getattr(args, "ouro_token_exit", False),
++            gate_shift=getattr(args, "ouro_gate_shift", 3.))
 +
 +    return model_provider
+diff --git a/slime_plugins/models/ouro_token_exit.py b/slime_plugins/models/ouro_token_exit.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..9a3108202d93eb44d4cf1ab29b64f631592a3469
+--- /dev/null
++++ b/slime_plugins/models/ouro_token_exit.py
+@@ -0,0 +1,98 @@
++"""Functional replay of the *executed* token-exit trajectory (joint score).
++
++Only readouts/hazards through the recorded exit enter the objective. This lets
++all queries at a loop share last-exited K/V: the diagonal differs only for
++already exited queries, whose counterfactual readouts are deliberately unused.
++K/V crossing recurrent loops remain differentiable checkpoint outputs.
++"""
++from functools import partial
++
++import torch
++from torch.nn import functional as F
++from torch.utils.checkpoint import checkpoint
++from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
++
++
++def exit_layout(tokens, total_lengths, response_lengths, traces):
++    if not (len(total_lengths) == len(response_lengths) == len(traces)):
++        raise ValueError("Mismatched token-exit batch metadata")
++    readout = torch.full((tokens.shape[-1],), 4, device=tokens.device, dtype=torch.long)
++    cache = readout.clone()
++    offset = 0
++    for total, response, trace in zip(total_lengths, response_lengths, traces, strict=True):
++        prompt = total - response
++        if prompt < 1 or response < 1 or len(trace) != response or any(type(e) is not int or e not in (1, 2, 3, 4) for e in trace):
++            raise ValueError("Invalid per-token exit trace")
++        if offset + total > tokens.shape[-1]:
++            raise ValueError("Token-exit trace exceeds packed tokens")
++        values = torch.tensor(trace, device=tokens.device, dtype=torch.long)
++        readout[offset + prompt - 1:offset + total - 1] = values
++        # The first prediction reads the last prompt position. All prompt KV
++        # is dense, including that position, regardless of its selected readout.
++        cache[offset + prompt:offset + total - 1] = values[1:]
++        offset += total
++    return readout, cache
++
++
++def recurrent_layer(layer, hidden, previous_k, previous_v, *, loop, cache_exits, rope, packed):
++    attn = layer.self_attention
++    query, key, value = attn.get_query_key_value_tensors(layer.input_layernorm(hidden))
++    if packed is not None:
++        query, key, value = (x.squeeze(1) for x in (query, key, value))
++    kwargs = dict(config=layer.config, cu_seqlens=packed.cu_seqlens_q if packed is not None else None)
++    if packed is not None:
++        kwargs["max_seqlen"] = packed.max_seqlen_q
++    query = apply_rotary_pos_emb(query, rope, **kwargs)
++    key = apply_rotary_pos_emb(key, rope, **kwargs)
++    if previous_k is not None:
++        active = (cache_exits >= loop).reshape((-1,) + (1,) * (key.ndim - 1))
++        key = torch.where(active, key, previous_k)
++        value = torch.where(active, value, previous_v)
++    context = attn.core_attention(query, key, value, packed_seq_params=packed)
++    if packed is not None:
++        context = context.reshape(hidden.shape[0], 1, -1)
++    branch, bias = attn.linear_proj(context)
++    if bias is not None:
++        raise ValueError("Ouro token-exit attention must be bias-free")
++    hidden = hidden + layer.post_self_attn_layernorm(branch)
++    branch, bias = layer.mlp(layer.pre_mlp_layernorm(hidden))
++    if bias is not None:
++        raise ValueError("Ouro token-exit MLP must be bias-free")
++    return hidden + layer.post_mlp_layernorm(branch), key, value
++
++
++def forward(model, input_ids, packed_seq_params, total_lengths, response_lengths, traces):
++    if input_ids.shape[0] != 1 or model.config.context_parallel_size != 1:
++        raise ValueError("Token-exit replay requires packed batch=1 and CP=1")
++    readout, cache_exits = exit_layout(input_ids, total_lengths, response_lengths, traces)
++    prep = model._preprocess(input_ids, None, packed_seq_params=packed_seq_params)
++    hidden, rope = prep[:2]
++    initial = hidden
++    selected = torch.zeros_like(hidden)
++    logq = torch.zeros(input_ids.shape[-1], device=hidden.device, dtype=torch.float32)
++    states = [(None, None)] * len(model.decoder.layers)
++    use_checkpoint = torch.is_grad_enabled() and model.config.recompute_granularity == "full"
++    for loop in range(1, 5):
++        for index, layer in enumerate(model.decoder.layers):
++            function = partial(recurrent_layer, layer, loop=loop, cache_exits=cache_exits,
++                               rope=rope, packed=packed_seq_params)
++            if use_checkpoint:
++                hidden, key, value = checkpoint(function, hidden, *states[index],
++                                                use_reentrant=False, preserve_rng_state=False)
++            else:
++                hidden, key, value = function(hidden, *states[index])
++            states[index] = key, value
++        hidden = model.decoder.final_layernorm(hidden)
++        selected = torch.where((readout == loop)[:, None, None], hidden, selected)
++        if loop < 4:
++            hazard = model.early_exit_gate(hidden).squeeze(-1).squeeze(-1).float() - model.gate_shift
++            logq = logq + torch.where(readout == loop, F.logsigmoid(hazard),
++                                     torch.where(readout > loop, F.logsigmoid(-hazard), 0.))
++    output = model._postprocess(hidden_states=selected, input_ids=input_ids,
++        position_ids=None, labels=None, rotary_pos_emb=rope, rotary_pos_cos=None,
++        rotary_pos_sin=None, mtp_in_postprocess=False,
++        decoder_input=initial, attention_mask=None, packed_seq_params=packed_seq_params)
++    # Float16Module preserves an already-FP32 Tensor and its attached score.
++    output = output.float()
++    output.ouro_exit_log_probs = logq
++    return output
 diff --git a/slime_plugins/ouro_2a.py b/slime_plugins/ouro_2a.py
 new file mode 100644
-index 0000000..acc1cd0
+index 0000000000000000000000000000000000000000..969dc60f3bab0672b4e56976e2c5762fd87ac2d2
 --- /dev/null
 +++ b/slime_plugins/ouro_2a.py
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,151 @@
 +"""Fixed/stratified sequence-depth 2a hooks for native slime training.
 +
 +The learned depth policy is not implemented here. Its score must eventually
@@ -653,7 +862,7 @@ index 0000000..acc1cd0
 +slime's outer loss function supplies the global-batch normalization. Its
 +per-sample response-length reducer must not normalize the objective again.
 +"""
-+    from slime.backends.megatron_utils.loss import get_log_probs_and_entropy
++    from slime.backends.megatron_utils.loss import get_log_probs_and_entropy, _maybe_capture_log_probs
 +
 +    if args.calculate_per_token_loss or args.context_parallel_size != 1:
 +        raise ValueError("Initial Ouro loss requires sequence mean and CP=1")
@@ -663,8 +872,14 @@ index 0000000..acc1cd0
 +        unconcat_tokens=batch["unconcat_tokens"], total_lengths=batch["total_lengths"],
 +        response_lengths=batch["response_lengths"], with_entropy=False)
 +    current = torch.cat(output["log_probs"])
-+    old = torch.cat(batch["log_probs"]).detach()
-+    if getattr(args, "rollout_data_postprocess_path", None) == "slime_plugins.ouro_2a.check_on_policy":
++    _maybe_capture_log_probs(batch, output["log_probs"])
++    reuse = getattr(args, "ouro_reuse_old_log_probs", False)
++    old = current.detach() if reuse else torch.cat(batch["log_probs"]).detach()
++    if reuse:
++        from slime_plugins.ouro_training import record_reuse
++        record_reuse(args, batch, current,
++                     torch.cat(output["exit_log_probs"]) if getattr(args, "ouro_token_exit", False) else None)
++    elif getattr(args, "rollout_data_postprocess_path", None) == "slime_plugins.ouro_2a.check_on_policy":
 +        error = (current.detach() - old).abs().max().item()
 +        if not math.isfinite(error) or error > 1e-3:
 +            raise ValueError(f"Ouro grad/no-grad replay mismatch {error:.6g} exceeds 0.001")
@@ -688,10 +903,14 @@ index 0000000..acc1cd0
 +    budget = args.rollout_max_response_len
 +    loss = (pg + args.kl_loss_coef * kl) / budget
 +    return loss, {"loss": loss.detach(), "pg_loss": pg.detach() / budget,
-+                  "kl_loss": kl.detach() / budget, **{k:v.detach() for k,v in correction_metrics.items()}}
++                  "kl_loss": kl.detach() / budget,
++                  # The outer logger divides by sample count, not microbatches.
++                  # Exact token-weighted batch diagnostics are in consistency.jsonl.
++                  **{k:v.detach()*max(1, len(batch["response_lengths"]))
++                     for k,v in correction_metrics.items()}}
 diff --git a/slime_plugins/ouro_attention.py b/slime_plugins/ouro_attention.py
 new file mode 100644
-index 0000000..7ff5af4
+index 0000000000000000000000000000000000000000..7ff5af40fcf88af6ee3c48249f5e1e03780ec8cc
 --- /dev/null
 +++ b/slime_plugins/ouro_attention.py
 @@ -0,0 +1,154 @@
@@ -849,9 +1068,163 @@ index 0000000..7ff5af4
 +    # SGLang intentionally disables graphs for torch_native. Register Ouro's
 +    # actual Triton implementation on the graph-capable backend as well.
 +    ATTENTION_BACKENDS["triton"] = create_triton
+diff --git a/slime_plugins/ouro_kernels.py b/slime_plugins/ouro_kernels.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..4238f2391a2b2a783a2ed1d37a80da43ef14fa7f
+--- /dev/null
++++ b/slime_plugins/ouro_kernels.py
+@@ -0,0 +1,148 @@
++"""FP32 paged decode without materializing a dense copy of the KV history.
++
++Each split computes FP32 dot products/reductions (no TF32) directly from the
++request page table. A second kernel merges the stable softmax partials.
++"""
++import torch
++import triton
++import triton.language as tl
++
++
++@triton.jit
++def _norm(X, Weight, Out, STRIDE: tl.constexpr, DIM: tl.constexpr,
++          EPS: tl.constexpr, BLOCK: tl.constexpr):
++    row = tl.program_id(0)
++    col = tl.arange(0, BLOCK)
++    x = tl.load(X + row*STRIDE + col, col < DIM, other=0).to(tl.float32)
++    variance = tl.sum(x*x, axis=0)/DIM
++    value = x*tl.rsqrt(variance+EPS)
++    weight = tl.load(Weight+col, col < DIM, other=0).to(tl.float32)
++    tl.store(Out+row*DIM+col, value*weight, col < DIM)
++
++
++def rms_norm(hidden, weight, eps):
++    if hidden.dtype != torch.float32 or hidden.ndim != 2 or hidden.stride(-1) != 1:
++        raise ValueError("Ouro fused norm requires a two-dimensional FP32 tensor")
++    result = torch.empty_like(hidden)
++    _norm[(hidden.shape[0],)](hidden, weight, result, hidden.stride(0), hidden.shape[1], eps,
++        triton.next_power_of_2(hidden.shape[1]), num_warps=4, enable_fp_fusion=False)
++    return result
++
++
++@triton.jit
++def _rope(Q, K, Positions, Cache, QOUT, KOUT, QS: tl.constexpr, KS: tl.constexpr,
++          QHEADS: tl.constexpr, KHEADS: tl.constexpr, DIM: tl.constexpr,
++          CACHE_STRIDE: tl.constexpr, BLOCK: tl.constexpr):
++    row, head = tl.program_id(0), tl.program_id(1)
++    i = tl.arange(0, BLOCK)
++    position = tl.load(Positions+row)
++    cos = tl.load(Cache+position*CACHE_STRIDE+i, i<DIM//2, other=0)
++    sin = tl.load(Cache+position*CACHE_STRIDE+DIM//2+i, i<DIM//2, other=0)
++    if head < QHEADS:
++        a = tl.load(Q+row*QS+head*DIM+i, i<DIM//2, other=0)
++        b = tl.load(Q+row*QS+head*DIM+DIM//2+i, i<DIM//2, other=0)
++        tl.store(QOUT+row*QHEADS*DIM+head*DIM+i, a*cos-b*sin, i<DIM//2)
++        tl.store(QOUT+row*QHEADS*DIM+head*DIM+DIM//2+i, b*cos+a*sin, i<DIM//2)
++    else:
++        h = head-QHEADS
++        a = tl.load(K+row*KS+h*DIM+i, i<DIM//2, other=0)
++        b = tl.load(K+row*KS+h*DIM+DIM//2+i, i<DIM//2, other=0)
++        tl.store(KOUT+row*KHEADS*DIM+h*DIM+i, a*cos-b*sin, i<DIM//2)
++        tl.store(KOUT+row*KHEADS*DIM+h*DIM+DIM//2+i, b*cos+a*sin, i<DIM//2)
++
++
++def rotary(positions, query, key, cache, head_dim):
++    if query.dtype != torch.float32 or key.dtype != torch.float32 or cache.dtype != torch.float32:
++        raise ValueError("Ouro fused RoPE requires FP32")
++    qout, kout = torch.empty_like(query), torch.empty_like(key)
++    qheads, kheads = query.shape[1]//head_dim, key.shape[1]//head_dim
++    _rope[(query.shape[0],qheads+kheads)](query,key,positions,cache,qout,kout,
++        query.stride(0),key.stride(0),qheads,kheads,head_dim,cache.stride(0),
++        triton.next_power_of_2(head_dim//2),num_warps=4,enable_fp_fusion=False)
++    return qout,kout
++
++
++@triton.jit
++def _paged_partial(Q, K, V, Pages, Requests, Lengths, Partial, Maxima, Sums,
++                   q0: tl.constexpr, q1: tl.constexpr, k0: tl.constexpr, k1: tl.constexpr,
++                   v0: tl.constexpr, v1: tl.constexpr, page_stride: tl.constexpr,
++                   HEADS: tl.constexpr, KV_HEADS: tl.constexpr, DIM: tl.constexpr,
++                   SPLITS: tl.constexpr, SCALE: tl.constexpr, BLOCK: tl.constexpr,
++                   WIDTH: tl.constexpr):
++    batch, head, split = tl.program_id(0), tl.program_id(1), tl.program_id(2)
++    positions = split * BLOCK + tl.arange(0, BLOCK)
++    channels = tl.arange(0, WIDTH)
++    length = tl.load(Lengths + batch)
++    request = tl.load(Requests + batch)
++    maximum = 0.
++    denominator = 0.
++    numerator = tl.full((WIDTH,), 0., tl.float32)
++    # Graphs reserve space for the longest context. Skip arithmetic for empty
++    # splits instead of running a full tile of masked loads and reductions.
++    if split * BLOCK < length:
++        valid = positions < length
++        slots = tl.load(Pages + request * page_stride + positions, valid, other=0)
++        kv_head = head // (HEADS // KV_HEADS)
++        query = tl.load(Q + batch*q0 + head*q1 + channels, channels < DIM, other=0).to(tl.float32)
++        keys = tl.load(K + slots[:, None]*k0 + kv_head*k1 + channels[None, :],
++                       valid[:, None] & (channels[None, :] < DIM), other=0).to(tl.float32)
++        scores = tl.sum(keys * query[None, :], axis=1) * SCALE
++        scores = tl.where(valid, scores, -float("inf"))
++        maximum = tl.max(scores, axis=0)
++        probabilities = tl.exp(scores - maximum)
++        denominator = tl.sum(probabilities, axis=0)
++        values = tl.load(V + slots[:, None]*v0 + kv_head*v1 + channels[None, :],
++                         valid[:, None] & (channels[None, :] < DIM), other=0).to(tl.float32)
++        numerator = tl.sum(probabilities[:, None] * values, axis=0)
++    offset = (batch*HEADS + head)*SPLITS + split
++    tl.store(Partial + offset*DIM + channels, numerator, channels < DIM)
++    tl.store(Maxima + offset, maximum)
++    tl.store(Sums + offset, denominator)
++
++
++@triton.jit
++def _paged_merge(Partial, Maxima, Sums, Output, HEADS: tl.constexpr,
++                 DIM: tl.constexpr, SPLITS: tl.constexpr, WIDTH: tl.constexpr,
++                 SPLIT_BLOCK: tl.constexpr, o0: tl.constexpr, o1: tl.constexpr):
++    batch, head = tl.program_id(0), tl.program_id(1)
++    splits = tl.arange(0, SPLIT_BLOCK)
++    channels = tl.arange(0, WIDTH)
++    offset = (batch*HEADS + head)*SPLITS + splits
++    denominator = tl.load(Sums + offset, splits < SPLITS, other=0.)
++    maximum = tl.load(Maxima + offset, splits < SPLITS, other=-float("inf"))
++    maximum = tl.where(denominator > 0, maximum, -float("inf"))
++    factors = tl.exp(maximum - tl.max(maximum, axis=0))
++    numerator = tl.load(Partial + offset[:, None]*DIM + channels[None, :],
++                        (splits[:, None] < SPLITS) & (channels[None, :] < DIM), other=0.)
++    result = tl.sum(numerator*factors[:, None], axis=0) / tl.sum(denominator*factors, axis=0)
++    tl.store(Output + batch*o0 + head*o1 + channels, result, channels < DIM)
++
++
++def paged_decode(query, key_cache, value_cache, pages, requests, lengths, maximum,
++                 scale, output=None, workspace=None):
++    if query.dtype != torch.float32 or key_cache.dtype != torch.float32 or value_cache.dtype != torch.float32:
++        raise ValueError("Ouro paged acceptance kernel requires FP32 Q/K/V")
++    batch, heads, dim = query.shape
++    if key_cache.shape != value_cache.shape or heads % key_cache.shape[1] or key_cache.shape[2] != dim:
++        raise ValueError("Unsupported Ouro paged attention shape")
++    block = 256
++    splits = triton.cdiv(maximum, block)
++    if maximum < 1 or dim > 256 or query.stride(-1) != 1:
++        raise ValueError("Invalid Ouro decode dimensions")
++    if output is None:
++        output = torch.empty_like(query)
++    if workspace is None:
++        partial = torch.empty((batch, heads, splits, dim), device=query.device, dtype=torch.float32)
++        maxima = torch.empty((batch, heads, splits), device=query.device, dtype=torch.float32)
++        sums = torch.empty_like(maxima)
++    else:
++        partial, maxima, sums = workspace
++    _paged_partial[(batch, heads, splits)](query, key_cache, value_cache, pages, requests,
++        lengths, partial, maxima, sums, query.stride(0), query.stride(1),
++        key_cache.stride(0), key_cache.stride(1), value_cache.stride(0), value_cache.stride(1),
++        pages.stride(0), heads, key_cache.shape[1], dim, splits, scale, block,
++        triton.next_power_of_2(dim), num_warps=8, enable_fp_fusion=False)
++    _paged_merge[(batch, heads)](partial, maxima, sums, output, heads, dim, splits,
++        triton.next_power_of_2(dim), triton.next_power_of_2(splits),
++        output.stride(0), output.stride(1), num_warps=4, enable_fp_fusion=False)
++    return output
 diff --git a/slime_plugins/ouro_smoke.py b/slime_plugins/ouro_smoke.py
 new file mode 100644
-index 0000000..49559c9
+index 0000000000000000000000000000000000000000..49559c91a77bcc96f6efa7937f534c5949057f79
 --- /dev/null
 +++ b/slime_plugins/ouro_smoke.py
 @@ -0,0 +1,7 @@
@@ -862,19 +1235,227 @@ index 0000000..49559c9
 +    # Guarantees a nonzero group-centered training signal in a two-sample
 +    # smoke test even when both short responses are unfinished.
 +    return float(sample.index % 2)
+diff --git a/slime_plugins/ouro_training.py b/slime_plugins/ouro_training.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c55dd4f038e45aaa679df6d04e3b0f2d68123a5
+--- /dev/null
++++ b/slime_plugins/ouro_training.py
+@@ -0,0 +1,202 @@
++"""Single-update Ouro optimizations with an independent replay audit.
++
++The detached training forward is the old policy only while no optimizer step
++has occurred. One complete microbatch per executed depth is independently
++replayed, with the same packing shape. All samples retain TIS/finite checks.
++"""
++import json
++from pathlib import Path
++
++import torch
++import torch.distributed as dist
++
++_state = None
++
++
++def homogeneous_schedule(metadata, lengths, micro_batch_size):
++    if micro_batch_size < 1 or len(metadata) != len(lengths):
++        raise ValueError("Invalid Ouro microbatch schedule")
++    groups = {}
++    for i, item in enumerate(metadata):
++        depth = item["ouro_depth"]
++        if type(depth) is not int or depth not in (2, 3, 4):
++            raise ValueError("Invalid Ouro depth")
++        groups.setdefault(depth, []).append(i)
++    batches = []
++    for depth in sorted(groups):
++        indices = sorted(groups[depth], key=lambda i: (lengths[i], i))
++        batches.extend(indices[i:i + micro_batch_size]
++                       for i in range(0, len(indices), micro_batch_size))
++    return batches
++
++
++def configure_microbatches(args, data):
++    if not getattr(args, "ouro_group_microbatches", False):
++        return
++    if len(data["global_batch_sizes"]) != 1 or args.num_steps_per_rollout != 1:
++        raise ValueError("Ouro grouped batches require one optimizer update")
++    schedule = homogeneous_schedule(data["metadata"], data["total_lengths"], args.micro_batch_size)
++    # TP=PP=CP=1: unequal microbatch counts across DP ranks are safe when
++    # gradient synchronization happens only at the end of accumulation.
++    if getattr(args, "overlap_grad_reduce", False):
++        raise ValueError("Ouro grouped batches require overlap_grad_reduce=False")
++    data["micro_batch_indices"] = schedule
++    data["num_microbatches"] = [len(schedule)]
++
++
++def validate_reuse_config(args, data):
++    if (args.num_steps_per_rollout != 1 or len(data["num_microbatches"]) != 1
++            or args.use_rollout_logprobs or args.kl_coef != 0
++            or args.loss_type != "custom_loss"
++            or args.custom_loss_function_path != ("looprl.native_2b.policy_loss" if getattr(args, "ouro_token_exit", False) else "looprl.native_2a.policy_loss")
++            or args.advantage_estimator != "grpo"
++            or getattr(args, "ouro_learned_depth", False)
++            or getattr(args, "recompute_loss_function", False)
++            or getattr(args, "use_critic", False) or getattr(args, "use_opd", False)
++            or getattr(args, "use_routing_replay", False)
++            or getattr(args, "attention_dropout", 0) != 0
++            or getattr(args, "hidden_dropout", 0) != 0
++            or not getattr(args, "use_tis", False)
++            or getattr(args, "ouro_rollout_correction", None) != "tis"):
++        raise ValueError("Ouro probability reuse requires one deterministic GRPO/TIS update")
++
++
++def begin_audit(args, data, audits, gate_audits=None):
++    global _state
++    validate_reuse_config(args, data)
++    expected = dict(zip(data["partition"], data["response_lengths"], strict=True))
++    if len(expected) != len(data["partition"]) or not audits or not set(audits) <= expected.keys():
++        raise ValueError("Invalid or missing independent Ouro replay audit")
++    if getattr(args, "ouro_token_exit", False) and (not gate_audits or gate_audits.keys() != audits.keys()):
++        raise ValueError("Token-exit policy requires separate gate replay audits")
++    steps = {m["ouro_step"] for m in data["metadata"]}
++    if len(steps) != 1:
++        raise ValueError("Mixed Ouro update IDs")
++    for key in ("ref_log_probs", "rollout_log_probs"):
++        if len(data[key]) != len(expected) or any(
++                t.numel() != n or not torch.isfinite(t).all()
++                for t, n in zip(data[key], data["response_lengths"], strict=True)):
++            raise ValueError("Invalid Ouro reference or sampling probabilities")
++    _state = dict(step=steps.pop(), expected=expected, audits=audits, seen=set(),
++                  sums=None, maxima=None, audited=0, gate_audits=gate_audits)
++
++
++def prepare_reuse(actor, data, iterators):
++    """Replay a representative full microbatch at each locally present depth."""
++    from slime.backends.megatron_utils.data import DataIterator
++    validate_reuse_config(actor.args, data)
++    by_depth = {}
++    for batch in iterators[0].micro_batch_indices:
++        depths = {data["metadata"][i]["ouro_depth"] for i in batch}
++        if len(depths) != 1:
++            raise ValueError("Mixed depths in an Ouro microbatch")
++        depth = depths.pop()
++        if depth not in by_depth or sum(data["total_lengths"][i] for i in batch) > sum(
++                data["total_lengths"][i] for i in by_depth[depth]):
++            by_depth[depth] = batch
++    selected = list(by_depth.values())
++    indices = [i for batch in selected for i in batch]
++    subset = {key: [value[i] for i in indices] for key, value in data.items()
++              if isinstance(value, list) and len(value) == len(data["tokens"])}
++    schedule, offset = [], 0
++    for batch in selected:
++        schedule.append(list(range(offset, offset + len(batch))))
++        offset += len(batch)
++    computed = actor.compute_log_prob([DataIterator(subset, schedule)], [len(schedule)], store_prefix="audit_")
++    values = computed["audit_log_probs"]
++    audits = {data["partition"][i]: value.detach() for i, value in zip(indices, values, strict=True)}
++    gate_audits = ({data["partition"][i]: value.detach() for i, value in
++                   zip(indices, computed["audit_exit_log_probs"], strict=True)}
++                  if getattr(actor.args, "ouro_token_exit", False) else None)
++    begin_audit(actor.args, data, audits, gate_audits)
++
++
++def record_reuse(args, batch, current, gate_current=None):
++    """Collect additive full-batch diagnostics, including an exact coverage check."""
++    if _state is None:
++        raise ValueError("Ouro reuse audit was not initialized")
++    positions = batch["partition"]
++    if len(positions) != len(batch["response_lengths"]):
++        raise ValueError("Ouro audit sample count mismatch")
++    values = current.detach().split(batch["response_lengths"])
++    gated = getattr(args, "ouro_token_exit", False)
++    if gated and (gate_current is None or not torch.isfinite(gate_current).all()):
++        raise ValueError("Missing or nonfinite current gate probabilities")
++    gate_values = gate_current.detach().split(batch["response_lengths"]) if gated else [None]*len(values)
++    for position, value, gate in zip(positions, values, gate_values, strict=True):
++        if (position not in _state["expected"] or position in _state["seen"]
++                or value.numel() != _state["expected"][position]):
++            raise ValueError("Duplicate or malformed Ouro training sample")
++        _state["seen"].add(position)
++        if position in _state["audits"]:
++            error = (value - _state["audits"][position]).abs().max()
++            if not torch.isfinite(error) or error > 1e-3:
++                raise ValueError(f"Ouro independent grad/no-grad replay mismatch: {float(error)}")
++            _state["audited"] += 1
++        else:
++            error = value.new_zeros(())
++        _state["maxima"] = error.reshape(1) if _state["maxima"] is None else torch.maximum(_state["maxima"], error)
++        if gated and position in _state["gate_audits"]:
++            gate_error = (gate - _state["gate_audits"][position]).abs().max()
++            if not torch.isfinite(gate_error) or gate_error > 1e-3:
++                raise ValueError("Ouro independent gate grad/no-grad replay mismatch")
++            _state["gate_audit_max"] = torch.maximum(_state.get("gate_audit_max", gate_error.new_zeros(())), gate_error)
++    if gated:
++        sampled_gate = torch.tensor([v for m in batch["metadata"] for v in m["ouro_gate_log_probs"]],device=current.device)
++        if sampled_gate.shape != gate_current.shape or not torch.isfinite(sampled_gate).all():
++            raise ValueError("Invalid sampled gate probabilities")
++        error = (gate_current.detach()-sampled_gate).abs().max()
++        _state["gate_sampler_max"] = torch.maximum(_state.get("gate_sampler_max", error.new_zeros(())),error)
++    sampled = torch.cat(batch["rollout_log_probs"]).to(current.device).detach()
++    delta = current.detach().float() - sampled.float()
++    ratio = delta.exp()
++    if not torch.isfinite(delta).all() or not torch.isfinite(ratio).all():
++        raise ValueError("Nonfinite Ouro reused probabilities")
++    weights = ratio.clamp(max=args.tis_clip)
++    stats = torch.stack([weights.new_tensor(weights.numel()), weights.sum(), weights.square().sum(),
++                         (ratio > args.tis_clip).sum(), delta.abs().sum(),
++                         (delta.expm1() - delta).sum()]).double()
++    _state["sums"] = stats if _state["sums"] is None else _state["sums"] + stats
++    maximum = delta.abs().max()
++    _state["sampler_max"] = maximum if "sampler_max" not in _state else torch.maximum(_state["sampler_max"], maximum)
++
++
++def finish_reuse_audit(args):
++    """Run before optimizer.step; never accept incomplete or unaudited batches."""
++    global _state
++    if (_state is None or _state["seen"] != _state["expected"].keys()
++            or _state["audited"] != len(_state["audits"])):
++        raise ValueError("Incomplete Ouro probability audit before optimizer update")
++    sums = _state["sums"]
++    maxima = torch.cat([_state["maxima"], _state["sampler_max"].reshape(1)])
++    gated = getattr(args, "ouro_token_exit", False)
++    if gated:
++        maxima = torch.cat([maxima, _state["gate_audit_max"].reshape(1), _state["gate_sampler_max"].reshape(1)])
++    counts = sums.new_tensor([len(_state["seen"]), _state["audited"]])
++    rank, world = 0, 1
++    if dist.is_initialized():
++        from megatron.core import mpu
++        group = mpu.get_data_parallel_group()
++        rank, world = mpu.get_data_parallel_rank(), mpu.get_data_parallel_world_size()
++        dist.all_reduce(sums, group=group)
++        dist.all_reduce(counts, group=group)
++        dist.all_reduce(maxima, op=dist.ReduceOp.MAX, group=group)
++    tokens, weight_sum, square_sum, clipped, abs_sum, k3_sum = sums.tolist()
++    if weight_sum <= 0 or not torch.isfinite(sums).all():
++        raise ValueError("Invalid aggregate Ouro probability diagnostics")
++    report = dict(step=_state["step"], correction="tis", reference_finite=True,
++        tokens=int(tokens), samples=int(counts[0]), audit_samples=int(counts[1]),
++        data_parallel_size=world, old_policy_source="detached_training_forward",
++        grad_no_grad_max_error=float(maxima[0]), sampler_recompute_max_error=float(maxima[1]),
++        tis_weight_mean=weight_sum/tokens, tis_clip_fraction=clipped/tokens,
++        tis_ess_fraction=weight_sum**2/(tokens*square_sum),
++        mismatch_mean_abs=abs_sum/tokens, mismatch_k3=k3_sum/tokens)
++    if gated:
++        report.update(policy_space="joint_exit_token", gate_grad_no_grad_max_error=float(maxima[2]),
++                      gate_sampler_recompute_max_error=float(maxima[3]))
++    if rank == 0:
++        path = Path(args.ouro_output)/"consistency.jsonl"
++        with path.open("a") as stream:
++            stream.write(json.dumps(report, allow_nan=False)+"\n")
++    _state = None
++    return report
 diff --git a/slime_plugins/sglang_models/__init__.py b/slime_plugins/sglang_models/__init__.py
 new file mode 100644
-index 0000000..234d9b0
+index 0000000000000000000000000000000000000000..234d9b05915eec370f11cb13179b0fe60d0104c8
 --- /dev/null
 +++ b/slime_plugins/sglang_models/__init__.py
 @@ -0,0 +1 @@
 +"""External SGLang architectures supplied by slime."""
 diff --git a/slime_plugins/sglang_models/ouro.py b/slime_plugins/sglang_models/ouro.py
 new file mode 100644
-index 0000000..23f7b3e
+index 0000000000000000000000000000000000000000..7adf32a13af04f8019dc25c658244b90d924fc35
 --- /dev/null
 +++ b/slime_plugins/sglang_models/ouro.py
-@@ -0,0 +1,191 @@
+@@ -0,0 +1,196 @@
 +"""Fixed sequence-depth Ouro serving with shared weights and per-loop KV slots.
 +
 +Set SGLANG_EXTERNAL_MODEL_PACKAGE=slime_plugins.sglang_models and select the
@@ -1013,6 +1594,9 @@ index 0000000..23f7b3e
 +    def forward(self, input_ids, positions, forward_batch, input_embeds=None, pp_proxy_tensors=None):
 +        if pp_proxy_tensors is not None:
 +            raise ValueError("Ouro does not support pipeline parallel serving")
++        if getattr(self.config, "ouro_token_exit", False):
++            from .ouro_token_exit import forward
++            return forward(self, input_ids, positions, forward_batch, input_embeds)
 +        hidden = self.embed_tokens(input_ids) if input_embeds is None else input_embeds
 +        for loop in range(self.config.total_ut_steps):
 +            for layer in self.layers:
@@ -1028,6 +1612,8 @@ index 0000000..23f7b3e
 +    @torch.no_grad()
 +    def forward(self, *args, **kwargs):
 +        result = super().forward(*args, **kwargs)
++        if getattr(self.model.config, "ouro_token_exit", False) and getattr(result, "hidden_states", None) is not None:
++            result.hidden_states = self.model.ouro_exit_trace
 +        # A depth4, one-token request with return_hidden_states='last' returns
 +        # the prompt-conditioned action distribution from the synchronized head.
 +        if hasattr(self.model, "sequence_depth_head") and getattr(result, "hidden_states", None) is not None:
@@ -1066,9 +1652,127 @@ index 0000000..23f7b3e
 +
 +
 +EntryClass = OuroForCausalLM
+diff --git a/slime_plugins/sglang_models/ouro_token_exit.py b/slime_plugins/sglang_models/ouro_token_exit.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a50a36cd13fb86f2a271d0ffe4e4fc1820e21b3
+--- /dev/null
++++ b/slime_plugins/sglang_models/ouro_token_exit.py
+@@ -0,0 +1,112 @@
++"""Batched physical early exit with last-exited per-layer KV propagation."""
++import copy
++
++import torch
++from torch.nn import functional as F
++from sglang.srt.model_executor.forward_context import get_attn_backend, get_token_to_kv_pool
++
++
++def uniform(seeds, positions, loop):
++    # Stateless, independently salted from token sampling; invariant to batch
++    # packing and request completion order. All arithmetic is modulo 2**32.
++    value = (seeds ^ (positions * 0x9E3779B9) ^ (loop * 0x85EBCA6B) ^ 0xA511E9B3) & 0xFFFFFFFF
++    value = ((value ^ (value >> 16)) * 0x7FEB352D) & 0xFFFFFFFF
++    value = ((value ^ (value >> 15)) * 0x846CA68B) & 0xFFFFFFFF
++    value = value ^ (value >> 16)
++    return (value.double() + .5) / 4294967296.
++
++
++def subset_decode(batch, indices):
++    view = copy.copy(batch)
++    cpu = indices.cpu()
++    view.batch_size = indices.numel()
++    for name in ("input_ids", "positions", "req_pool_indices", "seq_lens", "out_cache_loc"):
++        value = getattr(batch, name)
++        setattr(view, name, value.index_select(0, indices))
++    view.seq_lens_cpu = batch.seq_lens_cpu.index_select(0, cpu)
++    view.seq_lens_sum = int(view.seq_lens_cpu.sum())
++    view.global_num_token_non_padded_cpu = view.batch_size
++    if batch.global_num_token_non_padded is not None:
++        view.global_num_token_non_padded = batch.global_num_token_non_padded.new_tensor(view.batch_size)
++    if batch.num_token_non_padded is not None:
++        view.num_token_non_padded = batch.num_token_non_padded.new_tensor(view.batch_size)
++    return view
++
++
++def propagate_exit_kv(model, batch, indices, loop):
++    if indices.numel() == 0 or loop == 3:
++        return
++    pool = get_token_to_kv_pool()
++    slots = batch.out_cache_loc.index_select(0, indices).long()
++    layers = len(model.layers)
++    for index in range(layers):
++        key = pool.get_key_buffer(loop * layers + index).index_select(0, slots)
++        value = pool.get_value_buffer(loop * layers + index).index_select(0, slots)
++        for later in range(loop + 1, 4):
++            pool.get_key_buffer(later * layers + index).index_copy_(0, slots, key)
++            pool.get_value_buffer(later * layers + index).index_copy_(0, slots, value)
++
++
++def forward(model, input_ids, positions, batch, input_embeds=None):
++    if model.config.total_ut_steps != 4 or batch.forward_mode.is_idle():
++        raise ValueError("Token exit requires four physical loop slots and a nonempty batch")
++    hidden = model.embed_tokens(input_ids) if input_embeds is None else input_embeds
++    seeds = batch.sampling_info.sampling_seed
++    if seeds is None:
++        # Server warmup/health probes may omit a seed. Actual rollout requests
++        # carry ouro_token_exit in custom_params, which preserves their seed.
++        seeds = torch.full((batch.batch_size,), 42, device=hidden.device, dtype=torch.long)
++    if batch.forward_mode.is_decode():
++        selected = torch.empty_like(hidden)
++        logq = torch.zeros(batch.batch_size, device=hidden.device, dtype=torch.float32)
++        exits = torch.zeros(batch.batch_size, device=hidden.device, dtype=torch.long)
++        active = torch.arange(batch.batch_size, device=hidden.device)
++        for loop in range(4):
++            view = batch if active.numel() == batch.batch_size else subset_decode(batch, active)
++            get_attn_backend().init_forward_metadata(view)
++            active_positions = positions.index_select(0, active)
++            for layer in model.layers:
++                hidden = layer(active_positions, hidden, view, loop)
++            hidden = model.norm(hidden)
++            hazard = model.early_exit_gate(hidden).squeeze(-1).float() - model.config.ouro_gate_shift
++            stop = (uniform(seeds[active], active_positions, loop+1) < hazard.sigmoid()) if loop < 3 else torch.ones_like(hazard,dtype=torch.bool)
++            if loop < 3:
++                logq[active] += torch.where(stop, F.logsigmoid(hazard), F.logsigmoid(-hazard))
++            finished = active[stop]
++            selected[finished] = hidden[stop]
++            exits[finished] = loop + 1
++            propagate_exit_kv(model, batch, finished, loop)
++            active = active[~stop]
++            if active.numel() == 0:
++                break
++            hidden = hidden[~stop]
++        model.ouro_exit_trace = torch.stack([exits.float(), logq], dim=-1)
++        return selected
++    if not batch.forward_mode.is_extend() or batch.extend_seq_lens_cpu is None:
++        raise ValueError("Token exit only supports ordinary prefill and decode")
++    if any(batch.extend_prefix_lens_cpu):
++        raise ValueError("Token-exit rollout requires fresh dense prompt prefill, without radix reuse")
++    # Dense prompt KV at all loops, but the first token may use any readout.
++    ends = torch.tensor(batch.extend_seq_lens_cpu,device=hidden.device).cumsum(0)-1
++    selected = torch.empty((batch.batch_size,hidden.shape[-1]),device=hidden.device,dtype=hidden.dtype)
++    active = torch.ones(batch.batch_size,device=hidden.device,dtype=torch.bool)
++    logq = torch.zeros(batch.batch_size,device=hidden.device,dtype=torch.float32)
++    exits = torch.zeros(batch.batch_size,device=hidden.device,dtype=torch.long)
++    for loop in range(4):
++        for layer in model.layers:
++            hidden = layer(positions, hidden, batch, loop)
++        hidden = model.norm(hidden)
++        features = hidden[ends]
++        hazard = model.early_exit_gate(features).squeeze(-1).float() - model.config.ouro_gate_shift
++        stop = (uniform(seeds, positions[ends], loop+1) < hazard.sigmoid()) if loop < 3 else torch.ones_like(active)
++        if loop < 3:
++            logq += torch.where(active, torch.where(stop,F.logsigmoid(hazard),F.logsigmoid(-hazard)),0.)
++        finished = active & stop
++        selected[finished] = features[finished]
++        exits[finished] = loop + 1
++        active &= ~stop
++    hidden[ends] = selected
++    trace = torch.zeros((hidden.shape[0],2),device=hidden.device,dtype=torch.float32)
++    trace[ends] = torch.stack([exits.float(),logq],dim=-1)
++    model.ouro_exit_trace = trace if batch.capture_hidden_mode.is_full() else trace[ends]
++    return hidden
 diff --git a/tests/test_ouro_2a.py b/tests/test_ouro_2a.py
 new file mode 100644
-index 0000000..6b074b3
+index 0000000000000000000000000000000000000000..6b074b31be14ea6491bb577ef0c387e19d4973a0
 --- /dev/null
 +++ b/tests/test_ouro_2a.py
 @@ -0,0 +1,113 @@
@@ -1187,7 +1891,7 @@ index 0000000..6b074b3
 +        dist.destroy_process_group()
 diff --git a/tests/test_ouro_model.py b/tests/test_ouro_model.py
 new file mode 100644
-index 0000000..529ed05
+index 0000000000000000000000000000000000000000..529ed05b040b09a3e3149910379fcb7a012ffbbf
 --- /dev/null
 +++ b/tests/test_ouro_model.py
 @@ -0,0 +1,167 @@
@@ -1360,7 +2064,7 @@ index 0000000..529ed05
 +            torch.testing.assert_close(left.grad, right.grad, atol=3e-6, rtol=3e-5)
 diff --git a/tests/test_ouro_weight_conversion.py b/tests/test_ouro_weight_conversion.py
 new file mode 100644
-index 0000000..812fdd1
+index 0000000000000000000000000000000000000000..812fdd1e67f3eb3c38282e05b3b0051779af5559
 --- /dev/null
 +++ b/tests/test_ouro_weight_conversion.py
 @@ -0,0 +1,73 @@
@@ -1437,157 +2141,3 @@ index 0000000..812fdd1
 +def test_ouro_rejects_unknown_parameter():
 +    with pytest.raises(KeyError):
 +        ouro_hf_tensor("decoder.layers.0.unknown.weight", {}, SimpleNamespace())
-diff --git a/slime_plugins/ouro_kernels.py b/slime_plugins/ouro_kernels.py
-new file mode 100644
-index 0000000..4238f23
---- /dev/null
-+++ b/slime_plugins/ouro_kernels.py
-@@ -0,0 +1,148 @@
-+"""FP32 paged decode without materializing a dense copy of the KV history.
-+
-+Each split computes FP32 dot products/reductions (no TF32) directly from the
-+request page table. A second kernel merges the stable softmax partials.
-+"""
-+import torch
-+import triton
-+import triton.language as tl
-+
-+
-+@triton.jit
-+def _norm(X, Weight, Out, STRIDE: tl.constexpr, DIM: tl.constexpr,
-+          EPS: tl.constexpr, BLOCK: tl.constexpr):
-+    row = tl.program_id(0)
-+    col = tl.arange(0, BLOCK)
-+    x = tl.load(X + row*STRIDE + col, col < DIM, other=0).to(tl.float32)
-+    variance = tl.sum(x*x, axis=0)/DIM
-+    value = x*tl.rsqrt(variance+EPS)
-+    weight = tl.load(Weight+col, col < DIM, other=0).to(tl.float32)
-+    tl.store(Out+row*DIM+col, value*weight, col < DIM)
-+
-+
-+def rms_norm(hidden, weight, eps):
-+    if hidden.dtype != torch.float32 or hidden.ndim != 2 or hidden.stride(-1) != 1:
-+        raise ValueError("Ouro fused norm requires a two-dimensional FP32 tensor")
-+    result = torch.empty_like(hidden)
-+    _norm[(hidden.shape[0],)](hidden, weight, result, hidden.stride(0), hidden.shape[1], eps,
-+        triton.next_power_of_2(hidden.shape[1]), num_warps=4, enable_fp_fusion=False)
-+    return result
-+
-+
-+@triton.jit
-+def _rope(Q, K, Positions, Cache, QOUT, KOUT, QS: tl.constexpr, KS: tl.constexpr,
-+          QHEADS: tl.constexpr, KHEADS: tl.constexpr, DIM: tl.constexpr,
-+          CACHE_STRIDE: tl.constexpr, BLOCK: tl.constexpr):
-+    row, head = tl.program_id(0), tl.program_id(1)
-+    i = tl.arange(0, BLOCK)
-+    position = tl.load(Positions+row)
-+    cos = tl.load(Cache+position*CACHE_STRIDE+i, i<DIM//2, other=0)
-+    sin = tl.load(Cache+position*CACHE_STRIDE+DIM//2+i, i<DIM//2, other=0)
-+    if head < QHEADS:
-+        a = tl.load(Q+row*QS+head*DIM+i, i<DIM//2, other=0)
-+        b = tl.load(Q+row*QS+head*DIM+DIM//2+i, i<DIM//2, other=0)
-+        tl.store(QOUT+row*QHEADS*DIM+head*DIM+i, a*cos-b*sin, i<DIM//2)
-+        tl.store(QOUT+row*QHEADS*DIM+head*DIM+DIM//2+i, b*cos+a*sin, i<DIM//2)
-+    else:
-+        h = head-QHEADS
-+        a = tl.load(K+row*KS+h*DIM+i, i<DIM//2, other=0)
-+        b = tl.load(K+row*KS+h*DIM+DIM//2+i, i<DIM//2, other=0)
-+        tl.store(KOUT+row*KHEADS*DIM+h*DIM+i, a*cos-b*sin, i<DIM//2)
-+        tl.store(KOUT+row*KHEADS*DIM+h*DIM+DIM//2+i, b*cos+a*sin, i<DIM//2)
-+
-+
-+def rotary(positions, query, key, cache, head_dim):
-+    if query.dtype != torch.float32 or key.dtype != torch.float32 or cache.dtype != torch.float32:
-+        raise ValueError("Ouro fused RoPE requires FP32")
-+    qout, kout = torch.empty_like(query), torch.empty_like(key)
-+    qheads, kheads = query.shape[1]//head_dim, key.shape[1]//head_dim
-+    _rope[(query.shape[0],qheads+kheads)](query,key,positions,cache,qout,kout,
-+        query.stride(0),key.stride(0),qheads,kheads,head_dim,cache.stride(0),
-+        triton.next_power_of_2(head_dim//2),num_warps=4,enable_fp_fusion=False)
-+    return qout,kout
-+
-+
-+@triton.jit
-+def _paged_partial(Q, K, V, Pages, Requests, Lengths, Partial, Maxima, Sums,
-+                   q0: tl.constexpr, q1: tl.constexpr, k0: tl.constexpr, k1: tl.constexpr,
-+                   v0: tl.constexpr, v1: tl.constexpr, page_stride: tl.constexpr,
-+                   HEADS: tl.constexpr, KV_HEADS: tl.constexpr, DIM: tl.constexpr,
-+                   SPLITS: tl.constexpr, SCALE: tl.constexpr, BLOCK: tl.constexpr,
-+                   WIDTH: tl.constexpr):
-+    batch, head, split = tl.program_id(0), tl.program_id(1), tl.program_id(2)
-+    positions = split * BLOCK + tl.arange(0, BLOCK)
-+    channels = tl.arange(0, WIDTH)
-+    length = tl.load(Lengths + batch)
-+    request = tl.load(Requests + batch)
-+    maximum = 0.
-+    denominator = 0.
-+    numerator = tl.full((WIDTH,), 0., tl.float32)
-+    # Graphs reserve space for the longest context. Skip arithmetic for empty
-+    # splits instead of running a full tile of masked loads and reductions.
-+    if split * BLOCK < length:
-+        valid = positions < length
-+        slots = tl.load(Pages + request * page_stride + positions, valid, other=0)
-+        kv_head = head // (HEADS // KV_HEADS)
-+        query = tl.load(Q + batch*q0 + head*q1 + channels, channels < DIM, other=0).to(tl.float32)
-+        keys = tl.load(K + slots[:, None]*k0 + kv_head*k1 + channels[None, :],
-+                       valid[:, None] & (channels[None, :] < DIM), other=0).to(tl.float32)
-+        scores = tl.sum(keys * query[None, :], axis=1) * SCALE
-+        scores = tl.where(valid, scores, -float("inf"))
-+        maximum = tl.max(scores, axis=0)
-+        probabilities = tl.exp(scores - maximum)
-+        denominator = tl.sum(probabilities, axis=0)
-+        values = tl.load(V + slots[:, None]*v0 + kv_head*v1 + channels[None, :],
-+                         valid[:, None] & (channels[None, :] < DIM), other=0).to(tl.float32)
-+        numerator = tl.sum(probabilities[:, None] * values, axis=0)
-+    offset = (batch*HEADS + head)*SPLITS + split
-+    tl.store(Partial + offset*DIM + channels, numerator, channels < DIM)
-+    tl.store(Maxima + offset, maximum)
-+    tl.store(Sums + offset, denominator)
-+
-+
-+@triton.jit
-+def _paged_merge(Partial, Maxima, Sums, Output, HEADS: tl.constexpr,
-+                 DIM: tl.constexpr, SPLITS: tl.constexpr, WIDTH: tl.constexpr,
-+                 SPLIT_BLOCK: tl.constexpr, o0: tl.constexpr, o1: tl.constexpr):
-+    batch, head = tl.program_id(0), tl.program_id(1)
-+    splits = tl.arange(0, SPLIT_BLOCK)
-+    channels = tl.arange(0, WIDTH)
-+    offset = (batch*HEADS + head)*SPLITS + splits
-+    denominator = tl.load(Sums + offset, splits < SPLITS, other=0.)
-+    maximum = tl.load(Maxima + offset, splits < SPLITS, other=-float("inf"))
-+    maximum = tl.where(denominator > 0, maximum, -float("inf"))
-+    factors = tl.exp(maximum - tl.max(maximum, axis=0))
-+    numerator = tl.load(Partial + offset[:, None]*DIM + channels[None, :],
-+                        (splits[:, None] < SPLITS) & (channels[None, :] < DIM), other=0.)
-+    result = tl.sum(numerator*factors[:, None], axis=0) / tl.sum(denominator*factors, axis=0)
-+    tl.store(Output + batch*o0 + head*o1 + channels, result, channels < DIM)
-+
-+
-+def paged_decode(query, key_cache, value_cache, pages, requests, lengths, maximum,
-+                 scale, output=None, workspace=None):
-+    if query.dtype != torch.float32 or key_cache.dtype != torch.float32 or value_cache.dtype != torch.float32:
-+        raise ValueError("Ouro paged acceptance kernel requires FP32 Q/K/V")
-+    batch, heads, dim = query.shape
-+    if key_cache.shape != value_cache.shape or heads % key_cache.shape[1] or key_cache.shape[2] != dim:
-+        raise ValueError("Unsupported Ouro paged attention shape")
-+    block = 256
-+    splits = triton.cdiv(maximum, block)
-+    if maximum < 1 or dim > 256 or query.stride(-1) != 1:
-+        raise ValueError("Invalid Ouro decode dimensions")
-+    if output is None:
-+        output = torch.empty_like(query)
-+    if workspace is None:
-+        partial = torch.empty((batch, heads, splits, dim), device=query.device, dtype=torch.float32)
-+        maxima = torch.empty((batch, heads, splits), device=query.device, dtype=torch.float32)
-+        sums = torch.empty_like(maxima)
-+    else:
-+        partial, maxima, sums = workspace
-+    _paged_partial[(batch, heads, splits)](query, key_cache, value_cache, pages, requests,
-+        lengths, partial, maxima, sums, query.stride(0), query.stride(1),
-+        key_cache.stride(0), key_cache.stride(1), value_cache.stride(0), value_cache.stride(1),
-+        pages.stride(0), heads, key_cache.shape[1], dim, splits, scale, block,
-+        triton.next_power_of_2(dim), num_warps=8, enable_fp_fusion=False)
-+    _paged_merge[(batch, heads)](partial, maxima, sums, output, heads, dim, splits,
-+        triton.next_power_of_2(dim), triton.next_power_of_2(splits),
-+        output.stride(0), output.stride(1), num_warps=4, enable_fp_fusion=False)
-+    return output

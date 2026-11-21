@@ -1,0 +1,23 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+[transformers] The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/transformer/transformer_config.py:4445: UserWarning: full scope is deprecated. Use empty cuda_graph_modules to capture the whole layer.
+  warnings.warn(
+WARNING:megatron.core.models.gpt.gpt_model:GPTModel IS DEPRECATED. GPTModel is only accepting critical bug fixes, no new features. Please reference the migration guide `docs/user-guide/hybrid-model-migration.md` for details on how to use `HybridModel`
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank0]:[W1121 15:26:00.754104075 ProcessGroupNCCL.cpp:5276] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+{"reference_seconds": 3.4810835141688585, "old_or_audit_seconds": 1.6059080325067043, "forward_backward_seconds": 12.999346299096942, "sync_seconds": 0.08359301649034023, "total_seconds": 18.169930862262845, "peak_allocated_gib": 24.973931312561035, "loss": 0.6631578207015991, "final_norm_grad_norm": 0.028982482850551605}
+{"reference_seconds": 3.192708093672991, "old_or_audit_seconds": 1.606685508042574, "forward_backward_seconds": 12.957923207432032, "sync_seconds": 0.010343281552195549, "total_seconds": 17.767660090699792, "peak_allocated_gib": 24.973931789398193, "loss": 0.6631578207015991, "final_norm_grad_norm": 0.02911057136952877, "norm_gradient_relative_difference_to_first_repeat": 0.016784996020382633}
+{"reference_seconds": 3.194942394271493, "old_or_audit_seconds": 1.607401704415679, "forward_backward_seconds": 12.969232188537717, "sync_seconds": 0.010425839573144913, "total_seconds": 17.782002126798034, "peak_allocated_gib": 24.973931789398193, "loss": 0.6631578207015991, "final_norm_grad_norm": 0.029018525034189224, "norm_gradient_relative_difference_to_first_repeat": 0.013868723818703525}

@@ -1,0 +1,23 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+[transformers] The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/transformer/transformer_config.py:4445: UserWarning: full scope is deprecated. Use empty cuda_graph_modules to capture the whole layer.
+  warnings.warn(
+WARNING:megatron.core.models.gpt.gpt_model:GPTModel IS DEPRECATED. GPTModel is only accepting critical bug fixes, no new features. Please reference the migration guide `docs/user-guide/hybrid-model-migration.md` for details on how to use `HybridModel`
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank0]:[W1121 15:20:17.280823774 ProcessGroupNCCL.cpp:5276] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+{"reference_seconds": 3.101612800732255, "old_or_audit_seconds": 2.771318204700947, "forward_backward_seconds": 9.659666735678911, "sync_seconds": 0.03268089145421982, "total_seconds": 15.565278632566333, "peak_allocated_gib": 17.481380939483643, "loss": 0.641775369644165, "final_norm_grad_norm": 0.04485025256872177}
+{"reference_seconds": 2.9745899196714163, "old_or_audit_seconds": 2.8595841266214848, "forward_backward_seconds": 9.575182354077697, "sync_seconds": 0.000769568607211113, "total_seconds": 15.410125968977809, "peak_allocated_gib": 17.4813814163208, "loss": 0.641775369644165, "final_norm_grad_norm": 0.045012641698122025}
+{"reference_seconds": 2.860959477722645, "old_or_audit_seconds": 2.867789104580879, "forward_backward_seconds": 9.593284646049142, "sync_seconds": 0.0003383718430995941, "total_seconds": 15.322371600195765, "peak_allocated_gib": 17.4813814163208, "loss": 0.641775369644165, "final_norm_grad_norm": 0.044956039637327194}

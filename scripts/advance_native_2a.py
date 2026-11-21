@@ -19,7 +19,7 @@ from looprl.data import write_json
 
 class Queue:
     def __init__(self, output, gpus, attention_implementation="reference", serving_upgrade_report=None,
-                 gpu_wait_timeout=600, run_options=None):
+                 gpu_wait_timeout=600, run_options=None, training_upgrade_report=None):
         self.output = output.resolve()
         self.output.mkdir(parents=True, exist_ok=True)
         self.gpus = gpus
@@ -27,6 +27,7 @@ class Queue:
         self.serving_upgrade_report = serving_upgrade_report
         self.gpu_wait_timeout = gpu_wait_timeout
         self.run_options = run_options or {}
+        self.training_upgrade_report = training_upgrade_report
         self.stage = "starting"
 
     def status(self, status, **fields):
@@ -104,9 +105,11 @@ class Queue:
             argv += ["--resume", resume/"checkpoints", "--resume-step", boundary]
             if self.serving_upgrade_report:
                 argv += ["--serving-upgrade-report", self.serving_upgrade_report]
+            if self.training_upgrade_report:
+                argv += ["--training-upgrade-report", self.training_upgrade_report]
         if stop is not None:
             argv += ["--stop-after", stop]
-        count=1+self.run_options.get("depth4_replicas",1)
+        count=self.run_options.get("trainer_gpus",1)+self.run_options.get("depth4_replicas",1)
         self.command(name, "run_native_2a.py", argv, self.gpus[:count] if arm == "fixed" else self.gpus)
         self.accept(run)
         return run
@@ -140,6 +143,13 @@ def main():
     p.add_argument("--kv-token-capacity",type=int,default=16384)
     p.add_argument("--serving-memory-fraction",type=float,default=.55)
     p.add_argument("--depth4-replicas",type=int,default=1)
+    p.add_argument("--serving-replicas",type=int,default=1)
+    p.add_argument("--gate-shift",type=float,default=3.)
+    p.add_argument("--trainer-gpus", type=int, default=1)
+    p.add_argument("--micro-batch-size", type=int, default=1)
+    p.add_argument("--reuse-old-log-probs", action="store_true")
+    p.add_argument("--recompute", choices=["full", "selective", "selective-mlp", "none"], default="full")
+    p.add_argument("--training-upgrade-report", type=Path)
     p.add_argument("--resume-first-run", type=Path)
     p.add_argument("--resume-boundary", type=int)
     p.add_argument("--serving-upgrade-report", type=Path)
@@ -151,7 +161,12 @@ def main():
                         or len(set(a.arm_names)) != len(a.arm_names)):
         p.error("arm-names requires direct-formal and distinct names from the plan")
     selected = [arm for arm in plan["arms"] if not a.arm_names or arm["name"] in a.arm_names]
-    required_gpus = (2 if a.direct_formal and all(arm["arm"] == "fixed" for arm in selected) else 4)+a.depth4_replicas-1
+    if any(arm['arm']=='token_exit' for arm in selected):
+        if not a.direct_formal or not all(arm['arm']=='token_exit' for arm in selected):
+            p.error('Token-exit arms require a dedicated direct-formal queue')
+        required_gpus=a.trainer_gpus+a.serving_replicas
+    else:
+        required_gpus = (1 if a.direct_formal and all(arm["arm"] == "fixed" for arm in selected) else 3)+a.depth4_replicas-1+a.trainer_gpus
     if a.depth4_replicas < 1:
         p.error("depth4-replicas must be positive")
     if len(a.gpus) != required_gpus or len(set(a.gpus)) != required_gpus:
@@ -162,15 +177,17 @@ def main():
         p.error("direct-formal starts from the base checkpoint; do not specify acceptance")
     if a.resume_first_run and (not a.direct_formal or a.resume_boundary is None):
         p.error("resume-first-run requires direct-formal and resume-boundary")
-    if (a.resume_boundary is not None or a.serving_upgrade_report) and not a.resume_first_run:
+    if (a.resume_boundary is not None or a.serving_upgrade_report or a.training_upgrade_report) and not a.resume_first_run:
         p.error("resume-boundary and serving-upgrade-report require resume-first-run")
     if a.resume_boundary is not None and a.resume_boundary < 0:
         p.error("resume-boundary must be nonnegative")
     if a.gpu_wait_timeout < 1:
         p.error("gpu-wait-timeout must be positive")
     run_options={key:getattr(a,key) for key in ('precision','rollout_correction','tis_clip','cuda_graph',
-        'max_running_requests','kv_token_capacity','serving_memory_fraction','depth4_replicas')}
-    queue = Queue(a.output, a.gpus, a.attention_implementation, a.serving_upgrade_report, a.gpu_wait_timeout,run_options)
+        'max_running_requests','kv_token_capacity','serving_memory_fraction','depth4_replicas',
+        'trainer_gpus','micro_batch_size','reuse_old_log_probs','recompute','serving_replicas','gate_shift')}
+    queue = Queue(a.output, a.gpus, a.attention_implementation, a.serving_upgrade_report,
+                  a.gpu_wait_timeout,run_options,a.training_upgrade_report)
     try:
         if a.direct_formal:
             write_json(queue.output/"formal-plan.json", dict(plan=plan, selected_arms=selected,
@@ -180,7 +197,7 @@ def main():
                 run_options=run_options,
                 resume_first_run=str(a.resume_first_run) if a.resume_first_run else None,
                 resume_boundary=a.resume_boundary,
-                retained_checks="Shared weight versions, sampler/recompute/gradient logp <= 0.001, finite reference and loss, end-of-run checkpoint validation"))
+                retained_checks="Shared weight versions; explicit TIS and finite sampler/trainer probabilities (or strict sampler error <= 0.001 without TIS); independent grad/no-grad replay error <= 0.001; finite reference and loss; end-of-run checkpoint validation"))
             for index, arm in enumerate(selected):
                 queue.train(arm["name"], arm=arm["arm"], beta=arm["beta"],
                     steps=plan["formal_steps"], prompts=plan["formal_prompts_per_step"],

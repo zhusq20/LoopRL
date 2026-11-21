@@ -1,0 +1,66 @@
+.......................                                                  [100%]
+=============================== warnings summary ===============================
+tests/native/test_ouro_training.py: 14 warnings
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/fused_moe/cute_dsl/blackwell/blockscaled_contiguous_gather_grouped_gemm_act_fusion.py:3446: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/fused_moe/cute_dsl/blackwell/moe_w4a16_kernel.py:2326: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gemm/kernels/grouped_gemm_masked_blackwell.py:427: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    epi_layout: utils.LayoutEnum,
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gemm/kernels/grouped_gemm_masked_blackwell.py:2391: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gemm/kernels/grouped_gemm_masked_rubin.py:215: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gdn_kernels/blackwell/gated_delta_net_chunked.py:95: DeprecationWarning: cutlass.utils.TensorMapUpdateMode is deprecated; use cutlass.tensor_utils.TensorMapUpdateMode instead. It will be removed in a future release.
+    from cutlass.utils import TensorMapManager, TensorMapUpdateMode
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gdn_kernels/delta_rule_dsl/collective_store_tma.py:6: DeprecationWarning: cutlass.utils.tensormap_manager.TensorMapUpdateMode is deprecated; use cutlass.tensor_utils.TensorMapUpdateMode instead. It will be removed in a future release.
+    from cutlass.utils.tensormap_manager import TensorMapManager, TensorMapUpdateMode
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gdn_kernels/blackwell/gated_delta_net_cp_prefill.py:55: DeprecationWarning: cutlass.utils.TensorMapUpdateMode is deprecated; use cutlass.tensor_utils.TensorMapUpdateMode instead. It will be removed in a future release.
+    from cutlass.utils import TensorMapManager, TensorMapUpdateMode
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/cute_dsl/availability.py:135: DeprecationWarning: Arch from arch.py is deprecated. Use Arch from enums.py instead.
+    from cutlass.base_dsl.arch import Arch
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+    warnings.warn(
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+    warnings.warn(
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/inference/contexts/__init__.py:9: DeprecationWarning: The following imports from `dynamic_context.py` will be removed in this file in `megatron-core` 0.14. The imports here result in a cyclic import issue that causes rotary embeddings to import from Apex rather than Transformer Engine.
+    warnings.warn(
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+    warnings.warn(
+
+tests/native/test_ouro_training.py::test_reuse_preserves_loss_and_gradient_with_kl_tis_masks_and_zero_advantage
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+23 passed, 30 warnings in 5.87s

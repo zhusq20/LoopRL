@@ -1,0 +1,76 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+Multi-thread loading shards:   0% Completed | 0/1 [00:00<?, ?it/s]Multi-thread loading shards: 100% Completed | 1/1 [00:00<00:00,  1.00it/s]Multi-thread loading shards: 100% Completed | 1/1 [00:00<00:00,  1.00it/s]
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+Traceback (most recent call last):
+  File "/ossfs/workspace/LoopRL/scripts/check_native_token_exit_serving.py", line 88, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/ossfs/workspace/LoopRL/scripts/check_native_token_exit_serving.py", line 35, in main
+    outputs=engine.generate(input_ids=prompts,sampling_params=[dict(temperature=1.,top_p=1.,max_new_tokens=a.tokens,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/entrypoints/engine.py", line 521, in generate
+    ret = self.loop.run_until_complete(generator.__anext__())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1515, in uvloop.loop.Loop.run_until_complete
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/tokenizer_manager.py", line 927, in generate_request
+    async for response in self._handle_batch_request(
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/tokenizer_manager.py", line 1990, in _handle_batch_request
+    tokenized_objs = await self._batch_tokenize_and_process(batch_size, obj)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/tokenizer_manager.py", line 1615, in _batch_tokenize_and_process
+    return [await self._tokenize_one_request(obj[i]) for i in range(batch_size)]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/tokenizer_manager.py", line 1240, in _tokenize_one_request
+    self._validate_one_request(obj, input_ids)
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/tokenizer_manager.py", line 1370, in _validate_one_request
+    raise ValueError(
+ValueError: The requested return_hidden_states mode exceeds the server maximum `last`. Please launch with `--return-hidden-states-mode full` to allow return_hidden_states=True.

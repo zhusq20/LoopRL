@@ -10,9 +10,9 @@ def test_direct_formal_runs_full_selected_arms_without_pilots(monkeypatch, tmp_p
     monkeypatch.setattr(runner.Queue, "train", lambda self, name, **kw: calls.append((name, kw)))
     monkeypatch.setattr(runner.Queue, "wait_run", lambda *a: pytest.fail("Unexpected acceptance wait"))
     monkeypatch.setattr(sys, "argv", ["queue", "--direct-formal", "--output", str(tmp_path),
-        "--arm-names", "stratified-beta0", "stratified-beta010"])
+        "--gpus", "0", "1", "--arm-names", "gate-beta0", "gate-beta010"])
     runner.main()
-    assert [name for name, _ in calls] == ["stratified-beta0", "stratified-beta010"]
+    assert [name for name, _ in calls] == ["gate-beta0", "gate-beta010"]
     for _, kw in calls:
         assert (kw["steps"], kw["prompts"], kw["group"]) == (140, 32, 8)
         assert "stop" not in kw and "resume" not in kw
@@ -24,7 +24,7 @@ def test_direct_formal_stops_scan_after_failed_arm(monkeypatch, tmp_path):
         calls.append(name)
         raise RuntimeError("numerical guard failed")
     monkeypatch.setattr(runner.Queue, "train", fail)
-    monkeypatch.setattr(sys, "argv", ["queue", "--direct-formal", "--output", str(tmp_path)])
+    monkeypatch.setattr(sys, "argv", ["queue", "--direct-formal", "--output", str(tmp_path), "--gpus", "0", "1", "--arm-names", "fixed4-beta0"])
     with pytest.raises(RuntimeError, match="numerical guard failed"):
         runner.main()
     assert calls == ["fixed4-beta0"]
@@ -55,7 +55,7 @@ def test_resumed_formal_queue_resumes_only_first_arm(monkeypatch,tmp_path):
     calls=[]
     monkeypatch.setattr(runner.Queue,'train',lambda self,name,**kw:calls.append((name,kw)))
     monkeypatch.setattr(sys,'argv',['queue','--direct-formal','--output',str(tmp_path),
-        '--arm-names','stratified-beta0','stratified-beta002',
+        '--gpus','0','1','--arm-names','gate-beta0','gate-beta002',
         '--resume-first-run',str(tmp_path/'old'),'--resume-boundary','4',
         '--attention-implementation','paged-fused'])
     runner.main()
@@ -113,3 +113,9 @@ def test_resume_cannot_mix_fp32_and_bf16_protocols():
     old=dict(arm='stratified',total_steps=140,precision='fp32',beta=0.)
     with pytest.raises(ValueError,match='protocol'):
         validate_resume_protocol(old,dict(old,precision='bf16',rollout_correction=dict(mode='tis')),True)
+
+
+def test_cancelled_mixed_arm_cannot_be_relaunched(monkeypatch,tmp_path):
+    monkeypatch.setattr(sys,'argv',['queue','--direct-formal','--output',str(tmp_path),
+                                  '--arm-names','stratified-beta0'])
+    with pytest.raises(SystemExit):runner.main()

@@ -1,0 +1,122 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[2026-11-21 16:39:33] Cuda graph is disabled because of using torch native attention backend
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+Multi-thread loading shards:   0% Completed | 0/1 [00:00<?, ?it/s]Multi-thread loading shards: 100% Completed | 1/1 [00:02<00:00,  2.20s/it]Multi-thread loading shards: 100% Completed | 1/1 [00:02<00:00,  2.20s/it]
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[2026-11-21 16:39:47] Scheduler hit an exception: Traceback (most recent call last):
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/scheduler.py", line 6110, in run_scheduler_process
+    scheduler.run_event_loop()
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/scheduler.py", line 1906, in run_event_loop
+    dispatch_event_loop(self)
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/scheduler.py", line 5960, in dispatch_event_loop
+    return _dispatch_event_loop_once(scheduler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/scheduler.py", line 5975, in _dispatch_event_loop_once
+    scheduler.event_loop_normal()
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/scheduler.py", line 1944, in event_loop_normal
+    result = self.run_batch(batch)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/observability/scheduler_stage_metrics.py", line 155, in wrapper
+    return profiled_func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/utils/nvtx_utils.py", line 109, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/scheduler.py", line 4605, in run_batch
+    batch_result = self.model_worker.forward_batch_generation(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/managers/tp_worker.py", line 649, in forward_batch_generation
+    out = self.model_runner.forward(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/model_executor/model_runner.py", line 1754, in forward
+    output = self._forward_raw(
+             ^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/model_executor/model_runner.py", line 1952, in _forward_raw
+    ret = self.eager_runner.execute(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/model_executor/runner/eager_runner.py", line 223, in execute
+    return self._execute_decode(forward_batch, pp_proxy_tensors)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/model_executor/runner/eager_runner.py", line 265, in _execute_decode
+    return model_runner.model.forward(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/ossfs/workspace/LoopRL/third_party/slime/slime_plugins/sglang_models/ouro.py", line 156, in forward
+    result = super().forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-native-sources/sglang-e00930c5489053f26d86b179cee0d087f846acbb/python/sglang/srt/models/llama.py", line 570, in forward
+    hidden_states = self.model(
+                    ^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ossfs/workspace/LoopRL/third_party/slime/slime_plugins/sglang_models/ouro.py", line 141, in forward
+    return forward(self, input_ids, positions, forward_batch, input_embeds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ossfs/workspace/LoopRL/third_party/slime/slime_plugins/sglang_models/ouro_token_exit.py", line 65, in forward
+    batch.attn_backend.init_forward_metadata(view)
+    ^^^^^^^^^^^^^^^^^^
+AttributeError: 'ForwardBatch' object has no attribute 'attn_backend'
+
+[2026-11-21 16:39:47] SIGQUIT received. signum=None, frame=None. It usually means one child failed.
+[rank0]:[W1121 16:39:51.157248570 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[2026-11-21 16:39:52] No live scheduler processes found; skipping py-spy and CUDA coredump.

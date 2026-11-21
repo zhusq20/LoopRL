@@ -1,0 +1,12 @@
+...........................................                              [100%]
+=============================== warnings summary ===============================
+tests/native/test_native_resume_compare.py::test_read_tensor_payload_preserves_names_shapes_and_values
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to save in a single process.
+    return func(*args, **kwargs)
+
+tests/native/test_native_resume_compare.py::test_read_tensor_payload_preserves_names_shapes_and_values
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to load in a single process.
+    return func(*args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+43 passed, 2 warnings in 6.33s

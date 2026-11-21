@@ -1,0 +1,56 @@
+{
+  "norm_gradient_relative_l2_difference": 0.016548439224922346,
+  "max_norm_gradient_absolute_difference": 0.00203704833984375,
+  "gradient_scope": "all normalization parameters; full parameter-gradient equivalence not asserted",
+  "configurations": {
+    "update-mb1-baseline-v2": {
+      "seconds": 15.366248784586787,
+      "loss": 0.641775369644165,
+      "peak_gib": 17.4813814163208,
+      "repeated_norm_gradient_differences": []
+    },
+    "update-mb1-reuse": {
+      "seconds": 13.44908626563847,
+      "loss": 0.641775369644165,
+      "peak_gib": 17.48130178451538,
+      "repeated_norm_gradient_differences": []
+    },
+    "update-mb2-reuse": {
+      "seconds": 9.44636447262019,
+      "loss": 0.6417754292488098,
+      "peak_gib": 19.979533672332764,
+      "repeated_norm_gradient_differences": []
+    },
+    "update-mb4-reuse": {
+      "seconds": 9.736352137289941,
+      "loss": 0.6417754292488098,
+      "peak_gib": 24.970199584960938,
+      "repeated_norm_gradient_differences": []
+    },
+    "update-mb1-selective-reuse": {
+      "seconds": 12.53989926725626,
+      "loss": 0.641775369644165,
+      "peak_gib": 48.73325443267822,
+      "repeated_norm_gradient_differences": []
+    },
+    "update-dp1-mb4-matched": {
+      "seconds": 17.774831108748913,
+      "loss": 0.6631578207015991,
+      "peak_gib": 24.973931789398193,
+      "repeated_norm_gradient_differences": [
+        0.016784996020382633,
+        0.013868723818703525
+      ]
+    },
+    "update-dp2-mb4-reuse": {
+      "seconds": 9.69854395929724,
+      "loss": 0.6631578207015991,
+      "peak_gib": 24.825247287750244,
+      "repeated_norm_gradient_differences": [
+        0.017877626014019224,
+        0.014226591602452491
+      ]
+    }
+  },
+  "matched_dp_speedup": 1.832731921755076
+}

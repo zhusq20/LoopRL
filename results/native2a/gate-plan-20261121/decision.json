@@ -1,0 +1,69 @@
+{
+  "updated_at": "2026-11-21T16:19:03.264548",
+  "user_request": "Replace uniform mixed-depth experiments with gated policies at beta=0 and multiple positive compute prices.",
+  "cancelled_arms": [
+    {
+      "name": "stratified-beta0",
+      "arm": "stratified",
+      "beta": 0.0
+    },
+    {
+      "name": "stratified-beta002",
+      "arm": "stratified",
+      "beta": 0.02
+    },
+    {
+      "name": "stratified-beta005",
+      "arm": "stratified",
+      "beta": 0.05
+    },
+    {
+      "name": "stratified-beta010",
+      "arm": "stratified",
+      "beta": 0.1
+    },
+    {
+      "name": "stratified-beta020",
+      "arm": "stratified",
+      "beta": 0.2
+    }
+  ],
+  "retained_baseline": [
+    {
+      "name": "fixed4-beta0",
+      "arm": "fixed",
+      "beta": 0.0
+    }
+  ],
+  "planned_gate_arms": [
+    {
+      "name": "gate-beta0",
+      "beta": 0.0
+    },
+    {
+      "name": "gate-beta002",
+      "beta": 0.02
+    },
+    {
+      "name": "gate-beta005",
+      "beta": 0.05
+    },
+    {
+      "name": "gate-beta010",
+      "beta": 0.1
+    },
+    {
+      "name": "gate-beta020",
+      "beta": 0.2
+    }
+  ],
+  "beta_zero_recommendation": "Keep as the clean correctness-only gated control; reduced compute is not guaranteed without a cost term.",
+  "gate_granularity_status": "clarification_requested",
+  "existing_code": "Native sequence_depth_head chooses 2/3/4 once per trajectory; the pretrained early_exit_gate remains frozen. Token-level hazard training is a different implementation.",
+  "implementation_gap": "Current BF16 launcher rejects learned depth pending action-probability correction validation; do not silently remove this guard.",
+  "cancellation_record": "results/native2a/gate-plan-20261121/stratified-cancellation.json",
+  "gate_granularity": "per_token_per_loop",
+  "scheme": "2b",
+  "clarification": "User explicitly selected per-token per-loop exit",
+  "gate_status": "native_acceptance_in_progress"
+}

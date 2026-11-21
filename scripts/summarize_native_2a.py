@@ -18,6 +18,7 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     protocol = json.loads((a.run/"protocol.json").read_text())
+    gated = protocol['arm'] == 'token_exit'
     status = json.loads((a.run/"status.json").read_text())
     log = re.sub(r"\x1b\[[0-9;]*m", "", a.run.with_suffix(".log").read_text())
     steps = [dict(step=int(step), metrics=ast.literal_eval(value)) for step, value in
@@ -44,6 +45,22 @@ def main():
         bad_probability_check |= any(c["sampler_recompute_max_error"] > .001 for c in checks)
     if len(checks) != len(steps) or bad_probability_check:
         failures.append("missing_or_failed_probability_checks")
+    execution = protocol.get("training_execution", {})
+    if execution.get("reuse_old_log_probs"):
+        expected_samples = protocol["prompts"]*protocol["group_size"]
+        for check in checks:
+            error = check.get("grad_no_grad_max_error", float("inf"))
+            if (check.get("old_policy_source") != "detached_training_forward"
+                    or not check.get("reference_finite")
+                    or not math.isfinite(error) or error > .001
+                    or check.get("samples") != expected_samples
+                    or check.get("data_parallel_size") != execution["data_parallel_size"]
+                    or check.get("audit_samples", 0) < (1 if protocol["arm"] in ("fixed", "token_exit") else 3)):
+                failures.append(f"invalid_reuse_audit_at_{check['step']}")
+            if gated and (check.get('policy_space') != 'joint_exit_token' or
+                          not math.isfinite(check.get('gate_grad_no_grad_max_error',float('inf'))) or
+                          check.get('gate_grad_no_grad_max_error',float('inf')) > .001):
+                failures.append(f"invalid_gate_audit_at_{check['step']}")
     if any(not math.isfinite(v) for s in steps for v in s["metrics"].values()):
         failures.append("nonfinite_training_metrics")
     if not any(s["metrics"]["train/grad_norm"] > 0 for s in steps):
@@ -55,6 +72,14 @@ def main():
         failures.append("missing_depth_coverage")
     if protocol["arm"] == "fixed" and depths != [4]:
         failures.append("fixed_arm_not_depth4")
+    if gated:
+        for r in rollouts:
+            m=r['train_metadata'];trace=m.get('ouro_exits',[]);n=r['response_length']
+            if (len(trace)!=n or any(e not in (1,2,3,4) for e in trace) or
+                    m.get('executed_loop_tokens') != 4*(len(r['tokens'])-n)+sum(trace[1:])):
+                failures.append('invalid_executed_exit_trace');break
+        if len({e for r in rollouts for e in r['train_metadata'].get('ouro_exits',[])}) < 2:
+            failures.append('no_actual_exit_variation')
     if any(r["reward"] not in (0., 1.) or r["reward"] != r["train_metadata"]["math_score"]["reward"] for r in rollouts):
         failures.append("invalid_math_reward")
     if start == 0 and not any(r["reward"] == 1 for r in rollouts):
@@ -87,6 +112,14 @@ def main():
         if protocol["arm"] == "learned":
             names += ["sequence_depth_head.weight", "sequence_depth_head.bias",
                       "optimizer.state.exp_avg.sequence_depth_head.weight"]
+        gate_master=None
+        if gated:
+            names += [f'optimizer.state.{kind}.early_exit_gate.weight' for kind in ('exp_avg','exp_avg_sq')]
+            if protocol['precision']=='bf16':
+                found=[f'optimizer.state.{kind}.early_exit_gate.weight' for kind in ('param','fp32_param')
+                       if f'optimizer.state.{kind}.early_exit_gate.weight' in md.state_dict_metadata]
+                if len(found)!=1:raise ValueError('Missing unique FP32 gate master parameter')
+                gate_master=found[0];names.append(gate_master)
         tensors = {k: torch.empty(md.state_dict_metadata[k].size,
             dtype=md.state_dict_metadata[k].properties.dtype) for k in names}
         load(tensors, storage_reader=reader)
@@ -95,9 +128,14 @@ def main():
             master_delta=(tensors[master_key]-base.get_tensor("model.norm.weight").float()).abs().max().item() if protocol["precision"]=="bf16" else delta
             if master_delta == 0:
                 failures.append("parameters_did_not_update")
-            for suffix in ("weight", "bias"):
-                if not torch.equal(tensors[f"early_exit_gate.{suffix}"], base.get_tensor(f"model.early_exit_gate.{suffix}").float()):
-                    failures.append("frozen_token_gate_changed")
+            if gated:
+                gate_delta=(tensors[gate_master or 'early_exit_gate.weight'].float()-base.get_tensor('model.early_exit_gate.weight').float()).abs().max().item()
+                if not gate_delta:failures.append('token_exit_gate_did_not_update')
+                if gate_master and tensors[gate_master].dtype!=torch.float32:failures.append('gate_master_not_fp32')
+            else:
+                for suffix in ("weight", "bias"):
+                    if not torch.equal(tensors[f"early_exit_gate.{suffix}"], base.get_tensor(f"model.early_exit_gate.{suffix}").float()):
+                        failures.append("frozen_token_gate_changed")
         moments = {k: tensors[k].abs().max().item() for k in names if k.startswith(("optimizer.state.exp_avg.","optimizer.state.exp_avg_sq."))}
         if protocol["precision"]=="bf16" and any(tensors[k].dtype!=torch.float32 for k in [master_key,*moments]):
             failures.append("bf16_master_or_optimizer_state_is_not_fp32")
@@ -120,6 +158,9 @@ def main():
             checkpoint_report["depth_head_weight_max"] = changed
             if not changed:
                 failures.append("learned_depth_head_did_not_update")
+        if gated:
+            checkpoint_report['gate_master_max_delta']=gate_delta
+            checkpoint_report['gate_model_dtype']=str(tensors['early_exit_gate.weight'].dtype)
     else:
         checkpoint_report = None
     report = dict(passed=not failures, failures=failures, protocol=protocol, run=str(a.run),

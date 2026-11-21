@@ -1,0 +1,40 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to load in a single process.
+  return func(*args, **kwargs)
+{
+  "stratified": {
+    "checkpoint": "runs/native2a-bf16-formal-20261121/stratified/stratified-beta0/checkpoints/iter_0000004",
+    "optimizer_steps": [
+      5.0,
+      5.0
+    ],
+    "scheduler_samples": 1280,
+    "dataset_state": {
+      "sample_offset": 160,
+      "sample_group_index": 160,
+      "sample_index": 1280,
+      "epoch_id": 0
+    }
+  },
+  "fixed": {
+    "checkpoint": "runs/native2a-bf16-formal-20261121/fixed/fixed4-beta0/checkpoints/iter_0000004",
+    "optimizer_steps": [
+      5.0,
+      5.0
+    ],
+    "scheduler_samples": 1280,
+    "dataset_state": {
+      "sample_offset": 160,
+      "sample_group_index": 160,
+      "sample_index": 1280,
+      "epoch_id": 0
+    }
+  }
+}

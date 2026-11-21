@@ -25,3 +25,18 @@ diff --git a/python/sglang/srt/model_executor/model_runner_components/layer_setu
      # Nanbeige uses num_loops; IQuestLoopCoder uses loop_num.
      return int(getattr(hf_config, "loop_num", getattr(hf_config, "num_loops", 1)) or 1)
  
+diff --git a/python/sglang/srt/sampling/sampling_batch_info.py b/python/sglang/srt/sampling/sampling_batch_info.py
+--- a/python/sglang/srt/sampling/sampling_batch_info.py
++++ b/python/sglang/srt/sampling/sampling_batch_info.py
+@@ -183,6 +183,10 @@
+                 pin_memory=_pin,
+             ).to(device, non_blocking=True)
+-            if enable_deterministic
++            if enable_deterministic or any(
++                isinstance(r.sampling_params.custom_params, dict)
++                and r.sampling_params.custom_params.get("ouro_token_exit", False)
++                for r in reqs
++            )
+             else None
+         )
+ 

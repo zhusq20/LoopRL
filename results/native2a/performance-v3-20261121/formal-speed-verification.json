@@ -1,0 +1,360 @@
+{
+  "updated_unix": 1795247943.841579,
+  "passed": true,
+  "runs_complete": false,
+  "scope": "Completed full 256-response updates after checkpoint resume; not final experiment acceptance or bitwise resume equivalence.",
+  "queues": {
+    "stratified": {
+      "baseline_workload": {
+        "response_tokens": 1764090,
+        "response_loop_tokens": 5301256,
+        "seconds": 1874.2979199886322,
+        "response_tokens_per_second": 941.2004256029369,
+        "response_loop_tokens_per_second": 2828.3956053433344
+      },
+      "current_workload": {
+        "response_tokens": 1286780,
+        "response_loop_tokens": 3838292,
+        "seconds": 670.1551697254181,
+        "response_tokens_per_second": 1920.1224703335959,
+        "response_loop_tokens_per_second": 5727.467567806213
+      },
+      "run": "runs/native2a-speed-formal-20261121/stratified/stratified-beta0",
+      "status": {
+        "status": "running",
+        "started_unix": 1795246862.4167457,
+        "pid": 118432
+      },
+      "verified_steps": [
+        5,
+        6,
+        7
+      ],
+      "checks": [
+        {
+          "step": 5,
+          "passed": true,
+          "index_min": 1280,
+          "index_max": 1535,
+          "prompt_groups": 32,
+          "weight_versions": [
+            "1"
+          ],
+          "response_tokens": 399912,
+          "consistency": {
+            "step": 5,
+            "correction": "tis",
+            "reference_finite": true,
+            "tokens": 399912,
+            "samples": 256,
+            "audit_samples": 24,
+            "data_parallel_size": 2,
+            "old_policy_source": "detached_training_forward",
+            "grad_no_grad_max_error": 0.0,
+            "sampler_recompute_max_error": 0.7107365131378174,
+            "tis_weight_mean": 1.0000106371057882,
+            "tis_clip_fraction": 0.0,
+            "tis_ess_fraction": 0.9994013212401405,
+            "mismatch_mean_abs": 0.008203201808661211,
+            "mismatch_k3": 0.00029893120729061653
+          },
+          "metrics": {
+            "train/loss": 0.030312515795230865,
+            "train/pg_loss": 0.030312296003103256,
+            "train/kl_loss": 0.00022014518617652357,
+            "train/tis_weight_mean": 1.0000096559524536,
+            "train/tis_clip_fraction": 0.0,
+            "train/tis_ess_fraction": 0.9994248747825623,
+            "train/mismatch_mean_abs": 0.007877107709646225,
+            "train/mismatch_k3": 0.00028713600477203727,
+            "train/grad_norm": 0.09308038428450918,
+            "train/lr-pg_0": 4.2857142857142857e-07,
+            "train/lr-pg_1": 4.2857142857142857e-07,
+            "train/global_batch_size": 256,
+            "train/step": 5
+          },
+          "timing": {
+            "perf/update_weights_time": 3.8321986198425293,
+            "perf/data_preprocess_time": 0.057187557220458984,
+            "perf/train_wait_time": 148.3880114555359,
+            "perf/ref_log_probs_time": 14.014664888381958,
+            "perf/audit_log_probs_time": 1.540867805480957,
+            "perf/actor_train_time": 56.188371419906616,
+            "perf/train_time": 72.08426427841187,
+            "perf/ref_log_probs_tflops": 83.00603990282548,
+            "perf/actor_train_tflops": 62.11081422468251,
+            "perf/actor_train_tok_per_s": 7541.204510687778,
+            "perf/step_time": 220.47227573394775,
+            "perf/wait_time_ratio": 0.6730461277344518
+          }
+        },
+        {
+          "step": 6,
+          "passed": true,
+          "index_min": 1536,
+          "index_max": 1791,
+          "prompt_groups": 32,
+          "weight_versions": [
+            "2"
+          ],
+          "response_tokens": 427434,
+          "consistency": {
+            "step": 6,
+            "correction": "tis",
+            "reference_finite": true,
+            "tokens": 427434,
+            "samples": 256,
+            "audit_samples": 24,
+            "data_parallel_size": 2,
+            "old_policy_source": "detached_training_forward",
+            "grad_no_grad_max_error": 0.0,
+            "sampler_recompute_max_error": 1.385072112083435,
+            "tis_weight_mean": 0.9999702222393545,
+            "tis_clip_fraction": 2.3395424790727926e-06,
+            "tis_ess_fraction": 0.9993369964402469,
+            "mismatch_mean_abs": 0.009033875780053784,
+            "mismatch_k3": 0.00033304229918850527
+          },
+          "metrics": {
+            "train/loss": 0.02825222723186016,
+            "train/pg_loss": 0.02825196087360382,
+            "train/kl_loss": 0.0002645093481987715,
+            "train/tis_weight_mean": 0.9999650120735168,
+            "train/tis_clip_fraction": 1.9073486328125e-06,
+            "train/tis_ess_fraction": 0.9993739128112793,
+            "train/mismatch_mean_abs": 0.008561329916119576,
+            "train/mismatch_k3": 0.0003143624635413289,
+            "train/grad_norm": 0.08228620011043075,
+            "train/lr-pg_0": 5e-07,
+            "train/lr-pg_1": 5e-07,
+            "train/global_batch_size": 256,
+            "train/step": 6
+          },
+          "timing": {
+            "perf/update_weights_time": 0.16083145141601562,
+            "perf/data_preprocess_time": 0.04166126251220703,
+            "perf/train_wait_time": 142.86823415756226,
+            "perf/ref_log_probs_time": 14.209937572479248,
+            "perf/audit_log_probs_time": 1.582831859588623,
+            "perf/actor_train_time": 57.289068937301636,
+            "perf/train_time": 73.49800777435303,
+            "perf/ref_log_probs_tflops": 87.42926265886763,
+            "perf/actor_train_tflops": 65.05766566480962,
+            "perf/actor_train_tok_per_s": 7876.162213315467,
+            "perf/step_time": 216.36624193191528,
+            "perf/wait_time_ratio": 0.6603074161750201
+          }
+        },
+        {
+          "step": 7,
+          "passed": true,
+          "index_min": 1792,
+          "index_max": 2047,
+          "prompt_groups": 32,
+          "weight_versions": [
+            "3"
+          ],
+          "response_tokens": 459434,
+          "consistency": {
+            "step": 7,
+            "correction": "tis",
+            "reference_finite": true,
+            "tokens": 459434,
+            "samples": 256,
+            "audit_samples": 24,
+            "data_parallel_size": 2,
+            "old_policy_source": "detached_training_forward",
+            "grad_no_grad_max_error": 0.0,
+            "sampler_recompute_max_error": 0.49751996994018555,
+            "tis_weight_mean": 1.000019735454215,
+            "tis_clip_fraction": 0.0,
+            "tis_ess_fraction": 0.9993903710547901,
+            "mismatch_mean_abs": 0.008325680553576584,
+            "mismatch_k3": 0.0003042566118882721
+          },
+          "metrics": {
+            "train/loss": 0.02570917457342148,
+            "train/pg_loss": 0.025708908215165138,
+            "train/kl_loss": 0.00026139436522498727,
+            "train/tis_weight_mean": 1.0000300407409668,
+            "train/tis_clip_fraction": 0.0,
+            "train/tis_ess_fraction": 0.9994078874588013,
+            "train/mismatch_mean_abs": 0.008089213632047176,
+            "train/mismatch_k3": 0.0002953805960714817,
+            "train/grad_norm": 0.10200918070677625,
+            "train/lr-pg_0": 5.714285714285714e-07,
+            "train/lr-pg_1": 5.714285714285714e-07,
+            "train/global_batch_size": 256,
+            "train/step": 7
+          },
+          "timing": {
+            "perf/update_weights_time": 0.14884662628173828,
+            "perf/data_preprocess_time": 0.04151344299316406,
+            "perf/train_wait_time": 153.85275411605835,
+            "perf/ref_log_probs_time": 15.196621179580688,
+            "perf/audit_log_probs_time": 1.650242567062378,
+            "perf/actor_train_time": 62.03923511505127,
+            "perf/train_time": 79.4638979434967,
+            "perf/ref_log_probs_tflops": 88.5390204515347,
+            "perf/actor_train_tflops": 65.0633724409035,
+            "perf/actor_train_tok_per_s": 7847.324343976121,
+            "perf/step_time": 233.31665205955505,
+            "perf/wait_time_ratio": 0.659416088641572
+          }
+        }
+      ],
+      "failures": [],
+      "baseline_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "baseline_mean": {
+        "perf/step_time": 468.57447999715805,
+        "perf/train_time": 356.034255862236,
+        "perf/train_wait_time": 112.54022413492203,
+        "perf/ref_log_probs_time": 66.0516602396965,
+        "perf/actor_train_time": 224.19863313436508
+      },
+      "current_mean": {
+        "perf/step_time": 223.38505657513937,
+        "perf/train_time": 75.01538999875386,
+        "perf/train_wait_time": 148.3696665763855,
+        "perf/ref_log_probs_time": 14.473741213480631,
+        "perf/actor_train_time": 58.505558490753174
+      },
+      "current_steady_mean": {
+        "perf/step_time": 224.84144699573517,
+        "perf/train_time": 76.48095285892487,
+        "perf/train_wait_time": 148.3604941368103,
+        "perf/ref_log_probs_time": 14.703279376029968,
+        "perf/actor_train_time": 59.66415202617645
+      },
+      "current_steady_steps": [
+        6,
+        7
+      ],
+      "mean_speedup": 2.0976088874572727
+    },
+    "fixed": {
+      "baseline_workload": {
+        "response_tokens": 1735678,
+        "response_loop_tokens": 6942712,
+        "seconds": 2690.289081096649,
+        "response_tokens_per_second": 645.1641246272617,
+        "response_loop_tokens_per_second": 2580.6564985090467
+      },
+      "current_workload": {
+        "response_tokens": 400462,
+        "response_loop_tokens": 1601848,
+        "seconds": 398.0541422367096,
+        "response_tokens_per_second": 1006.0490709875808,
+        "response_loop_tokens_per_second": 4024.196283950323
+      },
+      "run": "runs/native2a-speed-formal-20261121/fixed/fixed4-beta0",
+      "status": {
+        "status": "running",
+        "started_unix": 1795247246.8579197,
+        "pid": 128950
+      },
+      "verified_steps": [
+        5
+      ],
+      "checks": [
+        {
+          "step": 5,
+          "passed": true,
+          "index_min": 1280,
+          "index_max": 1535,
+          "prompt_groups": 32,
+          "weight_versions": [
+            "1"
+          ],
+          "response_tokens": 400462,
+          "consistency": {
+            "step": 5,
+            "correction": "tis",
+            "reference_finite": true,
+            "tokens": 400462,
+            "samples": 256,
+            "audit_samples": 4,
+            "data_parallel_size": 1,
+            "old_policy_source": "detached_training_forward",
+            "grad_no_grad_max_error": 0.0,
+            "sampler_recompute_max_error": 0.48471665382385254,
+            "tis_weight_mean": 0.9999485043017502,
+            "tis_clip_fraction": 0.0,
+            "tis_ess_fraction": 0.9993831615337749,
+            "mismatch_mean_abs": 0.008326066583918176,
+            "mismatch_k3": 0.00030797084685269894
+          },
+          "metrics": {
+            "train/loss": 0.029743170365691185,
+            "train/pg_loss": 0.029742928221821785,
+            "train/kl_loss": 0.00023237039567902684,
+            "train/tis_weight_mean": 0.9999518394470215,
+            "train/tis_clip_fraction": 0.0,
+            "train/tis_ess_fraction": 0.9994082450866699,
+            "train/mismatch_mean_abs": 0.00797502975910902,
+            "train/mismatch_k3": 0.0002953959337901324,
+            "train/grad_norm": 0.11676535069318435,
+            "train/lr-pg_0": 4.2857142857142857e-07,
+            "train/lr-pg_1": 4.2857142857142857e-07,
+            "train/global_batch_size": 256,
+            "train/step": 5
+          },
+          "timing": {
+            "perf/update_weights_time": 1.7660505771636963,
+            "perf/data_preprocess_time": 0.08404016494750977,
+            "perf/train_wait_time": 213.14235258102417,
+            "perf/ref_log_probs_time": 37.05397009849548,
+            "perf/audit_log_probs_time": 0.7832510471343994,
+            "perf/actor_train_time": 146.70582675933838,
+            "perf/train_time": 184.91178965568542,
+            "perf/ref_log_probs_tflops": 62.867802863988,
+            "perf/actor_train_tflops": 47.63617926304427,
+            "perf/actor_train_tok_per_s": 2892.0323709841546,
+            "perf/step_time": 398.0541422367096,
+            "perf/wait_time_ratio": 0.5354607073885831
+          }
+        }
+      ],
+      "failures": [],
+      "baseline_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "baseline_mean": {
+        "perf/step_time": 672.5722702741623,
+        "perf/train_time": 461.42874377965927,
+        "perf/train_wait_time": 211.14352649450302,
+        "perf/ref_log_probs_time": 84.75144165754318,
+        "perf/actor_train_time": 291.3123142719269
+      },
+      "current_mean": {
+        "perf/step_time": 398.0541422367096,
+        "perf/train_time": 184.91178965568542,
+        "perf/train_wait_time": 213.14235258102417,
+        "perf/ref_log_probs_time": 37.05397009849548,
+        "perf/actor_train_time": 146.70582675933838
+      },
+      "current_steady_mean": {
+        "perf/step_time": null,
+        "perf/train_time": null,
+        "perf/train_wait_time": null,
+        "perf/ref_log_probs_time": null,
+        "perf/actor_train_time": null
+      },
+      "current_steady_steps": [],
+      "mean_speedup": 1.6896502231955317
+    }
+  },
+  "limitations": [
+    "Before/after batches contain different questions and generated lengths.",
+    "Eight GPUs total before and after; stratified queue transfers one serving GPU to data-parallel training.",
+    "Reported perf/step_time excludes startup and checkpoint save overhead."
+  ]
+}

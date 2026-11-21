@@ -1,0 +1,236 @@
+..F................FF..F..................                               [100%]
+=================================== FAILURES ===================================
+________ test_joint_score_recovers_expected_reward_minus_cost_gradient _________
+
+    def test_joint_score_recovers_expected_reward_minus_cost_gradient():
+        # Enumerate two decisions, each selecting exit and emitted token. The
+        # second policy depends on both first actions, representing ragged history.
+        torch.manual_seed(7)
+        gate=torch.randn(2,2,2,dtype=torch.float64,requires_grad=True)
+        token=torch.randn(2,2,2,2,dtype=torch.float64,requires_grad=True)
+        exact=gate.new_zeros(());score=gate.new_zeros(())
+        for e0 in range(2):
+            for y0 in range(2):
+                for e1 in range(2):
+                    for y1 in range(2):
+                        logp=gate[0,0].log_softmax(-1)[e0]+token[0,0,e0].log_softmax(-1)[y0]
+                        logp=logp+gate[1,y0].log_softmax(-1)[e1]+token[1,e0,e1].log_softmax(-1)[y1]
+                        utility=float(y1==1)-.17*(4+e1+1)/8
+                        exact=exact+logp.exp()*utility
+                        score=score+logp.exp().detach()*utility*logp
+>       for actual,expected in zip(torch.autograd.grad(score,(gate,token)),torch.autograd.grad(exact,(gate,token))):
+                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/native/test_native_2b.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/autograd/__init__.py:594: in grad
+    result = _engine_run_backward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+t_outputs = (tensor(0.4921, dtype=torch.float64, grad_fn=<AddBackward0>),)
+args = ((tensor(1., dtype=torch.float64),), False, False, (tensor([[[-0.1468,  0.7861],
+         [ 0.9468, -1.1143]],
+
+      ...38]],
+
+         [[-0.2776, -0.2075],
+          [-0.4316,  1.8150]]]], dtype=torch.float64, requires_grad=True)), False)
+kwargs = {'accumulate_grad': False}, attach_logging_hooks = False
+
+    def _engine_run_backward(
+        t_outputs: Sequence[torch.Tensor | GradientEdge],
+        *args: Any,
+        **kwargs: Any,
+    ) -> tuple[torch.Tensor, ...]:
+        attach_logging_hooks = log.getEffectiveLevel() <= logging.DEBUG
+        if attach_logging_hooks:
+            unregister_hooks = _register_logging_hooks_on_whole_graph(t_outputs)
+    
+        # Need to save the context so compiler config will be visible in device threads
+        torch._C._stash_obj_in_tls("context", contextvars.copy_context())
+    
+        try:
+>           return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+                t_outputs, *args, **kwargs
+            )  # Calls into the C++ engine to run the backward pass
+E           RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.
+
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/autograd/graph.py:979: RuntimeError
+__________ test_direct_formal_runs_full_selected_arms_without_pilots ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa37a7b53d0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-36/test_direct_formal_runs_full_s0')
+
+    def test_direct_formal_runs_full_selected_arms_without_pilots(monkeypatch, tmp_path):
+        calls = []
+        monkeypatch.setattr(runner.Queue, "train", lambda self, name, **kw: calls.append((name, kw)))
+        monkeypatch.setattr(runner.Queue, "wait_run", lambda *a: pytest.fail("Unexpected acceptance wait"))
+        monkeypatch.setattr(sys, "argv", ["queue", "--direct-formal", "--output", str(tmp_path),
+            "--arm-names", "stratified-beta0", "stratified-beta010"])
+>       runner.main()
+
+tests/native/test_native_2a_queue.py:14: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/advance_native_2a.py:162: in main
+    p.error("arm-names requires direct-formal and distinct names from the plan")
+/tmp/looprl-native-python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/argparse.py:2650: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='queue', usage=None, description=None, formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'queue: error: arm-names requires direct-formal and distinct names from the plan\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/tmp/looprl-native-python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/argparse.py:2637: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: queue [-h] [--acceptance ACCEPTANCE] --output OUTPUT
+             [--gpus GPUS [GPUS ...]] [--through {gates,formal-sweep}]
+             [--direct-formal] [--arm-names ARM_NAMES [ARM_NAMES ...]]
+             [--attention-implementation {reference,paged,paged-fused,bf16-fast}]
+             [--precision {fp32,bf16}] [--rollout-correction {none,tis}]
+             [--tis-clip TIS_CLIP] [--cuda-graph]
+             [--max-running-requests MAX_RUNNING_REQUESTS]
+             [--kv-token-capacity KV_TOKEN_CAPACITY]
+             [--serving-memory-fraction SERVING_MEMORY_FRACTION]
+             [--depth4-replicas DEPTH4_REPLICAS]
+             [--serving-replicas SERVING_REPLICAS] [--gate-shift GATE_SHIFT]
+             [--trainer-gpus TRAINER_GPUS]
+             [--micro-batch-size MICRO_BATCH_SIZE] [--reuse-old-log-probs]
+             [--recompute {full,selective,selective-mlp,none}]
+             [--training-upgrade-report TRAINING_UPGRADE_REPORT]
+             [--resume-first-run RESUME_FIRST_RUN]
+             [--resume-boundary RESUME_BOUNDARY]
+             [--serving-upgrade-report SERVING_UPGRADE_REPORT]
+             [--gpu-wait-timeout GPU_WAIT_TIMEOUT]
+queue: error: arm-names requires direct-formal and distinct names from the plan
+________________ test_direct_formal_stops_scan_after_failed_arm ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa37a7b7890>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-36/test_direct_formal_stops_scan_0')
+
+    def test_direct_formal_stops_scan_after_failed_arm(monkeypatch, tmp_path):
+        calls = []
+        def fail(self, name, **kw):
+            calls.append(name)
+            raise RuntimeError("numerical guard failed")
+        monkeypatch.setattr(runner.Queue, "train", fail)
+        monkeypatch.setattr(sys, "argv", ["queue", "--direct-formal", "--output", str(tmp_path)])
+        with pytest.raises(RuntimeError, match="numerical guard failed"):
+>           runner.main()
+
+tests/native/test_native_2a_queue.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/advance_native_2a.py:166: in main
+    p.error('Token-exit arms require a dedicated direct-formal queue')
+/tmp/looprl-native-python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/argparse.py:2650: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='queue', usage=None, description=None, formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'queue: error: Token-exit arms require a dedicated direct-formal queue\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/tmp/looprl-native-python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/argparse.py:2637: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: queue [-h] [--acceptance ACCEPTANCE] --output OUTPUT
+             [--gpus GPUS [GPUS ...]] [--through {gates,formal-sweep}]
+             [--direct-formal] [--arm-names ARM_NAMES [ARM_NAMES ...]]
+             [--attention-implementation {reference,paged,paged-fused,bf16-fast}]
+             [--precision {fp32,bf16}] [--rollout-correction {none,tis}]
+             [--tis-clip TIS_CLIP] [--cuda-graph]
+             [--max-running-requests MAX_RUNNING_REQUESTS]
+             [--kv-token-capacity KV_TOKEN_CAPACITY]
+             [--serving-memory-fraction SERVING_MEMORY_FRACTION]
+             [--depth4-replicas DEPTH4_REPLICAS]
+             [--serving-replicas SERVING_REPLICAS] [--gate-shift GATE_SHIFT]
+             [--trainer-gpus TRAINER_GPUS]
+             [--micro-batch-size MICRO_BATCH_SIZE] [--reuse-old-log-probs]
+             [--recompute {full,selective,selective-mlp,none}]
+             [--training-upgrade-report TRAINING_UPGRADE_REPORT]
+             [--resume-first-run RESUME_FIRST_RUN]
+             [--resume-boundary RESUME_BOUNDARY]
+             [--serving-upgrade-report SERVING_UPGRADE_REPORT]
+             [--gpu-wait-timeout GPU_WAIT_TIMEOUT]
+queue: error: Token-exit arms require a dedicated direct-formal queue
+_______________ test_resumed_formal_queue_resumes_only_first_arm _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa37a7a96a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-36/test_resumed_formal_queue_resu0')
+
+    def test_resumed_formal_queue_resumes_only_first_arm(monkeypatch,tmp_path):
+        calls=[]
+        monkeypatch.setattr(runner.Queue,'train',lambda self,name,**kw:calls.append((name,kw)))
+        monkeypatch.setattr(sys,'argv',['queue','--direct-formal','--output',str(tmp_path),
+            '--arm-names','stratified-beta0','stratified-beta002',
+            '--resume-first-run',str(tmp_path/'old'),'--resume-boundary','4',
+            '--attention-implementation','paged-fused'])
+>       runner.main()
+
+tests/native/test_native_2a_queue.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/advance_native_2a.py:162: in main
+    p.error("arm-names requires direct-formal and distinct names from the plan")
+/tmp/looprl-native-python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/argparse.py:2650: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='queue', usage=None, description=None, formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'queue: error: arm-names requires direct-formal and distinct names from the plan\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/tmp/looprl-native-python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/argparse.py:2637: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: queue [-h] [--acceptance ACCEPTANCE] --output OUTPUT
+             [--gpus GPUS [GPUS ...]] [--through {gates,formal-sweep}]
+             [--direct-formal] [--arm-names ARM_NAMES [ARM_NAMES ...]]
+             [--attention-implementation {reference,paged,paged-fused,bf16-fast}]
+             [--precision {fp32,bf16}] [--rollout-correction {none,tis}]
+             [--tis-clip TIS_CLIP] [--cuda-graph]
+             [--max-running-requests MAX_RUNNING_REQUESTS]
+             [--kv-token-capacity KV_TOKEN_CAPACITY]
+             [--serving-memory-fraction SERVING_MEMORY_FRACTION]
+             [--depth4-replicas DEPTH4_REPLICAS]
+             [--serving-replicas SERVING_REPLICAS] [--gate-shift GATE_SHIFT]
+             [--trainer-gpus TRAINER_GPUS]
+             [--micro-batch-size MICRO_BATCH_SIZE] [--reuse-old-log-probs]
+             [--recompute {full,selective,selective-mlp,none}]
+             [--training-upgrade-report TRAINING_UPGRADE_REPORT]
+             [--resume-first-run RESUME_FIRST_RUN]
+             [--resume-boundary RESUME_BOUNDARY]
+             [--serving-upgrade-report SERVING_UPGRADE_REPORT]
+             [--gpu-wait-timeout GPU_WAIT_TIMEOUT]
+queue: error: arm-names requires direct-formal and distinct names from the plan
+=============================== warnings summary ===============================
+tests/native/test_native_resume_compare.py::test_read_tensor_payload_preserves_names_shapes_and_values
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to save in a single process.
+    return func(*args, **kwargs)
+
+tests/native/test_native_resume_compare.py::test_read_tensor_payload_preserves_names_shapes_and_values
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to load in a single process.
+    return func(*args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/native/test_native_2b.py::test_joint_score_recovers_expected_reward_minus_cost_gradient
+FAILED tests/native/test_native_2a_queue.py::test_direct_formal_runs_full_selected_arms_without_pilots
+FAILED tests/native/test_native_2a_queue.py::test_direct_formal_stops_scan_after_failed_arm
+FAILED tests/native/test_native_2a_queue.py::test_resumed_formal_queue_resumes_only_first_arm
+4 failed, 38 passed, 2 warnings in 6.96s

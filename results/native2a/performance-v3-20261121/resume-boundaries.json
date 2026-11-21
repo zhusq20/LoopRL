@@ -1,0 +1,30 @@
+{
+  "stratified": {
+    "checkpoint": "runs/native2a-bf16-formal-20261121/stratified/stratified-beta0/checkpoints/iter_0000004",
+    "optimizer_steps": [
+      5.0,
+      5.0
+    ],
+    "scheduler_samples": 1280,
+    "dataset_state": {
+      "sample_offset": 160,
+      "sample_group_index": 160,
+      "sample_index": 1280,
+      "epoch_id": 0
+    }
+  },
+  "fixed": {
+    "checkpoint": "runs/native2a-bf16-formal-20261121/fixed/fixed4-beta0/checkpoints/iter_0000004",
+    "optimizer_steps": [
+      5.0,
+      5.0
+    ],
+    "scheduler_samples": 1280,
+    "dataset_state": {
+      "sample_offset": 160,
+      "sample_group_index": 160,
+      "sample_index": 1280,
+      "epoch_id": 0
+    }
+  }
+}

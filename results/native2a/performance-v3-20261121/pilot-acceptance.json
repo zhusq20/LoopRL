@@ -1,0 +1,194 @@
+{
+  "passed": true,
+  "failures": [],
+  "protocol": {
+    "backend": "slime_native_megatron_sglang",
+    "diagnostic_reward": false,
+    "arm": "stratified",
+    "total_steps": 140,
+    "prompts": 4,
+    "group_size": 8,
+    "max_new_tokens": 2048,
+    "beta": 0.1,
+    "price_warmup": 0.3,
+    "seed": 20261121,
+    "precision": "bf16",
+    "optimizer": "AdamW",
+    "adam_betas": [
+      0.9,
+      0.99
+    ],
+    "weight_decay": 0.1,
+    "learning_rate": 1e-06,
+    "gate_learning_rate": 0.0001,
+    "lr_warmup_fraction": 0.1,
+    "clip_grad": 0.1,
+    "kl_coef": 0.001,
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+    "batched_decode": true,
+    "activation_recompute": {
+      "granularity": "full",
+      "method": "uniform",
+      "layers": 1
+    },
+    "shared_depth_weight_sync": true,
+    "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+    "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+    "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+    "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+    "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a",
+    "serving": {
+      "attention_implementation": "bf16-fast",
+      "max_running_requests": 32,
+      "kv_token_capacity": 65536,
+      "cuda_graph": true,
+      "memory_fraction": 0.85,
+      "depth4_replicas": 1
+    },
+    "rollout_correction": {
+      "mode": "tis",
+      "clip_low": 0.0,
+      "clip_high": 2.0,
+      "level": "token"
+    },
+    "training_execution": {
+      "reuse_old_log_probs": true,
+      "micro_batch_size": 4,
+      "data_parallel_size": 2,
+      "group_by_depth": true
+    }
+  },
+  "run": "runs/native2a-speed-pilot-v2-20261121",
+  "steps": [
+    {
+      "step": 0,
+      "metrics": {
+        "train/loss": 0.009361162781715393,
+        "train/pg_loss": 0.009361162781715393,
+        "train/kl_loss": 0.0,
+        "train/tis_weight_mean": 0.9999762773513794,
+        "train/tis_clip_fraction": 0.0,
+        "train/tis_ess_fraction": 0.9992072582244873,
+        "train/mismatch_mean_abs": 0.010719635523855686,
+        "train/mismatch_k3": 0.0003961899783462286,
+        "train/grad_norm": 0.1973092436958277,
+        "train/lr-pg_0": 7.142857142857142e-08,
+        "train/lr-pg_1": 7.142857142857142e-08,
+        "train/global_batch_size": 32,
+        "train/step": 0
+      }
+    },
+    {
+      "step": 1,
+      "metrics": {
+        "train/loss": 0.011494051665067673,
+        "train/pg_loss": 0.011494051665067673,
+        "train/kl_loss": 0.0,
+        "train/tis_weight_mean": 0.999904215335846,
+        "train/tis_clip_fraction": 0.0,
+        "train/tis_ess_fraction": 0.999405026435852,
+        "train/mismatch_mean_abs": 0.008277243934571743,
+        "train/mismatch_k3": 0.0002976330870296806,
+        "train/grad_norm": 0.4487225819289995,
+        "train/lr-pg_0": 1.4285714285714285e-07,
+        "train/lr-pg_1": 1.4285714285714285e-07,
+        "train/global_batch_size": 32,
+        "train/step": 1
+      }
+    }
+  ],
+  "rollout_metrics": [
+    {
+      "step": 0,
+      "beta": 0.0,
+      "samples": 32,
+      "reward_mean": 0.21875,
+      "mean_response_tokens": 1984.84375,
+      "mean_depth": 3.0,
+      "depth_counts": {
+        "2": 10,
+        "3": 12,
+        "4": 10
+      },
+      "mean_loop_tokens": 5939.53125,
+      "mean_executed_loop_tokens": 6419.375,
+      "truncation_rate": 0.78125,
+      "nonzero_advantages": 8,
+      "generation_seconds": 976.5693470686674
+    },
+    {
+      "step": 1,
+      "beta": 0.002380952380952381,
+      "samples": 32,
+      "reward_mean": 0.46875,
+      "mean_response_tokens": 1652.15625,
+      "mean_depth": 3.0,
+      "depth_counts": {
+        "2": 10,
+        "3": 12,
+        "4": 10
+      },
+      "mean_loop_tokens": 4958.6875,
+      "mean_executed_loop_tokens": 5294.09375,
+      "truncation_rate": 0.53125,
+      "nonzero_advantages": 32,
+      "generation_seconds": 762.8407232556492
+    }
+  ],
+  "consistency": [
+    {
+      "step": 0,
+      "correction": "tis",
+      "reference_finite": true,
+      "tokens": 63515,
+      "samples": 32,
+      "audit_samples": 24,
+      "data_parallel_size": 2,
+      "old_policy_source": "detached_training_forward",
+      "grad_no_grad_max_error": 0.0,
+      "sampler_recompute_max_error": 0.48784470558166504,
+      "tis_weight_mean": 0.9999831006178412,
+      "tis_clip_fraction": 0.0,
+      "tis_ess_fraction": 0.9992031532315296,
+      "mismatch_mean_abs": 0.010771538837213343,
+      "mismatch_k3": 0.000398196683646581
+    },
+    {
+      "step": 1,
+      "correction": "tis",
+      "reference_finite": true,
+      "tokens": 52869,
+      "samples": 32,
+      "audit_samples": 24,
+      "data_parallel_size": 2,
+      "old_policy_source": "detached_training_forward",
+      "grad_no_grad_max_error": 0.0,
+      "sampler_recompute_max_error": 0.2833256721496582,
+      "tis_weight_mean": 0.9998905848801992,
+      "tis_clip_fraction": 0.0,
+      "tis_ess_fraction": 0.9994047332969354,
+      "mismatch_mean_abs": 0.00830613498701814,
+      "mismatch_k3": 0.0002978378896100491
+    }
+  ],
+  "checkpoint": {
+    "path": "runs/native2a-speed-pilot-v2-20261121/checkpoints/iter_0000001",
+    "final_norm_max_delta": 0.0,
+    "master_final_norm_max_delta": 1.1920928955078125e-07,
+    "model_dtype": "torch.bfloat16",
+    "master_dtype": "torch.float32",
+    "optimizer_moments": {
+      "optimizer.state.exp_avg.decoder.final_layernorm.weight": 0.00011312626156723127,
+      "optimizer.state.exp_avg_sq.decoder.final_layernorm.weight": 9.802631595334788e-09
+    },
+    "adam_steps": [
+      2.0
+    ],
+    "scheduler_samples": 64
+  },
+  "real_math_correct": 22.0,
+  "samples": 64,
+  "limitation": "Engineering and training acceptance; no held-out improvement claim; strict resume checked separately"
+}

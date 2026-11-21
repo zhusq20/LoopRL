@@ -1,0 +1,129 @@
+{
+  "passed": true,
+  "created_unix": 1795246810.872744,
+  "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "validated_configurations": [
+    {
+      "training_execution": {
+        "reuse_old_log_probs": true,
+        "micro_batch_size": 4,
+        "data_parallel_size": 2,
+        "group_by_depth": true
+      },
+      "activation_recompute": {
+        "granularity": "full",
+        "method": "uniform",
+        "layers": 1
+      },
+      "serving": {
+        "attention_implementation": "bf16-fast",
+        "max_running_requests": 32,
+        "kv_token_capacity": 65536,
+        "cuda_graph": true,
+        "memory_fraction": 0.85,
+        "depth4_replicas": 1
+      }
+    },
+    {
+      "training_execution": {
+        "reuse_old_log_probs": true,
+        "micro_batch_size": 4,
+        "data_parallel_size": 1,
+        "group_by_depth": true
+      },
+      "activation_recompute": {
+        "granularity": "full",
+        "method": "uniform",
+        "layers": 1
+      },
+      "serving": {
+        "attention_implementation": "bf16-fast",
+        "max_running_requests": 32,
+        "kv_token_capacity": 65536,
+        "cuda_graph": true,
+        "memory_fraction": 0.85,
+        "depth4_replicas": 2
+      }
+    }
+  ],
+  "source_sha256": {
+    "looprl/native_2a.py": "abb492b62eca367f04d5e314a0df160c3b7f4bbc2f03d6194df9447ec3fdaecb",
+    "third_party/slime/slime_plugins/ouro_training.py": "17f40746fdace5fb658f8457e1781c0add371fb82b35126de6e35e8bfc4b2951",
+    "third_party/slime/slime_plugins/ouro_2a.py": "c81a26f66afd10994684b314a5f170e347fe57ee7e31fa88cf96a818b4952c73",
+    "third_party/slime/slime/backends/megatron_utils/actor.py": "5abcaabce7031777df79a51a33db85d59e79b95565de0e4f752b65771184ec8e",
+    "third_party/slime/slime/backends/megatron_utils/model.py": "0dedf446718bcfa9efca2cef13d47ec6d0134828cc102f0ccce479381e7d1b98",
+    "third_party/slime/slime_plugins/models/ouro.py": "1539215aa4a16aaa6a6562c5857152c2aaef65a6ac99c8941e8c35c05247d14d",
+    "scripts/run_native_2a.py": "f44bc9d92f8a1b92327545290d30265ab919bd3c7d8bd0795fc5c7e4f9c1ed57",
+    "scripts/advance_native_2a.py": "14e9ea36d93129fe9b2aa4f06c17548b9d2a180a8b76b6c1ab76d3faad0cd294",
+    "scripts/summarize_native_2a.py": "5124fd3368f1a0a149a52e9039ccce69177ee08b06b14c08611912e7208be5d9"
+  },
+  "evidence": {
+    "native_dp2_training_and_checkpoint": "pilot-acceptance.json",
+    "native_dp1_dp2_real_trajectory_replay": "replay-summary.json",
+    "tests": "training-tests-final.log",
+    "patch": "patch-validation.json"
+  },
+  "tests_passed": 29,
+  "pilot_summary": {
+    "updates": 2,
+    "samples": 64,
+    "checkpoint": {
+      "path": "runs/native2a-speed-pilot-v2-20261121/checkpoints/iter_0000001",
+      "final_norm_max_delta": 0.0,
+      "master_final_norm_max_delta": 1.1920928955078125e-07,
+      "model_dtype": "torch.bfloat16",
+      "master_dtype": "torch.float32",
+      "optimizer_moments": {
+        "optimizer.state.exp_avg.decoder.final_layernorm.weight": 0.00011312626156723127,
+        "optimizer.state.exp_avg_sq.decoder.final_layernorm.weight": 9.802631595334788e-09
+      },
+      "adam_steps": [
+        2.0
+      ],
+      "scheduler_samples": 64
+    },
+    "consistency": [
+      {
+        "step": 0,
+        "correction": "tis",
+        "reference_finite": true,
+        "tokens": 63515,
+        "samples": 32,
+        "audit_samples": 24,
+        "data_parallel_size": 2,
+        "old_policy_source": "detached_training_forward",
+        "grad_no_grad_max_error": 0.0,
+        "sampler_recompute_max_error": 0.48784470558166504,
+        "tis_weight_mean": 0.9999831006178412,
+        "tis_clip_fraction": 0.0,
+        "tis_ess_fraction": 0.9992031532315296,
+        "mismatch_mean_abs": 0.010771538837213343,
+        "mismatch_k3": 0.000398196683646581
+      },
+      {
+        "step": 1,
+        "correction": "tis",
+        "reference_finite": true,
+        "tokens": 52869,
+        "samples": 32,
+        "audit_samples": 24,
+        "data_parallel_size": 2,
+        "old_policy_source": "detached_training_forward",
+        "grad_no_grad_max_error": 0.0,
+        "sampler_recompute_max_error": 0.2833256721496582,
+        "tis_weight_mean": 0.9998905848801992,
+        "tis_clip_fraction": 0.0,
+        "tis_ess_fraction": 0.9994047332969354,
+        "mismatch_mean_abs": 0.00830613498701814,
+        "mismatch_k3": 0.0002978378896100491
+      }
+    ]
+  },
+  "validation_scope": "DP2 native optimizer lifecycle, shared weight update and checkpoint; DP1/DP2 full-size model replay with real long trajectories, custom loss and FP32 gradient accumulation; full formal batches checked in training after resume.",
+  "limitations": [
+    "Microbenchmarks are not end-to-end formal speed measurements.",
+    "Matched DP1/DP2 replay losses agree, but normalization gradients differ by relative L2 0.01655; within-configuration BF16 repeat noise is 0.01387-0.01788. Full parameter-gradient or bitwise resume equality is not asserted.",
+    "Old-policy reuse is restricted to one deterministic update; each depth has an independent packed replay audit and every response has finite-value and exact coverage checks.",
+    "No held-out task benefit claim."
+  ]
+}

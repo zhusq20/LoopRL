@@ -1,5 +1,5 @@
 {
-  "status": "bf16_tis_formal_queues_running",
+  "status": "token_exit_2b_implementation_and_acceptance",
   "model": "Ouro-2.6B-Thinking",
   "backend": "native_slime_megatron_sglang",
   "precision": "bf16",
@@ -40,8 +40,8 @@
       "backend": "sglang_native_ouro"
     },
     "selection_reference_cost_per_loop_token": 1.220703125e-05,
-    "selection_rule": "Choose priced stratified beta maximizing validation mean(correct - reference_cost_per_loop_token * response_loop_tokens), averaging fixed depths 2/3/4 equally. Tie: lower beta. Never use MATH-500/test for this selection.",
-    "note": "Uniform stratified rollout fixes mean depth near 3; its mean depth cannot identify the best beta. Measure learned-policy depths after training the head."
+    "selection_rule": "Select nonzero beta on held-out actual token-exit policy accuracy minus reference compute price times executed prefill+decode loop tokens. Test data excluded.",
+    "note": "Uniform mixed-depth training and its beta scan were cancelled by the user."
   },
   "acceptance_gates": [
     "real_math_reward_and_2048_token_multi_depth_training",
@@ -58,6 +58,119 @@
       "arm": "fixed",
       "beta": 0.0
     },
+    {
+      "name": "gate-beta0",
+      "beta": 0.0,
+      "arm": "token_exit"
+    },
+    {
+      "name": "gate-beta002",
+      "beta": 0.02,
+      "arm": "token_exit"
+    },
+    {
+      "name": "gate-beta005",
+      "beta": 0.05,
+      "arm": "token_exit"
+    },
+    {
+      "name": "gate-beta010",
+      "beta": 0.1,
+      "arm": "token_exit"
+    },
+    {
+      "name": "gate-beta020",
+      "beta": 0.2,
+      "arm": "token_exit"
+    }
+  ],
+  "adaptive_followups": [
+    "At the validation-selected nonzero beta, add fixed-depth training with the same compute price to separate answer shortening from adaptive-depth gains.",
+    "Evaluate gated policies and fixed-depth baseline on paired held-out questions, including gate/prefill overhead."
+  ],
+  "budget_rule": "When generation budget changes, preserve beta/(4*max_new_tokens).",
+  "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit.",
+  "execution": {
+    "root": "runs/native2a-speed-formal-20261121",
+    "mode": "validated_training_execution_upgrade_resume_at_update_5",
+    "previous_fp32_root": "runs/native2a-formal-20261121",
+    "validation": "results/native2a/performance-v3-20261121/training-validation.json",
+    "gpus_by_queue": {
+      "fixed": [
+        4,
+        5,
+        6
+      ],
+      "token_exit": [
+        0,
+        1,
+        2,
+        3,
+        7
+      ]
+    },
+    "runtime_checks_retained": true,
+    "limitation": "Native DP2 pilot and optimizer checkpoint, DP1/DP2 replay, 29 tests, and full 256-response updates in both resumed formal queues passed. Before/after timing uses different batches; fixed has one measured update. All six completed runs, bitwise resume and held-out algorithmic benefits remain unverified. Tokenwise TIS does not fully correct prefix distribution.",
+    "launch_verification": "results/native2a/performance-v3-20261121/formal-speed-verification.json",
+    "previous_bf16_root": "runs/native2a-bf16-formal-20261121",
+    "resume_boundary": 4,
+    "training_by_queue": {
+      "fixed": {
+        "trainer_gpus": 1,
+        "serving_gpus": 2,
+        "depth4_replicas": 2
+      },
+      "stratified": {
+        "trainer_gpus": 2,
+        "serving_gpus": 3,
+        "depth4_replicas": 1
+      }
+    },
+    "verified_at": "2026-11-21 15:59",
+    "completed_updates_at_verification": {
+      "stratified": 8,
+      "fixed": 6
+    },
+    "cancelled_stratified_queue": "runs/native2a-speed-formal-20261121/stratified",
+    "cancellation_record": "results/native2a/gate-plan-20261121/stratified-cancellation.json",
+    "active_queues": [
+      "fixed"
+    ],
+    "gate_launch_status": "native_acceptance_in_progress",
+    "previous_plan": "results/native2a/gate-plan-20261121/previous-plan.json"
+  },
+  "master_parameter_precision": "float32",
+  "gradient_accumulation_precision": "float32",
+  "optimizer_state_precision": "float32",
+  "rollout_correction": {
+    "mode": "tis",
+    "level": "token",
+    "clip_low": 0.0,
+    "clip_high": 2.0
+  },
+  "serving": {
+    "attention_implementation": "bf16-fast",
+    "backend": "flashinfer",
+    "cuda_graph": true,
+    "overlap": false,
+    "max_running_requests": 32,
+    "kv_token_capacity": 65536,
+    "memory_fraction": 0.85,
+    "depth4_replicas_by_queue": {
+      "fixed": 2,
+      "stratified": 1
+    }
+  },
+  "training_execution": {
+    "reuse_old_log_probs": true,
+    "micro_batch_size": 4,
+    "group_by_depth": true,
+    "data_parallel_size_by_queue": {
+      "fixed": 1,
+      "stratified": 2
+    }
+  },
+  "cancelled_arms": [
     {
       "name": "stratified-beta0",
       "arm": "stratified",
@@ -84,53 +197,45 @@
       "beta": 0.2
     }
   ],
-  "adaptive_followups": [
-    "Train learned-depth from the same base checkpoint at the validation-selected beta.",
-    "Train fixed4 at that identical beta and at the nearest other scanned beta in log space (tie: lower beta).",
-    "Compare H4 at fixed depths 2/3; compare H5 using held-out accuracy versus executed loop-tokens, including depth-head prefill."
-  ],
-  "budget_rule": "When generation budget changes, preserve beta/(4*max_new_tokens).",
-  "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit.",
-  "execution": {
-    "root": "runs/native2a-bf16-formal-20261121",
-    "mode": "new_bf16_tis_formal_runs_from_common_base",
-    "previous_fp32_root": "runs/native2a-formal-20261121",
-    "validation": "results/native2a/performance-v2-20261121/bf16-tis-pilot-acceptance.json",
-    "gpus_by_queue": {
-      "fixed": [
-        4,
-        5,
-        6
-      ],
-      "stratified": [
-        0,
-        1,
-        2,
-        3,
-        7
-      ]
-    },
-    "runtime_checks_retained": true,
-    "limitation": "Two-step BF16/TIS native pilot and first stratified formal update passed. Steady-state timing, all six completed runs, strict resume and algorithmic benefits remain unmeasured. Tokenwise TIS does not fully correct prefix distribution.",
-    "launch_verification": "results/native2a/performance-v2-20261121/formal-launch-verification.json"
-  },
-  "master_parameter_precision": "float32",
-  "gradient_accumulation_precision": "float32",
-  "optimizer_state_precision": "float32",
-  "rollout_correction": {
-    "mode": "tis",
-    "level": "token",
-    "clip_low": 0.0,
-    "clip_high": 2.0
-  },
-  "serving": {
-    "attention_implementation": "bf16-fast",
-    "backend": "flashinfer",
-    "cuda_graph": true,
-    "overlap": false,
-    "max_running_requests": 32,
-    "kv_token_capacity": 65536,
-    "memory_fraction": 0.85,
-    "depth4_replicas": 2
+  "planned_gate_experiments": {
+    "status": "native_acceptance_in_progress",
+    "arms": [
+      {
+        "name": "gate-beta0",
+        "beta": 0.0,
+        "arm": "token_exit"
+      },
+      {
+        "name": "gate-beta002",
+        "beta": 0.02,
+        "arm": "token_exit"
+      },
+      {
+        "name": "gate-beta005",
+        "beta": 0.05,
+        "arm": "token_exit"
+      },
+      {
+        "name": "gate-beta010",
+        "beta": 0.1,
+        "arm": "token_exit"
+      },
+      {
+        "name": "gate-beta020",
+        "beta": 0.2,
+        "arm": "token_exit"
+      }
+    ],
+    "start_checkpoint": "Same original pretrained base for every gate arm; do not initialize from cancelled mixed-depth training.",
+    "gate_granularity": "per_token_per_loop",
+    "zero_price_control": "Measures learned depth choice driven by correctness alone; separates gate effects from explicit compute pricing.",
+    "required_before_launch": [
+      "confirmed: per-token per-loop exits (2b)",
+      "validate native rollout/recompute probabilities for depth actions as well as tokens",
+      "validate gate gradients, shared weights, optimizer save/restore and full-batch execution",
+      "evaluate the actual gated policy with its full executed compute"
+    ],
+    "scheme": "2b",
+    "gate_initialization": "pretrained early_exit_gate with shared fixed logit shift; calibrate before training"
   }
 }

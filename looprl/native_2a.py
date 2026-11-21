@@ -157,6 +157,12 @@ def post_process_rewards(args, samples):
 
 
 def check_on_policy(args, rollout_id, rollout_data):
+    if getattr(args, "ouro_reuse_old_log_probs", False):
+        # prepare_reuse already checked the frozen reference and sampler.
+        # Independent replay and full coverage are checked before optimizer.step.
+        from slime_plugins.ouro_training import validate_reuse_config
+        validate_reuse_config(args, rollout_data)
+        return
     import torch
     from slime_plugins.ouro_2a import check_on_policy as base_check
     base_check(args, rollout_id, rollout_data)

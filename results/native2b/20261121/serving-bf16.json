@@ -1,0 +1,44 @@
+{
+  "passed": true,
+  "dtype": "bfloat16",
+  "gate_shift": 3.0,
+  "generation_seconds": 10.101383103057742,
+  "cases": [
+    {
+      "response_tokens": 128,
+      "exit_counts": {
+        "1": 1,
+        "2": 2,
+        "3": 8,
+        "4": 117
+      },
+      "mean_depth": 3.8828125,
+      "token_logprob_max_error": 0.12257838249206543,
+      "gate_logprob_max_error": 0.011820316314697266,
+      "joint_logprob_max_error": 0.12279462814331055,
+      "tis_mean": 0.9959524273872375,
+      "tis_ess": 0.9991284608840942,
+      "grad_no_grad_error": 0.0,
+      "gate_gradient_norm": 1.1495130062103271,
+      "lm_gradient_norm": 0.8791266083717346
+    },
+    {
+      "response_tokens": 128,
+      "exit_counts": {
+        "1": 3,
+        "2": 6,
+        "3": 6,
+        "4": 113
+      },
+      "mean_depth": 3.7890625,
+      "token_logprob_max_error": 0.1021122932434082,
+      "gate_logprob_max_error": 0.05380105972290039,
+      "joint_logprob_max_error": 0.10216522216796875,
+      "tis_mean": 1.0009291172027588,
+      "tis_ess": 0.9996726512908936,
+      "grad_no_grad_error": 0.0,
+      "gate_gradient_norm": 1.4312070608139038,
+      "lm_gradient_norm": 0.3861792981624603
+    }
+  ]
+}

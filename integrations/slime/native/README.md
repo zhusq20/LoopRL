@@ -15,8 +15,11 @@
 1. `slime_plugins/models/ouro.py`：原生 Megatron 模型，48 个物理层共享，按序列执行 k 次；每层四个 RMSNorm，每轮结束复用 final norm。packed attention 隔离不同序列。exit gate 随 checkpoint 保存和同步，2a 固定深度下冻结。
 2. HF ↔ Megatron 映射覆盖真实 checkpoint 的全部 **533** 个张量，包括 sandwich norms；没有展开成 192 份层权重。
 3. `slime_plugins/sglang_models/ouro.py`：SGLang 外部模型，投影权重共享，每轮使用独立 KV 槽；一个引擎固定一个深度。两处 SGLang 核心缓存计数通过单独补丁适配。
-4. `slime_plugins/ouro_2a.py`：样本执行深度贯穿 batch 分发、旧策略重算与带梯度 forward；混合深度 microbatch 拒绝执行，当前使用 micro-batch-size=1。`--ouro-beta` 指定计算价格（默认 0）；计价后按 prompt group 中心化，除以整个 batch 原始 outcome 标准差，恒定 outcome 使用单位尺度。PPO token 项按固定生成预算归一化。
+4. `slime_plugins/ouro_2a.py`：样本执行深度贯穿 batch 分发、旧策略重算与带梯度 forward；混合深度 microbatch 拒绝执行。`--micro-batch-size` 大于 1 时，按深度和长度分组，保留不足一批的尾部样本。`--ouro-beta` 指定计算价格（默认 0）；计价后按 prompt group 中心化，除以整个 batch 原始 outcome 标准差，恒定 outcome 使用单位尺度。PPO token 项按固定生成预算归一化。
 5. 原生训练支持 FP32 与 BF16、forward kwargs hook。FP32 无校正模式的采样/重算误差超过 0.001 时拒绝更新；BF16 要求显式 `--rollout-correction tis`，自定义 PPO loss 乘以停止梯度的旧训练策略/采样策略重要性权重，上截断为 2。同一训练实现的带梯度/无梯度重放保留 0.001 门槛。记录原始误差、TIS 权重、截断率和 ESS，不声称 TIS 使两个引擎数值相等。
+6. `slime_plugins/ouro_training.py`：`--reuse-old-log-probs` 只允许无 dropout、每批一次更新的固定/分层 GRPO/TIS；此时更新前的训练 forward 同时提供停止梯度的旧策略概率。每卡、每个实际深度独立重放一个最长完整微批次，保留相同 packing 形状；每条回答检查有限值和恰好一次覆盖，优化器更新前聚合完整 token 级 TIS 统计并验收。`--trainer-gpus 2` 使用数据并行，FP32 梯度累积和全局损失归一化保持不变；TP/PP/CP 仍为 1。
+
+训练执行配置写入 `protocol.json`。从旧配置续训必须提供 `--training-upgrade-report`，其配置、基座版本和源码哈希均须匹配；允许改变微批次、数据并行、重算策略及四轮引擎副本数，禁止借此修改算法、数据、精度或训练总步数。执行回放证据见 [replay-summary.json](../../../results/native2a/performance-v3-20261121/replay-summary.json)；正式切换和实测整步吞吐以 [实验记录](../../../EXPERIMENTS.md) 为准。
 
 数值验收：
 
