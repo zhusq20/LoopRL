@@ -7,6 +7,18 @@
 - 配套讲解页：LoopLM RL 设计笔记.md
 - 记号：`P_t` 是第 t 个 loop 的 next-token 分布，`λ_t` 是 gate 在第 t 个 loop 给出的退出概率，`q_t = λ_t·Π_{s<t}(1−λ_s)` 是 exit 分布，`ω` 是 RLTT 的 loop 权重，`ρ_t ∝ ω_t·P_t(y)` 是后验，`A` 是 advantage，`gap = log Σ_t ω_t P_t(y) − Σ_t ω_t log P_t(y)`。
 
+## 获取源码
+
+`third_party/slime` 是 Git 子模块，指向 [THUDM/slime 的固定提交 `79aa41a`](https://github.com/THUDM/slime/tree/79aa41a884ab0bf65222c94418f6357d3c31192b)。GitHub 中点击该目录会跳到上游对应版本。LoopRL 对 slime 的修改单独保存在 [ouro-native.patch](integrations/slime/ouro-native.patch)，准备脚本负责应用。
+
+```bash
+git clone --recurse-submodules https://github.com/zhusq20/LoopRL.git
+cd LoopRL
+python scripts/prepare_slime.py --backend native
+```
+
+已有普通 clone 也可以直接运行准备脚本，它会初始化 slime 子模块。子模块记录上游版本；应用补丁后，`git status` 会显示它包含本地修改，这是预期状态。后续对 slime 的修改也需要同步到补丁文件。
+
 ## 1. 目标
 
 用尽量少的训练回答三个问题，再据此决定主线。

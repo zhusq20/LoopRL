@@ -6,4 +6,5 @@ __pycache__/
 runs/
 checkpoints/
 data/
-third_party/
+/third_party/*
+!/third_party/slime/

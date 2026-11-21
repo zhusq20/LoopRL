@@ -7,20 +7,27 @@ REVISION = "79aa41a884ab0bf65222c94418f6357d3c31192b"
 
 
 def main():
+    root = Path(__file__).resolve().parents[1]
     p = argparse.ArgumentParser()
     p.add_argument("--destination", default=None)
     p.add_argument("--backend", choices=["native", "hf-reference"], default="native")
     args = p.parse_args()
-    destination = Path(args.destination or ("third_party/slime" if args.backend == "native"
-                                           else "third_party/slime-hf-reference")).resolve()
-    if not destination.exists():
+    default_destination = root / "third_party" / ("slime" if args.backend == "native"
+                                                else "slime-hf-reference")
+    destination = Path(args.destination).resolve() if args.destination else default_destination
+    native_submodule = (args.backend == "native" and destination == root / "third_party/slime"
+                        and (root / ".gitmodules").is_file())
+    if native_submodule and not (destination / ".git").exists():
+        subprocess.run(["git", "-C", str(root), "submodule", "update", "--init", "--checkout",
+                        "--", "third_party/slime"], check=True)
+    elif not destination.exists():
         destination.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["git", "clone", "https://github.com/THUDM/slime.git", str(destination)], check=True)
         subprocess.run(["git", "-C", str(destination), "checkout", "--detach", REVISION], check=True)
     head = subprocess.check_output(["git", "-C", str(destination), "rev-parse", "HEAD"], text=True).strip()
     if head != REVISION:
         raise RuntimeError("Existing checkout differs from the pinned revision; use a new destination")
-    patch_root = Path(__file__).resolve().parents[1] / "integrations/slime"
+    patch_root = root / "integrations/slime"
     if args.backend == "native":
         reference_patch = patch_root / "custom-actor.patch"
         reference_present = subprocess.run(

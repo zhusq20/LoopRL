@@ -4,7 +4,7 @@
 
 ## 代码与版本
 
-- slime：`third_party/slime`，固定 `79aa41a884ab0bf65222c94418f6357d3c31192b`。`train.py` 保持上游原样；[ouro-native.patch](../ouro-native.patch) 保存全部 slime 修改，已在新 checkout 验证可应用。
+- slime：Git 子模块 `third_party/slime`，上游 [THUDM/slime](https://github.com/THUDM/slime)，固定 `79aa41a884ab0bf65222c94418f6357d3c31192b`。GitHub 中点击子模块目录会打开这个上游版本。`train.py` 保持上游原样；[ouro-native.patch](../ouro-native.patch) 保存全部 slime 修改，已在新 checkout 验证可应用。
 - Megatron：`ae76c60e6c35d913867d6dd7bad0f30b128b54e7`；SGLang：`e00930c5489053f26d86b179cee0d087f846acbb`（0.5.21）。两者必须应用 slime `docker/patch/v0.5.21` 的对应补丁；SGLang 再应用 [sglang-ouro.patch](sglang-ouro.patch)。Megatron 再应用 [megatron-adam-resume.patch](megatron-adam-resume.patch)，修复 PyTorch Adam 空状态模板、恢复后参数间步数张量别名与分片恢复的标量 step 处理。缺少上游兼容补丁会导致暂停生成期间的权重同步被拒绝。
 - Ouro checkpoint：`f1edd81e7ac41355db670500ceaf204e0f73af68`，本机 `/tmp/looprl-models/Ouro-2.6B-Thinking`。
 - 运行环境：Python 3.12.16、PyTorch 2.13.0+cu130、Transformers 5.12.1。HF oracle 单独保留 Transformers 4.57.1。精确依赖见 [runtime-lock.txt](runtime-lock.txt)、[oracle-lock.txt](oracle-lock.txt)。
@@ -44,6 +44,8 @@
 本机 glibc 不兼容 `nvidia-resiliency-ext==0.7.0` 的预编译包，因此 smoke 显式传入 `--disable-checkpoint-metadata-cache`，使用 Megatron 标准 checkpoint reader，保存内容与恢复的 optimizer 状态不变。该开关默认关闭，常规 slime 环境仍沿用原有缓存设置。
 
 ## 本机复现
+
+新 clone 可以使用 `git clone --recurse-submodules` 获取锁定的 slime 源码；普通 clone 运行下方准备脚本时也会自动初始化子模块，再应用原生补丁。已有 checkout 只核对版本与补丁，不覆盖本地修改。应用补丁后子模块显示为 modified 是预期状态，修改由主仓库中的补丁文件保存。
 
 ```bash
 python scripts/prepare_slime.py --backend native
