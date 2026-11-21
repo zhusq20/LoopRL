@@ -1,0 +1,26 @@
+{
+  "recompute": "full",
+  "dtype": "bfloat16",
+  "total_tokens": 2458,
+  "response_tokens": 2048,
+  "runs": [
+    {
+      "seconds": 1.9501060601323843,
+      "max_error": 0.0,
+      "gradient_norm": 0.30078125,
+      "peak_allocated_gib": 11.688587188720703
+    },
+    {
+      "seconds": 0.9999031201004982,
+      "max_error": 0.0,
+      "gradient_norm": 0.30078125,
+      "peak_allocated_gib": 11.699783325195312
+    },
+    {
+      "seconds": 1.0241953525692225,
+      "max_error": 0.0,
+      "gradient_norm": 0.30078125,
+      "peak_allocated_gib": 11.701032638549805
+    }
+  ]
+}

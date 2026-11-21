@@ -1,0 +1,44 @@
+{
+  "variant": "reference",
+  "depth": 4,
+  "forward_args": {
+    "total_ut_steps": 4,
+    "ouro_batched_decode": true,
+    "ouro_paged_attention": false,
+    "ouro_fused_ops": false
+  },
+  "cases": [
+    {
+      "prompt_lengths": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "batch": 8,
+      "seconds": 8.644900819286704,
+      "output_tokens": 512,
+      "tokens_per_second": 59.225665013730655
+    },
+    {
+      "prompt_lengths": [
+        2048,
+        2048,
+        2048,
+        2048,
+        2048,
+        2048,
+        2048,
+        2048
+      ],
+      "batch": 8,
+      "seconds": 9.339041195809841,
+      "output_tokens": 512,
+      "tokens_per_second": 54.82361510833892
+    }
+  ]
+}

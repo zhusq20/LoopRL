@@ -1,0 +1,28 @@
+{
+  "variant": "paged-fused",
+  "depth": 4,
+  "forward_args": {
+    "total_ut_steps": 4,
+    "ouro_batched_decode": true,
+    "ouro_paged_attention": true,
+    "ouro_fused_ops": true
+  },
+  "cases": [
+    {
+      "prompt_lengths": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ],
+      "batch": 8,
+      "seconds": 134.53332125023007,
+      "output_tokens": 16384,
+      "tokens_per_second": 121.7839554375231
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "observed_unix": 1795244175.2821906,
+  "measurement": "First stratified formal update completed; fixed first update still running.",
+  "queues": {
+    "fixed": {
+      "rollout_metrics": {
+        "rollout/response_len/mean": 1751.078125,
+        "rollout/response_len/median": 2048.0,
+        "rollout/response_len/max": 2048,
+        "rollout/response_len/min": 366,
+        "rollout/zero_std/count_0.0": 15,
+        "rollout/zero_std/count_1.0": 8,
+        "rollout/prefix_cache_hit_rate": 0.6431598062953995,
+        "rollout/avg_cached_tokens_per_sample": 83.0078125,
+        "rollout/repetition_frac": 0.0,
+        "perf/rollout_time": 231.6624457836151,
+        "perf/tokens_per_gpu_per_sec": 967.5197861346792,
+        "perf/longest_sample_tokens_per_sec": 8.840448839571259,
+        "perf/effective_tokens_per_gpu_per_sec": 967.5197861346792,
+        "perf/longest_effective_sample_tokens_per_sec": 8.840448839571259,
+        "perf/request/e2e_latency/mean": 121.79015501453978,
+        "perf/request/e2e_latency/median": 114.42445363849401,
+        "perf/request/e2e_latency/max": 229.85724591463804,
+        "perf/request/e2e_latency/min": 14.237774999812245,
+        "perf/request/queue_time/mean": 72.82102217870852,
+        "perf/request/queue_time/median": 65.78577130101621,
+        "perf/request/queue_time/max": 176.22178006358445,
+        "perf/request/queue_time/min": 0.0005528628826141357,
+        "perf/decode/throughput/mean": 37.37588028911277,
+        "perf/decode/throughput/median": 36.5830541555392,
+        "perf/decode/throughput/max": 51.901644998923885,
+        "perf/decode/throughput/min": 33.75352483809322
+      },
+      "training_updates": [],
+      "consistency": [
+        {
+          "step": 0,
+          "sampler_recompute_max_error": 1.1249380111694336,
+          "reference_finite": true,
+          "tokens": 448276,
+          "correction": "tis",
+          "tis_weight_mean": 0.9999687671661377,
+          "tis_clip_fraction": 2.2307685867417604e-06,
+          "tis_ess_fraction": 0.9993141889572144,
+          "mismatch_mean_abs": 0.009062597528100014,
+          "mismatch_k3": 0.000343006948241964
+        }
+      ]
+    },
+    "stratified": {
+      "rollout_metrics": {
+        "rollout/response_len/mean": 1750.27734375,
+        "rollout/response_len/median": 2048.0,
+        "rollout/response_len/max": 2048,
+        "rollout/response_len/min": 542,
+        "rollout/zero_std/count_0.0": 15,
+        "rollout/zero_std/count_1.0": 7,
+        "rollout/prefix_cache_hit_rate": 0.4043280871670702,
+        "rollout/avg_cached_tokens_per_sample": 52.18359375,
+        "rollout/repetition_frac": 0.0,
+        "perf/rollout_time": 125.18699717521667,
+        "perf/tokens_per_gpu_per_sec": 894.8033943430685,
+        "perf/longest_sample_tokens_per_sec": 16.359526518025977,
+        "perf/effective_tokens_per_gpu_per_sec": 894.8033943430685,
+        "perf/longest_effective_sample_tokens_per_sec": 16.359526518025977,
+        "perf/request/e2e_latency/mean": 57.077283997154154,
+        "perf/request/e2e_latency/median": 56.48043840751052,
+        "perf/request/e2e_latency/max": 123.35394543036819,
+        "perf/request/e2e_latency/min": 7.984728956595063,
+        "perf/request/queue_time/mean": 20.5825196511214,
+        "perf/request/queue_time/median": 12.419183548539877,
+        "perf/request/queue_time/max": 89.02076811529696,
+        "perf/request/queue_time/min": 0.0005522668361663818,
+        "perf/decode/throughput/mean": 53.48899468616208,
+        "perf/decode/throughput/median": 47.26774461831236,
+        "perf/decode/throughput/max": 95.17270678953655,
+        "perf/decode/throughput/min": 34.422195025598015
+      },
+      "consistency": [
+        {
+          "step": 0,
+          "sampler_recompute_max_error": 1.4790339469909668,
+          "reference_finite": true,
+          "tokens": 448071,
+          "correction": "tis",
+          "tis_weight_mean": 1.0000395774841309,
+          "tis_clip_fraction": 2.231789267170825e-06,
+          "tis_ess_fraction": 0.9993515610694885,
+          "mismatch_mean_abs": 0.008789078332483768,
+          "mismatch_k3": 0.00032625350286252797
+        }
+      ],
+      "train_metric_utils": {
+        "perf/update_weights_time": 2.1733319759368896,
+        "perf/data_preprocess_time": 0.08373522758483887,
+        "perf/train_wait_time": 134.78326725959778,
+        "perf/ref_log_probs_time": 64.60076141357422,
+        "perf/log_probs_time": 64.66363310813904,
+        "perf/actor_train_time": 220.53335547447205,
+        "perf/train_time": 350.08078479766846,
+        "perf/log_probs_tflops": 41.14700380107679,
+        "perf/ref_log_probs_tflops": 41.187049487824616,
+        "perf/actor_train_tflops": 36.194725531213685,
+        "perf/actor_train_tok_per_s": 2181.5792852056397,
+        "perf/step_time": 484.86405205726624,
+        "perf/wait_time_ratio": 0.27798156346653397
+      },
+      "training_updates": [
+        {
+          "step": 0,
+          "metrics": {
+            "train/loss": 0.019551103934645653,
+            "train/pg_loss": 0.019551103934645653,
+            "train/kl_loss": 0.0,
+            "train/tis_weight_mean": 1.0000439882278442,
+            "train/tis_clip_fraction": 1.9073486328125e-06,
+            "train/tis_ess_fraction": 0.9993765354156494,
+            "train/mismatch_mean_abs": 0.008448047563433647,
+            "train/mismatch_k3": 0.0003144373185932636,
+            "train/grad_norm": 0.08171223016791064,
+            "train/lr-pg_0": 7.142857142857142e-08,
+            "train/lr-pg_1": 7.142857142857142e-08,
+            "train/global_batch_size": 256,
+            "train/step": 0
+          }
+        }
+      ],
+      "engine_versions_after_first_update": {
+        "http://10.10.12.112:25000": "2",
+        "http://10.10.12.112:25165": "2",
+        "http://10.10.12.112:25330": "2",
+        "http://10.10.12.112:25332": "2"
+      }
+    }
+  },
+  "timing_note": "rollout_metrics.perf/rollout_time is wall time. The separate rollout-metrics.jsonl generation_seconds field sums concurrent request latency and must not be interpreted as wall time."
+}

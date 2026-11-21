@@ -1,23 +1,107 @@
 # 方案二实现与首轮实验
 
-## 原生 2a 真实 reward 推进（2026-11-21，运行中）
+## BF16、训推校正与新正式队列（2026-11-21 14:56）
 
-用户已授权按下一步计划执行 2a。新入口为 `scripts/run_native_2a.py`，使用原生 Megatron actor 和三个共享更新权重的 SGLang 深度引擎；新增真实 MATH 判分、绝对步数的价格升温、冻结初始策略 KL，以及运行源码快照。正式协议见 `configs/native2a-plan.json`，采用 FP32、标准 AdamW、temperature=top_p=1，所有对照统一协议。正式扫描尚未开始。
+用户要求进一步提速，并指出训推差异应使用校正方法处理。此前把跨引擎 `max |Δlogp| < 0.001` 当作必须使用 FP32 的理由过于保守；现为固定/分层 2a 接入 **BF16 + tokenwise TIS**。训练端对采样文本重算旧策略概率，以停止梯度的 `min(2, exp(log p_old_train − log p_sampler))` 乘在逐 token PPO 策略损失上；PPO 本身仍使用 `p_current_train / p_old_train`。固定生成预算归一化、价格、冻结参考 KL 保持原定义。实现依据 [slime 的 TIS 文档](https://thudm.github.io/slime/advanced/policy-mismatch.html#tis)，明确属于有偏的 tokenwise surrogate，不能声称完全校正前缀分布。
+
+BF16 用于模型训练与采样计算；主权重、梯度累积、Adam 一二阶矩保留 FP32。跨引擎检查改为显式 TIS 协议、有限值检查，并记录权重、截断率、ESS 与原始 logp 差；同一训练实现的带梯度/无梯度重算仍保留 0.001 门槛，深度、权重版本和共享策略同步检查继续执行。原始严格跨引擎审计仍如实记为 `passed=false`，没有将原始误差伪装为消失。学习深度头的 BF16 路径需要额外验证一次性深度动作校正，当前入口明确拒绝该组合。
+
+服务配置采用 FlashInfer attention、融合 BF16 RMSNorm/RoPE/MLP、decode CUDA Graph、每引擎并发 32、KV 容量 65,536、显存比例 0.85。实测 overlap scheduler 略慢，未启用。性能与校正证据见 [完整验证报告](results/native2a/performance-v2-20261121/bf16-tis-validation.json)：
+
+| 测量范围 | 优化后 FP32 | BF16 新配置 | 结果 |
+|---|---:|---:|---|
+| 相同 32 个数学采样请求/种子，四轮，最多 2048 token，单张同型号 GPU | 274.24 token/s | 1,034.21 token/s | 吞吐 3.77 倍；实际文本和 token 数随精度变化 |
+| 同一长轨迹原生四轮 forward/backward，预热后 | 约 5.41 秒 | 约 1.01 秒 | 约 5.35 倍；不含参考重算、优化器及完整训练编排 |
+| 上述单轨迹训练探针峰值 allocated 显存 | 23.03 GiB | 11.70 GiB | 不代表完整 trainer 显存 |
+
+32 条 BF16 长轨迹共 63,536 token，原始最大 logp 差 0.39709，平均绝对差 0.01067；TIS 权重均值 0.999924，范围 0.6723–1.4005，截断率 0，ESS 比例 99.918%。这验证该批权重没有退化，不证明后续所有批次或最终任务收益。
+
+`runs/native2a-bf16-tis-pilot-v2-20261121` 完成两步真实 MATH 训练，覆盖 2/3/4 轮、每步 12 条回答、2048-token 上限及非零价格。两步 ESS 比例均超过 99.9%，无截断，第二步梯度有限非零；保存后实读检查点确认 BF16 模型、FP32 主权重及优化器矩，主权重 final norm 最大变化 1.0133e-6，Adam 步数 2，scheduler 已消费 24 条样本。BF16 导出的 final norm 可能因量化保持相同，不能用它否定 FP32 主权重更新。验收见 [bf16-tis-pilot-acceptance.json](results/native2a/performance-v2-20261121/bf16-tis-pilot-acceptance.json)。第一次 pilot 因新增嵌套指标不被 slime logger 接受而在更新前失败，已改为标量张量，失败记录保留。35 项定向测试通过，包括实际自定义损失梯度、TIS 比值方向/停止梯度、非法值拒绝、CUDA Graph 重放、队列拓扑及拒绝跨精度续训；原生补丁正反应用检查通过。
+
+新的持久运行根目录为 `runs/native2a-bf16-formal-20261121`，14:45 启动：
+
+| 队列 | GPU | 正式训练组 |
+|---|---|---|
+| `fixed` | 4 训练，5/6 两个四轮采样副本 | `fixed4-beta0` |
+| `stratified` | 0 训练，1/2 分别二/三轮，3/7 两个四轮副本 | β=0、0.02、0.05、0.1、0.2 顺序执行 |
+
+所有组统一从同一基座重新开始，140 步、32 题 × 8 条回答、2048-token、seed=20261121、标准 AdamW、学习率 1e-6、temperature=top_p=1；不是从 FP32 检查点跨精度续训。两个首组的协议仅 `arm` 不同，源码随各 run 固定保存。14:55 分层首个正式更新完成：采样墙钟 125.19 秒，训练 350.08 秒（参考重算 64.60 秒、旧策略重算 64.66 秒、forward/backward 220.53 秒），端到端 484.86 秒；原 FP32 首步为 3835.90 秒，整体约快 7.91 倍。梯度范数 0.08171，四个服务引擎均已同步为权重版本 2，并开始第二批。首批 448,071 个 token 的 TIS ESS 比例 99.935%，仅 1 个 token 上截断，原始最大 logp 差 1.47903。固定组首批采样为 231.66 秒，校正检查通过，首轮训练仍在运行。这一整体变化包含精度、引擎优化、并发与新增 GPU，不能全部归因于 BF16；首步也不能替代稳态测量。详见 [首批计时与校正](results/native2a/performance-v2-20261121/formal-first-batch.json) 和 [六个服务实例启动核验](results/native2a/performance-v2-20261121/formal-launch-verification.json)。
+
+旧 FP32 分层组在已完成两次更新、第三批采样期间停止，尚未达到五步检查点；原固定组首批数值失败记录保留。此前等待检查点的 FP32 优化切换队列已标为 `superseded`，不再自动启动。只停止本实验已核对的进程，其他 GPU 任务自行结束后才使用空闲设备。停止记录见 [fp32-run-retirement.json](results/native2a/performance-v2-20261121/fp32-run-retirement.json)。以下 FP32 章节为历史记录，当前状态以本节为准。
+
+还测量了 selective checkpointing（约快 9%，单轨迹显存由 23 增至 71 GiB）、FP32x3 GEMM（单算子收益未转化为完整训练收益）以及 overlap（短基准慢约 3%），均未并入正式配置。完整六组训练、正式吞吐统计、验证集选价、学习深度头及配对效果评测仍未完成，不声称已达到硬件的绝对最优性能。
+
+
+## 采样性能修改与切换安排（2026-11-21 14:07）
+
+按用户授权修改原生服务实现：解码直接读取分页 KV，避免逐层复制完整历史；prefill 元数据每批仅处理一次，只计算新增 query；融合 FP32 RMSNorm 与 RoPE。保留 FP32、关闭 TF32、原训练参数、数据、种子与 0.001 一致性门槛。入口增加 `--attention-implementation paged-fused`，旧实现仍可显式选择。原生补丁包含新 Triton kernels，已通过固定上游版本的正向及当前树反向应用检查。
+
+同一 GPU 0、相同 FP32 模型、depth=4、batch=8，每条生成 64 token，预热并复用 prompt cache 后测量：
+
+| 上下文 | 原实现 token/s | 新实现 token/s | 倍数 |
+|---|---:|---:|---:|
+| 512 token | 59.23 | 110.57 | 1.87 |
+| 2048 token | 54.82 | 121.64 | 2.22 |
+
+真实数学题长回答批次共生成 14,038 token，耗时 132.43 秒，106.00 token/s。28 项定向测试通过；46 条轨迹覆盖 2/3/4 轮、长前缀、2048-token 回答与原失败题组的种子重跑，采样/原生重算最大 logp 差 0.000100613。最长 2458-token 样本带梯度/无梯度 logp 差为 0，梯度非零。此结果验证服务实现；未完成整个 256 条回答的优化版正式更新，不能将采样加速直接当作整步训练加速。完整数据及源码哈希见 [optimization-validation.json](results/native2a/performance-20261121/optimization-validation.json)。
+
+原固定组在首个 optimizer update 前因 sampler/recompute 差 0.00446677 超过阈值而停止，旧代码独立重放也能复现误差。保留失败数据；新实现按原种子重跑该题组的 8 条、每条 2048-token 回答已通过。随机生成文本可能随浮点顺序改变；通过此回归不表示后续全部训练批次已通过，训练内检查继续执行。
+
+新的持久调度根目录为 `runs/native2a-optimized-20261121`：
+
+- `fixed/`：GPU 4、5，优化实现从基座重跑 `fixed4-beta0`。14:07 时 GPU 4 被其他任务占用，队列等待设备空闲，最长等待 24 小时，不终止其他任务。
+- `stratified-upgrade/`：监视仍在运行的原分层组，等待 `iter_0000004`（第 5 次更新）的模型、优化器/RNG 和数据游标完整保存。确认文件稳定、恢复协议及源码验证通过后，仅停止本队列所属进程，再以新实现从同一边界续训，随后扫描其余 β。14:07 状态为 `waiting_for_checkpoint`，原分层组仍运行旧快照。
+
+切换前的协议检查已通过；服务实现变化单独记录在 `serving-upgrade.json`，其余训练协议必须完全一致。切换保留训练状态，不声称与旧服务不中断运行逐位相同。原先尚未完成的严格同边界恢复、学习头验收及最终效果评测仍保持未完成状态。
+
+## 正式 2a 对照（2026-11-21 11:27 起）
+
+用户要求直接运行正式 2a 对照。已停止此前的验收队列和 8192-token 基线评测，保留其全部结果；小批量 v4 验收在第 6 次更新后的 `iter_0000005` 检查点处终止。六次 sampler/recompute 最大 logp 差均低于 0.001。严格同边界恢复和学习深度头端到端验收尚未完成，不记作通过；它们不再阻挡从基座开始的固定/分层正式组。
+
+运行根目录：`runs/native2a-formal-20261121`。两条持久队列并行执行：
+
+| 队列 | GPU | 正式训练组 |
+|---|---|---|
+| `fixed` | 4、5 | `fixed4-beta0` |
+| `stratified-v2` | 0、1、2、3 | `stratified-beta0`，随后 β=0.02、0.05、0.1、0.2 |
+
+每组均从相同 Ouro-2.6B-Thinking 基座开始，140 步、32 题 × 8 条回答/步、2048-token 上限、seed=20261121、FP32、标准 AdamW、temperature=top_p=1、学习率 1e-6；每 5 步保存检查点。提示词和判分沿用已锁定的原生协议，各组一致。这里的“正式”指完整训练规格，不表示与 RLTT 在精度、优化器和提示词上完全复现。共享权重版本、0.001 概率一致性阈值、有限值和结束后检查点检查保留，任何失败会停止所在队列。
+
+入口为 `scripts/advance_native_2a.py --direct-formal --arm-names ... --gpus ...`；实际命令和进程记录在根目录 `launch.json`，两队列的 `status.json`、各组 `protocol.json`、源码快照和日志用于追踪。调度、原生协议和共享权重检查共 14 项通过。首批正式任务已启动，尚未得到正式训练增益结论。六组扫描后的验证集选价、学习深度组、同价固定深度组和配对评测仍是后续阶段，未宣称已经完成。
+
+首次并行启动时，两任务在服务绑定前都分配了 15000 端口，分层组在初始化权重通信组时失败，未执行更新。其证据保留在 `stratified/`。现为新任务增加按 GPU 分配的独立端口区间；分层队列从基座重新启动于 `stratified-v2/`，三个引擎使用 25000、25132、25264，固定组继续使用 15000。两组训练协议仅 `arm` 不同，模型、奖励、损失和采样源码相同；源码差异仅为启动器和端口分配。核对记录见 `launch-verification.json`，原生补丁已更新并通过反向应用检查。
+
+## 正式训练吞吐排查（2026-11-21 13:32–13:41）
+
+按用户要求先诊断慢速原因。运行中的模型权重、训练协议与服务配置未修改；在采样引擎等待训练时发出少量固定种子的短诊断请求，并采集四次 forward 的 CPU/CUDA trace。诊断会填充 prefix cache、产生少量额外耗时，不能把该时段算作正常训练吞吐。完整证据见 [diagnosis.json](results/native2a/performance-20261121/diagnosis.json)。
+
+- 固定组首批 256 条回答共 446,175 个 token，采样 7,550.81 秒（125.85 分钟），实际总吞吐 59.09 token/s。分层组前两批采样分别 43.48、43.65 分钟；第一次重算/训练约 20.4 分钟。任务规模与实测吞吐可以解释耗时，不是仅凭参数量推算。
+- 正式任务沿用了数值验收配置：FP32、TF32 关闭、原生 attention、CUDA Graph/overlap 关闭、每引擎最多 8 个请求及 16,384 个 KV token。训练侧每组一个 rank，microbatch=1，逐层全量激活重算；采样与训练串行。
+- 2.6B 是共享参数量；模型有 48 个物理 block，2/4 轮实际执行 96/192 个 block。4 轮的 FP32 MHA KV 每个缓存 token 需要 3 MiB，16K-token 池已占 48 GiB；32 条互不共享前缀的 2048-token 序列仅 KV 就需 192 GiB，不能只调大并发而不处理容量。
+- 真实引擎 trace 中，每次 4 轮、batch=8 解码出现 11,362 个 GPU kernel、768 次 linear、192 次 SDPA。native cached prefill 对每个请求逐个执行并读取 GPU 标量：8 条 512-token 历史、各只续一个 token 的 prefill 出现 13,440 次 DtoH/同步；同时构造完整长度的 query 再丢弃前缀输出。decode 每层先 gather/materialize 全历史 K/V，再执行 FP32 SDPA。trace 时长含 profiler 开销，不作正常速度使用。
+- 独立随机张量单 block 微基准（batch=8、context=2048，省略 RoPE/KV 写入）：FP32 0.642 ms，TF32 0.541 ms，BF16 0.335 ms；FP32 CUDA Graph 0.609 ms，仅约 1.05 倍。不能声称开启 CUDA Graph 就会带来数量级加速，也不能把 BF16 微基准当作完整模型一致性验收。
+- 优先级：修复 attention 中多余同步/缓存搬运与 cached prefill；解决 BF16/TF32 的训练—采样数值一致性后再决定精度；联合调整并发和 KV 容量；然后融合算子、适配 graph 和改善训练/采样资源利用率。当前仍未验证端到端加速后的正式配置。
+
+复测脚本：`scripts/benchmark_native_2a_live.py`（仅对空闲引擎发短请求）和 `scripts/benchmark_native_2a_ops.py`（单 GPU 小内存算子对照，使用 `integrations/slime/native/env.sh` 的兼容库环境）。
+
+## 此前原生 2a 验收记录（2026-11-21，已停止）
+
+入口 `scripts/run_native_2a.py` 使用原生 Megatron actor 和三个共享更新权重的 SGLang 深度引擎；支持真实 MATH 判分、绝对步数的价格升温、冻结初始策略 KL，以及运行源码快照。以下为正式启动前的验收记录，最新运行状态以上一节为准。
 
 - `runs/native2a-acceptance-20261121` 在首批回答判分阶段失败，未执行模型更新：math-verify 的 signal 超时不支持 Ray 工作线程。已改为独立进程判分并通过工作线程回归测试，未移除超时保护。
 - `runs/native2a-acceptance-v2-20261121` 首步完成：12 条回答中 2 条答对，截断率 83.3%，非零梯度范数 0.796，三个深度重算最大 logp 差 7.15e-5。第二步在带梯度 forward 时显存不足而失败，未达到验收标准。已保留失败日志，未缩短生成预算或放宽精度门槛。
 - `runs/native2a-acceptance-v3-20261121` 被新加的权重版本检查拒绝，未进入更新：上游 slime 的多模型入口仅更新第一个可训练 server，深度 3/4 仍为 `default`，深度 2 为 `1`。因此 v2 也不能作为多深度权重同步验收。现已为 Ouro 显式共享策略增加全部深度组的同步/恢复视图，保留其他模型的原有行为。
-- `runs/native2a-acceptance-v4-20261121` 正在运行 10 步、每步 2 题 × 6 条回答、2048-token、目标 β=0.1 的分层深度验收。截至 11:01（北京时间）已完成前 2 步并保存 `iter_0000001`，第三轮采样已启动。两步 sampler/recompute 最大 logp 差分别为 7.15e-5、1.11e-4，梯度范数为 0.682、0.00915。第一批 1/12 答对，第二批全错且截断，不能据此声称任务收益。
+- `runs/native2a-acceptance-v4-20261121` 原定 10 步、每步 2 题 × 6 条回答、2048-token、目标 β=0.1；完成 6 次更新并保存 `iter_0000005` 后按用户最新要求停止。前两步 sampler/recompute 最大 logp 差为 7.15e-5、1.11e-4；后四步也全部通过阈值。仅证明运行链路，不能据此声称任务收益。
 - 第一份 checkpoint 已实读验收：final norm 最大变化 1.01e-6，Adam 一、二阶矩非零、步数为 2，scheduler 已消费 24 条样本，冻结 token gate 逐位不变。三个深度引擎已同步版本 `3`，报告 `results/native2a/first-checkpoint.json`。激活重算修复了此前第二步的显存失败；完整 10 步验收及严格恢复对照仍未完成。
-- `runs/native2a-baseline-20261121` 正在运行同批 32 道 MATH-500 × 2 次采样 × 2/3/4 深度的原生基座评测，上限 8192 token、top-p=1。与旧 top-p=0.7 的 8 题先导不可直接作增益对照。
+- `runs/native2a-baseline-20261121` 的 8192-token 基座评测已停止，为正式训练释放 GPU；已完成的逐题结果保留。不同预算及不同 top-p 的结果不能直接作增益对照。
 - 原生 prompt 深度头、一次/trajectory 的动作损失、独立学习率及保存/同步路径已实现，端到端训练仍待验收。完整 2.6B 上非零深度头的 SGLang/Megatron logq 最大差 5.96e-7，head 与共享 LM 梯度均非零，报告 `results/native2a/depth-head-consistency.json`。
 - 60 项定向检查通过，记录 `results/native2a/tests.json`。原生 checkpoint 的 533 个模型张量已成功导出为评测用 HF 格式，重新导入后的全部 389 个原生参数与源 checkpoint 逐位一致；它仍来自原生训练。
 - FP32 批量 decode 已通过 ragged mask 单测、128/2048-token 双请求与缓存重用对照；2048-token 的最大 logp 差 0.000246，低于既定 0.001。v2 显存失败批次里最长的四轮样本（总长 2458、回答 2048）单独使用原生重算完成 backward，带梯度/无梯度 logp 差为 0，峰值 allocated 23.03 GiB；该数值不含完整 trainer、冻结参考备份及 Adam 状态。
-- `scripts/advance_native_2a.py` 首次队列已按预期在 v3 失败后停止。修复后的队列等待 v4：通过后依次执行同边界恢复对照、学习深度头训练/恢复、32×8 batch 实测，最后才进入六个 140 步基础对照臂。当前状态见 `runs/native2a-queue-v2-20261121/status.json`；任一命令或数值检查失败立即停止后续阶段，不静默重试或覆盖证据。训练扫描结束仍不等于 H4/H5 得到验证。
+- `scripts/advance_native_2a.py` 的旧队列已停止，替换为上述直接正式训练的两条队列。原验收队列记录保留在 `runs/native2a-queue-v2-20261121`。正式组仍在任一命令或数值检查失败时停止，不静默重试或覆盖证据。训练扫描结束不等于 H4/H5 得到验证。
 - 验证集选择入口 `scripts/select_native_2a_beta.py` 检查完整配对数据、正式训练 checkpoint 的臂/价格/步数和预先固定的训练集留出划分；拒绝错误数据、遗漏/重复样本及错误 checkpoint。
 - `scripts/compare_native_2a_evaluations.py` 在题目层面重采样，报告配对准确率、回答长度、实际 loop-token 计算量和截断率差的区间；同题重复回答不会被误当成独立题目。不同生成预算的结果拒绝作配对比较。
 
-待完成：10 步验收、同一 checkpoint 边界的恢复对照、学习深度头端到端训练/恢复、正式 32×8 batch 吞吐验收，以及验证集选价后的 140 步扫描和同价固定深度对照。均匀分层采样的平均深度天然接近 3，因此选 β 改用预先固定单位计算价格下的验证集效用；测试集不参与选择。
+待完成：正式六组训练与吞吐统计、验证集选价、学习深度头训练/恢复、同价固定深度对照和配对评测。均匀分层采样的平均深度天然接近 3，因此选 β 使用预先固定单位计算价格下的验证集效用；测试集不参与选择。
 
 **2026-11-21 路线修正：用户要求正式实现落在 slime 代码上。现有自定义 HF trainer/sampler 保留为数值参考，后续先补 Megatron/SGLang 原生 Ouro 接入，再推进正式 2a 扫描。原生模型、采样、深度元数据与损失已接通：33 项测试通过，完整 2.6B 的 2/3/4 轮 logits/梯度对齐，SGLang 与 Megatron 重算最大 log 概率差 5.25e-6；固定深度原生两步训练、NCCL 同步与 checkpoint 参数/Adam 状态检查已通过（合成诊断 reward），恢复续训也已通过（尚未验收逐位一致），详见 [原生接入进度](integrations/slime/native/README.md)。**
 

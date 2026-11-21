@@ -1,6 +1,6 @@
 # Ouro 原生 slime 接入
 
-2026-11-21，正式方案 2a 改在 slime 的原生 Megatron trainer、rollout manager 和 SGLang 引擎上实现。`looprl/slime_backend.py` 保留作 HF 参考；本目录结果不使用该 HF actor。正式扫描尚未启动。
+2026-11-21，正式方案 2a 在 slime 的原生 Megatron trainer、rollout manager 和 SGLang 引擎上实现。`looprl/slime_backend.py` 保留作 HF 参考；本目录结果不使用该 HF actor。14:45 起正式固定/分层扫描统一使用 BF16 + TIS，最新状态见 [EXPERIMENTS.md](../../../EXPERIMENTS.md)。
 
 ## 代码与版本
 
@@ -16,7 +16,7 @@
 2. HF ↔ Megatron 映射覆盖真实 checkpoint 的全部 **533** 个张量，包括 sandwich norms；没有展开成 192 份层权重。
 3. `slime_plugins/sglang_models/ouro.py`：SGLang 外部模型，投影权重共享，每轮使用独立 KV 槽；一个引擎固定一个深度。两处 SGLang 核心缓存计数通过单独补丁适配。
 4. `slime_plugins/ouro_2a.py`：样本执行深度贯穿 batch 分发、旧策略重算与带梯度 forward；混合深度 microbatch 拒绝执行，当前使用 micro-batch-size=1。`--ouro-beta` 指定计算价格（默认 0）；计价后按 prompt group 中心化，除以整个 batch 原始 outcome 标准差，恒定 outcome 使用单位尺度。PPO token 项按固定生成预算归一化。
-5. 原生训练新增 FP32 选项和 forward kwargs hook。采样/重算、带梯度/无梯度重放误差超过 0.001 时拒绝更新。
+5. 原生训练支持 FP32 与 BF16、forward kwargs hook。FP32 无校正模式的采样/重算误差超过 0.001 时拒绝更新；BF16 要求显式 `--rollout-correction tis`，自定义 PPO loss 乘以停止梯度的旧训练策略/采样策略重要性权重，上截断为 2。同一训练实现的带梯度/无梯度重放保留 0.001 门槛。记录原始误差、TIS 权重、截断率和 ESS，不声称 TIS 使两个引擎数值相等。
 
 数值验收：
 
@@ -29,7 +29,7 @@
 | 完整 checkpoint 的全部参数梯度，16 token，2/3/4 轮 | 相对 L2 误差 6.28e-6～7.42e-6 |
 | SGLang 双请求与单请求重复，2/3/4 轮，各生成 8 token | 与 Megatron 重算最大 log 概率差 5.25e-6；重复请求实际复用了 27 token 的 prefix cache |
 
-原始数据：[完整模型检查](../../../results/native/megatron-full-checkpoint.json)、[采样一致性](../../../results/native/serving-consistency.json)、`results/native/sglang-depth{2,3,4}.json`。上述检查是数值验收，不是准确率或加速实验；当前使用 FP32/SDPA，尚未验收 BF16、TP/PP/CP>1 或 CUDA graph。
+原始数据：[完整模型检查](../../../results/native/megatron-full-checkpoint.json)、[采样一致性](../../../results/native/serving-consistency.json)、`results/native/sglang-depth{2,3,4}.json`。上述早期检查使用 FP32/SDPA，是数值验收。后续 BF16/FlashInfer/CUDA Graph 和两步 TIS 训练验证见 [性能与校正报告](../../../results/native2a/performance-v2-20261121/bf16-tis-validation.json)；TP/PP/CP>1 仍未验收。
 
 ## 原生生命周期检查
 
@@ -89,10 +89,12 @@ CUDA_VISIBLE_DEVICES=2,3 "$LOOPRL_NATIVE_PYTHON" scripts/run_ouro_native_smoke.p
 
 ## 仍待完成
 
-- 长序列真实奖励的完整短程验收、同一 checkpoint 边界的严格恢复对照，以及正式 32×8 batch 实测。
+- 长序列真实奖励两步 BF16/TIS 验收及首个正式 32×8 更新已完成；更长稳定性、同一 checkpoint 边界的严格恢复对照和正式稳态吞吐仍待验证。
 - 学习深度头的原生端到端训练/保存/恢复验收。模型与动作 loss 已实现，完整模型的采样/重算深度概率及共享 LM 梯度检查已通过。
 - 140 步 β 扫描、验证集选价、同价固定深度对照及配对重复评测。数学 reward、价格升温、初始参考 KL、分层引擎路由和权重版本检查均已接入新入口。
 
-这些缺口完成前，不启动 140 步扫描，也不声称 2a 已有算法收益。
+用户已授权先运行固定/分层 140 步扫描；未完成的严格恢复与学习深度头验收继续单独记录，不声称 2a 已有算法收益。
 
-真实训练使用 FP32、标准 AdamW、逐层激活重算；学习率、采样参数、价格与数据划分固定在每次运行的 `protocol.json`。运行保存独立源码快照，开发中的后续修改不影响已启动的 actor。`scripts/advance_native_2a.py` 将验收和扫描串行排队，任一检查失败就停止后续阶段；`status.json` 与各阶段日志保存于队列目录。具体计划见 [native2a-plan.json](../../../configs/native2a-plan.json)。
+当前正式训练使用 BF16、标准 AdamW、逐层激活重算，主权重、梯度累积与优化器状态保留 FP32；学习率、采样参数、价格与数据划分固定在每次运行的 `protocol.json`。运行保存独立源码快照，开发中的后续修改不影响已启动的 actor。`scripts/advance_native_2a.py --direct-formal` 可直接排队正式组，任一阶段失败就停止后续阶段；`status.json` 与各阶段日志保存于队列目录。具体计划见 [native2a-plan.json](../../../configs/native2a-plan.json)。
+
+BF16 服务配置参数为 `--precision bf16 --rollout-correction tis --attention-implementation bf16-fast --cuda-graph --max-running-requests 32 --kv-token-capacity 65536 --serving-memory-fraction .85 --depth4-replicas 2`。两副本配置需要固定组 3 张、分层组 5 张 GPU；显存容量按本机 L20X 验证，换硬件需重新确定 KV 容量。默认入口仍保留 FP32 参考配置，跨精度恢复会被协议检查拒绝。

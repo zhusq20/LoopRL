@@ -165,7 +165,11 @@ def check_on_policy(args, rollout_id, rollout_data):
         raise ValueError("Nonfinite frozen-reference probabilities")
     append_record(args.ouro_output, "consistency.jsonl", dict(step=rollout_id,
         sampler_recompute_max_error=float(rollout_data["ouro_logprob_max_error"]),
-        reference_finite=True, tokens=ref.numel()))
+        reference_finite=True, tokens=ref.numel(),
+        correction=getattr(args,"ouro_rollout_correction","none"),
+        **{key:float(rollout_data["ouro_"+key]) for key in
+           ("tis_weight_mean","tis_clip_fraction","tis_ess_fraction","mismatch_mean_abs","mismatch_k3")
+           if "ouro_"+key in rollout_data}))
 
 
 def policy_loss(args, batch, logits, reducer):

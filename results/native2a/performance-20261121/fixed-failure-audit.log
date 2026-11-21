@@ -1,0 +1,35 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+[transformers] The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+/tmp/looprl-sglang-venv/lib/python3.12/site-packages/transformers/modeling_rope_utils.py:1036: FutureWarning: `rope_config_validation` is deprecated and has been removed. Its functionality has been moved to RotaryEmbeddingConfigMixin.validate_rope method. PreTrainedConfig inherits this class, so please call self.validate_rope() instead. Also, make sure to use the new rope_parameters syntax. You can call self.standardize_rope_params() in the meantime.
+  warnings.warn(
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+[transformers] `layer_type_validation` is deprecated and will be removed in v5.20. Use `PreTrainedConfig.validate_layer_type` instead
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/transformer/transformer_config.py:4445: UserWarning: full scope is deprecated. Use empty cuda_graph_modules to capture the whole layer.
+  warnings.warn(
+WARNING:megatron.core.models.gpt.gpt_model:GPTModel IS DEPRECATED. GPTModel is only accepting critical bug fixes, no new features. Please reference the migration guide `docs/user-guide/hybrid-model-migration.md` for details on how to use `HybridModel`
+{"index": 15, "step": 0, "total_tokens": 2109, "response_tokens": 2048, "max_error": 5.1021575927734375e-05, "worst_response_position": 1639, "sampled_logp": -3.442781686782837, "native_logp": -3.442730665206909, "seconds": 2.536399856209755}
+{"index": 31, "step": 0, "total_tokens": 2458, "response_tokens": 2048, "max_error": 0.00010800361633300781, "worst_response_position": 255, "sampled_logp": -2.2415201663970947, "native_logp": -2.2414121627807617, "seconds": 3.2603021562099457}
+{"index": 45, "step": 0, "total_tokens": 2168, "response_tokens": 2048, "max_error": 0.006218552589416504, "worst_response_position": 418, "sampled_logp": -1.550653338432312, "native_logp": -1.5568718910217285, "seconds": 3.097686806693673}
+{"index": 47, "step": 0, "total_tokens": 2168, "response_tokens": 2048, "max_error": 4.220008850097656e-05, "worst_response_position": 176, "sampled_logp": -2.141279458999634, "native_logp": -2.1413216590881348, "seconds": 1.2183856945484877}
+{"index": 63, "step": 0, "total_tokens": 1739, "response_tokens": 1575, "max_error": 4.6253204345703125e-05, "worst_response_position": 209, "sampled_logp": -5.453057765960693, "native_logp": -5.453011512756348, "seconds": 0.952757341787219}
+{"index": 79, "step": 0, "total_tokens": 1732, "response_tokens": 1659, "max_error": 4.863739013671875e-05, "worst_response_position": 404, "sampled_logp": -1.1922783851623535, "native_logp": -1.1922297477722168, "seconds": 0.9542197771370411}
+{"index": 95, "step": 0, "total_tokens": 1476, "response_tokens": 1372, "max_error": 4.780292510986328e-05, "worst_response_position": 8, "sampled_logp": -1.788236379623413, "native_logp": -1.7881885766983032, "seconds": 0.824993409216404}
+{"index": 111, "step": 0, "total_tokens": 1083, "response_tokens": 1034, "max_error": 5.269050598144531e-05, "worst_response_position": 300, "sampled_logp": -2.0011651515960693, "native_logp": -2.001112461090088, "seconds": 0.5984510872513056}
+{"index": 127, "step": 0, "total_tokens": 2169, "response_tokens": 2048, "max_error": 6.365776062011719e-05, "worst_response_position": 160, "sampled_logp": -1.5798804759979248, "native_logp": -1.5798168182373047, "seconds": 1.2070052362978458}
+{"index": 143, "step": 0, "total_tokens": 1535, "response_tokens": 1476, "max_error": 3.540515899658203e-05, "worst_response_position": 460, "sampled_logp": -1.6346474885940552, "native_logp": -1.6346120834350586, "seconds": 0.8299380764365196}
+{"index": 159, "step": 0, "total_tokens": 2128, "response_tokens": 2048, "max_error": 4.887580871582031e-05, "worst_response_position": 476, "sampled_logp": -1.4414327144622803, "native_logp": -1.4413838386535645, "seconds": 1.21669783256948}
+{"index": 175, "step": 0, "total_tokens": 2125, "response_tokens": 2048, "max_error": 0.0001233816146850586, "worst_response_position": 1159, "sampled_logp": -0.5692241191864014, "native_logp": -0.5691007375717163, "seconds": 1.2034911792725325}
+{"index": 191, "step": 0, "total_tokens": 1779, "response_tokens": 1684, "max_error": 5.1975250244140625e-05, "worst_response_position": 314, "sampled_logp": -4.945724964141846, "native_logp": -4.945672988891602, "seconds": 0.956413347274065}
+{"index": 207, "step": 0, "total_tokens": 2109, "response_tokens": 2048, "max_error": 5.3763389587402344e-05, "worst_response_position": 827, "sampled_logp": -1.7248845100402832, "native_logp": -1.7248307466506958, "seconds": 1.1118434071540833}
+{"index": 223, "step": 0, "total_tokens": 2357, "response_tokens": 2048, "max_error": 6.151199340820312e-05, "worst_response_position": 1187, "sampled_logp": -4.185484409332275, "native_logp": -4.185545921325684, "seconds": 1.3081436436623335}
+{"index": 239, "step": 0, "total_tokens": 2359, "response_tokens": 2048, "max_error": 5.340576171875e-05, "worst_response_position": 372, "sampled_logp": -4.037751197814941, "native_logp": -4.03780460357666, "seconds": 1.3084264155477285}
+{"index": 255, "step": 0, "total_tokens": 976, "response_tokens": 916, "max_error": 5.137920379638672e-05, "worst_response_position": 780, "sampled_logp": -1.571818470954895, "native_logp": -1.5718698501586914, "seconds": 0.560189375653863}
+{"samples": 256, "max_error": 0.006218552589416504, "passed": false}

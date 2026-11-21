@@ -1,0 +1,15 @@
+{
+  "tokens": 63536,
+  "trajectories": 32,
+  "correction": "tokenwise_tis",
+  "clip_low": 0.0,
+  "clip_high": 2.0,
+  "max_logprob_error": 0.3970932960510254,
+  "weights_min": 0.6722713112831116,
+  "weights_max": 1.4005403518676758,
+  "tis_weight_mean": 0.9999241232872009,
+  "tis_clip_fraction": 0.0,
+  "tis_ess_fraction": 0.9991764426231384,
+  "mismatch_mean_abs": 0.010667339898645878,
+  "mismatch_k3": 0.0004115519695915282
+}

@@ -33,7 +33,16 @@ def main():
     finish = int(launch[launch.index("--num-rollout")+1])
     if [s["step"] for s in steps] != list(range(start, finish)):
         failures.append("missing_or_duplicate_training_steps")
-    if len(checks) != len(steps) or any(c["sampler_recompute_max_error"] > .001 for c in checks):
+    correction=protocol.get("rollout_correction",{}).get("mode","none")
+    bad_probability_check = any(not math.isfinite(c["sampler_recompute_max_error"]) for c in checks)
+    if correction=="tis":
+        cap=protocol["rollout_correction"]["clip_high"]
+        bad_probability_check |= any(c.get("correction")!="tis" or
+            not 0<c.get("tis_weight_mean",0)<=cap or not 0<c.get("tis_ess_fraction",0)<=1.000001 or
+            not 0<=c.get("tis_clip_fraction",-1)<=1 for c in checks)
+    else:
+        bad_probability_check |= any(c["sampler_recompute_max_error"] > .001 for c in checks)
+    if len(checks) != len(steps) or bad_probability_check:
         failures.append("missing_or_failed_probability_checks")
     if any(not math.isfinite(v) for s in steps for v in s["metrics"].values()):
         failures.append("nonfinite_training_metrics")
@@ -67,6 +76,14 @@ def main():
         md = reader.read_metadata()
         names = ["decoder.final_layernorm.weight", "optimizer.state.exp_avg.decoder.final_layernorm.weight",
                  "optimizer.state.exp_avg_sq.decoder.final_layernorm.weight", "early_exit_gate.weight", "early_exit_gate.bias"]
+        master_key=None
+        if protocol["precision"]=="bf16":
+            candidates=[f"optimizer.state.{kind}.decoder.final_layernorm.weight" for kind in ("param","fp32_param")]
+            found=[key for key in candidates if key in md.state_dict_metadata]
+            if len(found)!=1:
+                raise ValueError(f"Expected one FP32 master parameter, found {found}")
+            master_key=found[0]
+            names.append(master_key)
         if protocol["arm"] == "learned":
             names += ["sequence_depth_head.weight", "sequence_depth_head.bias",
                       "optimizer.state.exp_avg.sequence_depth_head.weight"]
@@ -75,12 +92,17 @@ def main():
         load(tensors, storage_reader=reader)
         with safe_open(str(Path(protocol["checkpoint"])/"model.safetensors"), framework="pt") as base:
             delta = (tensors[names[0]]-base.get_tensor("model.norm.weight").float()).abs().max().item()
-            if delta == 0:
+            master_delta=(tensors[master_key]-base.get_tensor("model.norm.weight").float()).abs().max().item() if protocol["precision"]=="bf16" else delta
+            if master_delta == 0:
                 failures.append("parameters_did_not_update")
             for suffix in ("weight", "bias"):
                 if not torch.equal(tensors[f"early_exit_gate.{suffix}"], base.get_tensor(f"model.early_exit_gate.{suffix}").float()):
                     failures.append("frozen_token_gate_changed")
-        moments = {k: tensors[k].abs().max().item() for k in names if k.startswith("optimizer.")}
+        moments = {k: tensors[k].abs().max().item() for k in names if k.startswith(("optimizer.state.exp_avg.","optimizer.state.exp_avg_sq."))}
+        if protocol["precision"]=="bf16" and any(tensors[k].dtype!=torch.float32 for k in [master_key,*moments]):
+            failures.append("bf16_master_or_optimizer_state_is_not_fp32")
+        if protocol["precision"]=="bf16" and tensors[names[0]].dtype!=torch.bfloat16:
+            failures.append("bf16_model_parameters_have_wrong_dtype")
         if not all(moments.values()):
             failures.append("optimizer_moments_are_zero")
         common = load_common_state_dict(checkpoint)
@@ -88,6 +110,9 @@ def main():
         if adam_steps != {finish} or common["opt_param_scheduler"]["num_steps"] != finish*protocol["prompts"]*protocol["group_size"]:
             failures.append("optimizer_or_scheduler_progress_mismatch")
         checkpoint_report = dict(path=str(checkpoint), final_norm_max_delta=delta,
+            master_final_norm_max_delta=master_delta,
+            model_dtype=str(tensors[names[0]].dtype),
+            master_dtype=str(tensors[master_key].dtype) if master_key else str(tensors[names[0]].dtype),
             optimizer_moments=moments, adam_steps=sorted(adam_steps),
             scheduler_samples=common["opt_param_scheduler"]["num_steps"])
         if protocol["arm"] == "learned":

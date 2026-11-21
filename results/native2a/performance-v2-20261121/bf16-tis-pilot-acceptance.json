@@ -1,0 +1,178 @@
+{
+  "passed": true,
+  "failures": [],
+  "protocol": {
+    "backend": "slime_native_megatron_sglang",
+    "diagnostic_reward": false,
+    "arm": "stratified",
+    "total_steps": 2,
+    "prompts": 2,
+    "group_size": 6,
+    "max_new_tokens": 2048,
+    "beta": 0.1,
+    "price_warmup": 0.3,
+    "seed": 20261121,
+    "precision": "bf16",
+    "optimizer": "AdamW",
+    "adam_betas": [
+      0.9,
+      0.99
+    ],
+    "weight_decay": 0.1,
+    "learning_rate": 1e-06,
+    "gate_learning_rate": 0.0001,
+    "lr_warmup_fraction": 0.1,
+    "clip_grad": 0.1,
+    "kl_coef": 0.001,
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+    "batched_decode": true,
+    "activation_recompute": {
+      "granularity": "full",
+      "method": "uniform",
+      "layers": 1
+    },
+    "shared_depth_weight_sync": true,
+    "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+    "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+    "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+    "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+    "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a",
+    "serving": {
+      "attention_implementation": "bf16-fast",
+      "max_running_requests": 32,
+      "kv_token_capacity": 65536,
+      "cuda_graph": true,
+      "memory_fraction": 0.85,
+      "depth4_replicas": 1
+    },
+    "rollout_correction": {
+      "mode": "tis",
+      "clip_low": 0.0,
+      "clip_high": 2.0,
+      "level": "token"
+    }
+  },
+  "run": "runs/native2a-bf16-tis-pilot-v2-20261121",
+  "steps": [
+    {
+      "step": 0,
+      "metrics": {
+        "train/loss": 0.040048147241274513,
+        "train/pg_loss": 0.040048147241274513,
+        "train/kl_loss": 0.0,
+        "train/tis_weight_mean": 0.9999953905741373,
+        "train/tis_clip_fraction": 0.0,
+        "train/tis_ess_fraction": 0.9992477893829346,
+        "train/mismatch_mean_abs": 0.010218928878506025,
+        "train/mismatch_k3": 0.00037565284098188084,
+        "train/grad_norm": 0.5819305230354301,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 12,
+        "train/step": 0
+      }
+    },
+    {
+      "step": 1,
+      "metrics": {
+        "train/loss": -1.505482941865921e-06,
+        "train/pg_loss": -1.505482941865921e-06,
+        "train/kl_loss": 0.0,
+        "train/tis_weight_mean": 0.9997868537902832,
+        "train/tis_clip_fraction": 0.0,
+        "train/tis_ess_fraction": 0.9991272290547689,
+        "train/mismatch_mean_abs": 0.011770286907752356,
+        "train/mismatch_k3": 0.00043775599139432114,
+        "train/grad_norm": 0.020953135846086834,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 12,
+        "train/step": 1
+      }
+    }
+  ],
+  "rollout_metrics": [
+    {
+      "step": 0,
+      "beta": 0.0,
+      "samples": 12,
+      "reward_mean": 0.3333333333333333,
+      "mean_response_tokens": 1932.0833333333333,
+      "mean_depth": 3.0,
+      "depth_counts": {
+        "2": 4,
+        "3": 4,
+        "4": 4
+      },
+      "mean_loop_tokens": 5798.833333333333,
+      "mean_executed_loop_tokens": 6010.333333333333,
+      "truncation_rate": 0.6666666666666666,
+      "nonzero_advantages": 6,
+      "generation_seconds": 298.36496581323445
+    },
+    {
+      "step": 1,
+      "beta": 0.1,
+      "samples": 12,
+      "reward_mean": 0.0,
+      "mean_response_tokens": 2048.0,
+      "mean_depth": 3.0,
+      "depth_counts": {
+        "2": 4,
+        "3": 4,
+        "4": 4
+      },
+      "mean_loop_tokens": 6144.0,
+      "mean_executed_loop_tokens": 6870.0,
+      "truncation_rate": 1.0,
+      "nonzero_advantages": 12,
+      "generation_seconds": 321.50179891102016
+    }
+  ],
+  "consistency": [
+    {
+      "step": 0,
+      "sampler_recompute_max_error": 0.316259503364563,
+      "reference_finite": true,
+      "tokens": 23185,
+      "correction": "tis",
+      "tis_weight_mean": 0.9999912977218628,
+      "tis_clip_fraction": 0.0,
+      "tis_ess_fraction": 0.9992374181747437,
+      "mismatch_mean_abs": 0.010389207862317562,
+      "mismatch_k3": 0.00038063491228967905
+    },
+    {
+      "step": 1,
+      "sampler_recompute_max_error": 0.32330799102783203,
+      "reference_finite": true,
+      "tokens": 24576,
+      "correction": "tis",
+      "tis_weight_mean": 0.9997868537902832,
+      "tis_clip_fraction": 0.0,
+      "tis_ess_fraction": 0.9991260766983032,
+      "mismatch_mean_abs": 0.011770287528634071,
+      "mismatch_k3": 0.00043775601079687476
+    }
+  ],
+  "checkpoint": {
+    "path": "runs/native2a-bf16-tis-pilot-v2-20261121/checkpoints/iter_0000001",
+    "final_norm_max_delta": 0.0,
+    "master_final_norm_max_delta": 1.0132789611816406e-06,
+    "model_dtype": "torch.bfloat16",
+    "master_dtype": "torch.float32",
+    "optimizer_moments": {
+      "optimizer.state.exp_avg.decoder.final_layernorm.weight": 0.00012063707981724292,
+      "optimizer.state.exp_avg_sq.decoder.final_layernorm.weight": 1.70402483234966e-08
+    },
+    "adam_steps": [
+      2.0
+    ],
+    "scheduler_samples": 24
+  },
+  "real_math_correct": 4.0,
+  "samples": 24,
+  "limitation": "Engineering and training acceptance; no held-out improvement claim; strict resume checked separately"
+}

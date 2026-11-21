@@ -1,0 +1,52 @@
+{
+  "source": "results/native2a/performance-20261121/optimized-depth2.jsonl",
+  "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+  "cases": [
+    {
+      "index": 0,
+      "step": 0,
+      "total_tokens": 210,
+      "response_tokens": 128,
+      "max_error": 2.2411346435546875e-05,
+      "worst_response_position": 79,
+      "sampled_logp": -0.8695762157440186,
+      "native_logp": -0.869553804397583,
+      "seconds": 0.30902514792978764
+    },
+    {
+      "index": 1,
+      "step": 0,
+      "total_tokens": 189,
+      "response_tokens": 128,
+      "max_error": 3.165006637573242e-05,
+      "worst_response_position": 64,
+      "sampled_logp": -0.8409156203269958,
+      "native_logp": -0.8409472703933716,
+      "seconds": 0.12569485232234
+    },
+    {
+      "index": 2,
+      "step": 0,
+      "total_tokens": 204,
+      "response_tokens": 128,
+      "max_error": 1.4126300811767578e-05,
+      "worst_response_position": 103,
+      "sampled_logp": -0.5711737871170044,
+      "native_logp": -0.5711596608161926,
+      "seconds": 0.12665084935724735
+    },
+    {
+      "index": 3,
+      "step": 0,
+      "total_tokens": 538,
+      "response_tokens": 128,
+      "max_error": 1.2129545211791992e-05,
+      "worst_response_position": 99,
+      "sampled_logp": -0.4286562502384186,
+      "native_logp": -0.4286441206932068,
+      "seconds": 0.18574640154838562
+    }
+  ],
+  "max_error": 3.165006637573242e-05,
+  "passed": true
+}

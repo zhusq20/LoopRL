@@ -1,0 +1,25 @@
+{
+  "recompute": "selective-mlp",
+  "total_tokens": 2458,
+  "response_tokens": 2048,
+  "runs": [
+    {
+      "seconds": 4.99038247205317,
+      "max_error": 0.0,
+      "gradient_norm": 0.34524351358413696,
+      "peak_allocated_gib": 70.55849742889404
+    },
+    {
+      "seconds": 4.934291779994965,
+      "max_error": 0.0,
+      "gradient_norm": 0.34524381160736084,
+      "peak_allocated_gib": 70.57702827453613
+    },
+    {
+      "seconds": 4.937212293967605,
+      "max_error": 0.0,
+      "gradient_norm": 0.34524375200271606,
+      "peak_allocated_gib": 70.57702827453613
+    }
+  ]
+}

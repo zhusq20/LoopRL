@@ -16,6 +16,25 @@ sys.path.insert(0, str(ROOT))
 from looprl.data import read_jsonl, sha256, write_json
 
 
+def validate_resume_protocol(previous, current, allow_serving_upgrade=False):
+    previous, current = dict(previous), dict(current)
+    for value in (previous,current):
+        value.setdefault("batched_decode", False)
+        value.setdefault("rollout_correction",dict(mode="none",clip_low=0.,clip_high=2.,level="token"))
+        value["serving"] = dict(value.get("serving", dict(attention_implementation="reference",
+            max_running_requests=8, kv_token_capacity=16384)))
+        value["serving"].setdefault("cuda_graph",False)
+        value["serving"].setdefault("memory_fraction",.55)
+        value["serving"].setdefault("depth4_replicas",1)
+    if previous == current:
+        return None
+    before, after = dict(previous), dict(current)
+    old_serving, new_serving = before.pop("serving"), after.pop("serving")
+    if not allow_serving_upgrade or before != after:
+        raise ValueError("Resume protocol differs from original run")
+    return dict(previous=old_serving, current=new_serving)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--checkpoint", default="/tmp/looprl-models/Ouro-2.6B-Thinking")
@@ -29,10 +48,24 @@ def main():
     p.add_argument("--price-warmup", type=float, default=.3)
     p.add_argument("--gate-learning-rate", type=float, default=1e-4)
     p.add_argument("--batched-decode", action="store_true")
+    p.add_argument("--attention-implementation", choices=["reference", "paged", "paged-fused", "bf16-fast"],
+                   default="reference", help="Serving kernels recorded alongside precision and rollout correction")
+    p.add_argument("--precision",choices=["fp32","bf16"],default="fp32")
+    p.add_argument("--rollout-correction",choices=["none","tis"],default="none")
+    p.add_argument("--tis-clip",type=float,default=2.)
+    p.add_argument("--cuda-graph",action="store_true")
+    p.add_argument("--serving-memory-fraction",type=float,default=.55)
+    p.add_argument("--depth4-replicas",type=int,default=1)
+    p.add_argument("--max-running-requests", type=int, default=8)
+    p.add_argument("--kv-token-capacity", type=int, default=16384)
     p.add_argument("--seed", type=int, default=20261121)
     p.add_argument("--save-interval", type=int, default=5)
+    p.add_argument("--engine-base-port", type=int,
+                   help="Start of this run's SGLang port range; defaults to a range per GPU allocation")
     p.add_argument("--resume")
     p.add_argument("--resume-step", type=int)
+    p.add_argument("--serving-upgrade-report", type=Path,
+                   help="Explicitly allow a validated serving-only change at a saved resume boundary")
     p.add_argument("--stop-after", type=int)
     p.add_argument("--dry-run", action="store_true")
     options = p.parse_args()
@@ -42,12 +75,32 @@ def main():
         p.error("Stratified runs need at least three samples per prompt")
     if options.beta < 0 or not 0 <= options.price_warmup <= 1:
         p.error("Invalid compute-price schedule")
+    if options.max_running_requests < 1 or options.kv_token_capacity < options.max_new_tokens + 2048:
+        p.error("Invalid decode concurrency or KV capacity")
+    if options.precision=="bf16" and options.rollout_correction!="tis":
+        p.error("BF16 training requires explicit TIS rollout correction")
+    if options.precision=="bf16" and options.arm=="learned":
+        p.error("BF16 learned-depth needs separate validation of depth-action probability correction")
+    if options.attention_implementation=="bf16-fast" and options.precision!="bf16":
+        p.error("bf16-fast requires BF16 training and serving")
+    if options.precision=="bf16" and options.attention_implementation in ("paged","paged-fused"):
+        p.error("Custom paged kernels require FP32")
+    if not 0 < options.serving_memory_fraction < 1 or not math.isfinite(options.tis_clip) or options.tis_clip < 1:
+        p.error("Invalid serving memory fraction or TIS threshold")
     if options.stop_after is not None and not 1 <= options.stop_after <= options.steps:
         p.error("stop-after must be within the original total steps")
+    if options.serving_upgrade_report and not options.resume:
+        p.error("serving-upgrade-report requires resume")
     depths = [4] if options.arm == "fixed" else [2, 3, 4]
+    if options.depth4_replicas < 1:
+        p.error("depth4-replicas must be positive")
+    rollout_gpus=len(depths)+options.depth4_replicas-1
     visible = os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")
-    if len(visible) != len(depths)+1 or len(set(visible)) != len(visible):
-        p.error(f"Select {len(depths)+1} distinct free GPUs with CUDA_VISIBLE_DEVICES")
+    if len(visible) != rollout_gpus+1 or len(set(visible)) != len(visible):
+        p.error(f"Select {rollout_gpus+1} distinct free GPUs with CUDA_VISIBLE_DEVICES")
+    engine_base_port = options.engine_base_port or (25000 + 1000*int(visible[0]))
+    if not 1024 <= engine_base_port <= 64000:
+        p.error("engine-base-port must leave room for the engine port range")
     if not options.dry_run:
         memory = subprocess.check_output(["nvidia-smi", "--query-gpu=index,memory.used", "--format=csv,noheader,nounits"], text=True)
         used = dict(line.split(", ") for line in memory.strip().splitlines())
@@ -73,7 +126,7 @@ def main():
         arm=options.arm, total_steps=options.steps, prompts=options.prompts,
         group_size=options.group_size, max_new_tokens=options.max_new_tokens,
         beta=options.beta, price_warmup=options.price_warmup, seed=options.seed,
-        precision="fp32", optimizer="AdamW", adam_betas=[.9, .99], weight_decay=.1,
+        precision=options.precision, optimizer="AdamW", adam_betas=[.9, .99], weight_decay=.1,
         learning_rate=1e-6, gate_learning_rate=options.gate_learning_rate,
         lr_warmup_fraction=.1, clip_grad=.1, kl_coef=.001,
         temperature=1., top_p=1., reward="looprl.rewards.score_answer; math-verify==0.8.0",
@@ -83,31 +136,57 @@ def main():
         train_sha256=sha256(data), validation_sha256=sha256(output / "validation-ids.json"),
         checkpoint=checkpoint, checkpoint_revision="f1edd81e7ac41355db670500ceaf204e0f73af68",
         checkpoint_config_sha256=sha256(Path(checkpoint)/"config.json"))
+    # Keep implementation choices in the reproducibility protocol. A resume
+    # cannot silently switch kernels or admission settings.
+    protocol["serving"] = dict(attention_implementation=options.attention_implementation,
+        max_running_requests=options.max_running_requests,
+        kv_token_capacity=options.kv_token_capacity,cuda_graph=options.cuda_graph,
+        memory_fraction=options.serving_memory_fraction,depth4_replicas=options.depth4_replicas)
+    protocol["rollout_correction"] = dict(mode=options.rollout_correction,
+        clip_low=0.,clip_high=options.tis_clip,level="token")
     if options.resume:
         previous = json.loads((Path(options.resume).resolve().parent/"protocol.json").read_text())
-        previous.setdefault("batched_decode", False)
-        if previous != protocol:
-            raise ValueError("Resume protocol differs from original run")
+        change = validate_resume_protocol(previous, protocol, bool(options.serving_upgrade_report))
+        if change:
+            validation = json.loads(options.serving_upgrade_report.read_text())
+            if (validation.get("passed") is not True
+                    or validation.get("attention_implementation") != options.attention_implementation
+                    or validation.get("checkpoint_revision") != protocol["checkpoint_revision"]):
+                raise ValueError("Serving upgrade lacks a passing matching validation report")
+            required = {"third_party/slime/slime_plugins/ouro_attention.py",
+                        "third_party/slime/slime_plugins/ouro_kernels.py",
+                        "third_party/slime/slime_plugins/sglang_models/ouro.py"}
+            if set(validation.get("source_sha256", {})) != required or any(
+                    sha256(ROOT/name) != digest for name, digest in validation["source_sha256"].items()):
+                raise ValueError("Serving source differs from the validated implementation")
+            write_json(output/"serving-upgrade.json", dict(**change,
+                validation_report=str(options.serving_upgrade_report.resolve()),
+                validation_sha256=sha256(options.serving_upgrade_report),
+                source_run=str(Path(options.resume).resolve().parent), boundary=options.resume_step))
     write_json(output/"protocol.json", protocol)
     config = json.loads((Path(checkpoint)/"config.json").read_text())
     overrides = dict(ouro_arm=options.arm, ouro_total_steps=options.steps,
         ouro_price_warmup=options.price_warmup, ouro_output=str(output),
+        ouro_rollout_correction=options.rollout_correction,
         ouro_shared_depth_engines=True,
+        ouro_engine_base_port=engine_base_port,
         ouro_learned_depth=options.arm == "learned", ouro_gate_learning_rate=options.gate_learning_rate)
     write_json(output/"custom.json", overrides)
     deployment = {"sglang": [dict(name=f"depth{k}", update_weights=True,
-        server_groups=[dict(worker_type="regular", num_gpus=1,
+        server_groups=[dict(worker_type="regular", num_gpus=options.depth4_replicas if k==4 else 1,
             overrides={"json_model_override_args": json.dumps({"total_ut_steps": k,
-                "ouro_learned_depth": options.arm == "learned", "ouro_batched_decode": options.batched_decode}),
+                "ouro_learned_depth": options.arm == "learned", "ouro_batched_decode": options.batched_decode,
+                "ouro_paged_attention": options.attention_implementation in ("paged","paged-fused"),
+                "ouro_fused_ops": options.attention_implementation in ("paged-fused","bf16-fast")}),
                 **({"return_hidden_states_mode": "last"} if options.arm == "learned" else {})})]) for k in depths]}
     write_json(output/"engines.json", deployment)
     argv = ["train.py", "--actor-num-nodes", "1", "--actor-num-gpus-per-node", "1",
-        "--rollout-num-gpus", str(len(depths)), "--num-gpus-per-node", str(len(visible)),
+        "--rollout-num-gpus", str(rollout_gpus), "--num-gpus-per-node", str(len(visible)),
         "--hf-checkpoint", checkpoint, "--load", options.resume or checkpoint,
         "--ref-load", checkpoint, "--save", str(output/"checkpoints"),
         "--save-interval", str(options.save_interval),
         "--spec", "slime_plugins.models.ouro", "get_ouro_model_provider",
-        "--transformer-impl", "local", "--train-fp32", "--ouro-depth", "4",
+        "--transformer-impl", "local", "--train-fp32" if options.precision=="fp32" else "--bf16", "--ouro-depth", "4",
         "--ouro-beta", str(options.beta), "--disable-checkpoint-metadata-cache",
         "--num-layers", str(config["num_hidden_layers"]), "--hidden-size", str(config["hidden_size"]),
         "--ffn-hidden-size", str(config["intermediate_size"]),
@@ -143,19 +222,28 @@ def main():
         "--optimizer", "adam", "--lr", "1e-6", "--lr-decay-style", "constant",
         "--lr-decay-iters", str(options.steps), "--lr-warmup-iters", str(max(1, math.ceil(options.steps*.1))),
         "--clip-grad", ".1", "--weight-decay", ".1", "--adam-beta1", ".9", "--adam-beta2", ".99",
-        "--rollout-num-gpus-per-engine", "1", "--sglang-dtype", "float32",
+        "--rollout-num-gpus-per-engine", "1", "--sglang-dtype", "float32" if options.precision=="fp32" else "bfloat16",
         "--sglang-config", str(output/"engines.json"),
-        "--sglang-attention-backend", "torch_native", "--sglang-disable-cuda-graph",
+        "--sglang-attention-backend", "flashinfer" if options.attention_implementation=="bf16-fast" else "triton" if options.cuda_graph else "torch_native",
         "--sglang-disable-overlap-schedule", "--sglang-chunked-prefill-size", "-1",
         "--sglang-context-length", str(max(4096, options.max_new_tokens+2048)),
-        "--sglang-max-total-tokens", str(max(16384, 4*(options.max_new_tokens+2048))),
-        "--sglang-mem-fraction-static", ".55", "--sglang-max-running-requests", "8",
+        "--sglang-max-total-tokens", str(options.kv_token_capacity),
+        "--sglang-mem-fraction-static", str(options.serving_memory_fraction), "--sglang-max-running-requests", str(options.max_running_requests),
         "--custom-config-path", str(output/"custom.json"), "--dump-details", str(output/"details")]
+    if options.precision=="bf16":
+        argv += ["--accumulate-allreduce-grads-in-fp32"]
+    if options.rollout_correction=="tis":
+        argv += ["--use-tis","--tis-clip",str(options.tis_clip),"--tis-clip-low","0"]
+    if options.cuda_graph:
+        sizes=sorted({1,2,4,8,16,32,options.max_running_requests}&set(range(1,options.max_running_requests+1)))
+        argv += ["--sglang-cuda-graph-config",json.dumps(dict(decode=dict(backend="full",bs=sizes),prefill=dict(backend="disabled")))]
+    else:
+        argv += ["--sglang-disable-cuda-graph"]
     if options.resume_step is not None:
         if not options.resume:
             p.error("resume-step requires resume")
         argv += ["--ckpt-step", str(options.resume_step)]
-    write_json(output/"launch.json", dict(argv=argv, gpus=visible))
+    write_json(output/"launch.json", dict(argv=argv, gpus=visible, engine_base_port=engine_base_port))
     source = output/"source"
     source.mkdir()
     for name in ["looprl/native_2a.py", "scripts/run_native_2a.py", "third_party/slime/slime_plugins/ouro_2a.py",

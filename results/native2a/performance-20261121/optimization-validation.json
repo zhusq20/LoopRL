@@ -1,0 +1,78 @@
+{
+  "passed": true,
+  "attention_implementation": "paged-fused",
+  "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "dtype": "float32",
+  "tf32": false,
+  "logprob_tolerance": 0.001,
+  "source_sha256": {
+    "third_party/slime/slime_plugins/ouro_attention.py": "99db01d8750b6c55e8a9ed0dd2e53972d53e0c8dbe873c8c575a548701cc001b",
+    "third_party/slime/slime_plugins/ouro_kernels.py": "996c84dcfddb59ced7248b2831be6aefa0d5ab6ef3848271e66563568abac3ad",
+    "third_party/slime/slime_plugins/sglang_models/ouro.py": "9d3c504231a8f7caedd7b41690a961f1317936009de20fdbfdc4ed3b053b3a2c"
+  },
+  "tests_passed": 28,
+  "native_audits": {
+    "optimized-short-native": {
+      "cases": 22,
+      "max_error": 2.6047229766845703e-05,
+      "passed": true
+    },
+    "optimized-long-native": {
+      "cases": 8,
+      "max_error": 7.212162017822266e-05,
+      "passed": true
+    },
+    "optimized-failure-group-native": {
+      "cases": 8,
+      "max_error": 0.00010061264038085938,
+      "passed": true
+    },
+    "optimized-depth2-native": {
+      "cases": 4,
+      "max_error": 3.165006637573242e-05,
+      "passed": true
+    },
+    "optimized-depth3-native": {
+      "cases": 4,
+      "max_error": 2.7954578399658203e-05,
+      "passed": true
+    }
+  },
+  "max_logprob_error": 0.00010061264038085938,
+  "backward": {
+    "passed": true,
+    "source": "results/native2a/performance-20261121/optimized-math-long.jsonl",
+    "step": 0,
+    "index": 3,
+    "total_tokens": 2458,
+    "response_tokens": 2048,
+    "depth": 4,
+    "grad_no_grad_max_logprob_error": 0.0,
+    "final_norm_gradient": 0.3452436327934265,
+    "peak_allocated_gib": 23.02509307861328,
+    "seconds": 5.541279040277004,
+    "limitation": "Single native trajectory backward; excludes full trainer, reference backup and optimizer state"
+  },
+  "controlled_benchmark": [
+    {
+      "context_tokens": 512,
+      "batch": 8,
+      "reference_tokens_per_second": 59.225665013730655,
+      "optimized_tokens_per_second": 110.57015898572124,
+      "speedup": 1.8669298007896926
+    },
+    {
+      "context_tokens": 2048,
+      "batch": 8,
+      "reference_tokens_per_second": 54.82361510833892,
+      "optimized_tokens_per_second": 121.64199767404993,
+      "speedup": 2.2187883348018698
+    }
+  ],
+  "limitations": [
+    "Serving benchmarks only; full training update speedup not yet measured.",
+    "Regression reruns sample from the new implementation and may produce different tokens despite identical seeds.",
+    "No complete 256-trajectory optimized formal update has finished; original runtime numerical guards remain active.",
+    "Checkpoint migration preserves optimizer and data state but does not assert bitwise equivalence to uninterrupted reference serving."
+  ]
+}

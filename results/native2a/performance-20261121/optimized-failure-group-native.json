@@ -1,0 +1,96 @@
+{
+  "source": "results/native2a/performance-20261121/optimized-failure-group.jsonl",
+  "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+  "cases": [
+    {
+      "index": 0,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 5.316734313964844e-05,
+      "worst_response_position": 965,
+      "sampled_logp": -3.2612202167510986,
+      "native_logp": -3.2612733840942383,
+      "seconds": 1.3838956356048584
+    },
+    {
+      "index": 1,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 4.6253204345703125e-05,
+      "worst_response_position": 1237,
+      "sampled_logp": -3.189309597015381,
+      "native_logp": -3.1893558502197266,
+      "seconds": 1.211163392290473
+    },
+    {
+      "index": 2,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 7.677078247070312e-05,
+      "worst_response_position": 877,
+      "sampled_logp": -2.0814919471740723,
+      "native_logp": -2.081568717956543,
+      "seconds": 1.2102607488632202
+    },
+    {
+      "index": 3,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 6.556510925292969e-05,
+      "worst_response_position": 1730,
+      "sampled_logp": -2.8915116786956787,
+      "native_logp": -2.891446113586426,
+      "seconds": 1.2219283301383257
+    },
+    {
+      "index": 4,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 4.8995018005371094e-05,
+      "worst_response_position": 1873,
+      "sampled_logp": -1.0747790336608887,
+      "native_logp": -1.074828028678894,
+      "seconds": 1.212546857073903
+    },
+    {
+      "index": 5,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 0.00010061264038085938,
+      "worst_response_position": 1129,
+      "sampled_logp": -1.2168256044387817,
+      "native_logp": -1.2169262170791626,
+      "seconds": 1.2099315635859966
+    },
+    {
+      "index": 6,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 6.628036499023438e-05,
+      "worst_response_position": 1409,
+      "sampled_logp": -2.7853097915649414,
+      "native_logp": -2.785243511199951,
+      "seconds": 1.2162320408970118
+    },
+    {
+      "index": 7,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 7.843971252441406e-05,
+      "worst_response_position": 1064,
+      "sampled_logp": -2.044370412826538,
+      "native_logp": -2.0444488525390625,
+      "seconds": 1.2094210144132376
+    }
+  ],
+  "max_error": 0.00010061264038085938,
+  "passed": true
+}

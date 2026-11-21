@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "source": "results/native2a/performance-20261121/optimized-math-long.jsonl",
+  "step": 0,
+  "index": 3,
+  "total_tokens": 2458,
+  "response_tokens": 2048,
+  "depth": 4,
+  "grad_no_grad_max_logprob_error": 0.0,
+  "final_norm_gradient": 0.3452436327934265,
+  "peak_allocated_gib": 23.02509307861328,
+  "seconds": 5.541279040277004,
+  "limitation": "Single native trajectory backward; excludes full trainer, reference backup and optimizer state"
+}

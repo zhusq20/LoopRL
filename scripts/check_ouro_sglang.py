@@ -20,6 +20,9 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--max-new-tokens", type=int, default=8)
     parser.add_argument("--batched-decode", action="store_true")
+    parser.add_argument("--paged-attention", action="store_true")
+    parser.add_argument("--fused-ops", action="store_true")
+    parser.add_argument("--mem-fraction", type=float, default=.5)
     parser.add_argument("--dtype", choices=["float32", "bfloat16"], default="float32")
     args = parser.parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint, trust_remote_code=True)
@@ -28,9 +31,11 @@ def main():
                 tokenize=True, add_generation_prompt=True, return_dict=False) for text in prompts]
     engine = Engine(model_path=args.checkpoint, trust_remote_code=True, dtype=args.dtype,
         tp_size=1, pp_size=1, context_length=4096, max_total_tokens=8192,
-        max_running_requests=4, mem_fraction_static=0.5, attention_backend="torch_native",
+        max_running_requests=4, mem_fraction_static=args.mem_fraction, attention_backend="torch_native",
         disable_cuda_graph=True, disable_overlap_schedule=True, chunked_prefill_size=-1,
-        json_model_override_args=json.dumps({"total_ut_steps": args.depth, "ouro_batched_decode": args.batched_decode}),
+        json_model_override_args=json.dumps({"total_ut_steps": args.depth, "ouro_batched_decode": args.batched_decode,
+                                            "ouro_paged_attention": args.paged_attention,
+                                            "ouro_fused_ops": args.fused_ops}),
         random_seed=42, log_level="warning")
     try:
         sampling = dict(temperature=0, max_new_tokens=args.max_new_tokens, ignore_eos=True)
@@ -41,7 +46,9 @@ def main():
                                     return_logprob=True, logprob_start_len=len(token_ids[0]) - 1)
         assert repeated["meta_info"]["cached_tokens"] > 0, "Repeated request must exercise prefix reuse"
         report = dict(depth=args.depth, prompts=prompts, input_ids=token_ids,
-                      batched_decode=args.batched_decode, dtype=args.dtype, generation_seconds=time.monotonic()-started,
+                      batched_decode=args.batched_decode, paged_attention=args.paged_attention,
+                      fused_ops=args.fused_ops,
+                      dtype=args.dtype, generation_seconds=time.monotonic()-started,
                       batch_outputs=outputs, repeated_output=repeated)
         output = Path(args.output)
         output.parent.mkdir(parents=True, exist_ok=True)

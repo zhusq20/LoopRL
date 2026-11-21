@@ -1,0 +1,224 @@
+{
+  "checked_local": "2026-11-21T13:41:20.161483+08:00",
+  "conclusion": "Formal runs use an FP32 correctness-oriented, un-fused Ouro path with small decode batches and synchronous single-rank training. Current runtime is reproducible from token volume and measured throughput.",
+  "normal_training": [
+    {
+      "lane": "fixed",
+      "protocol": {
+        "backend": "slime_native_megatron_sglang",
+        "diagnostic_reward": false,
+        "arm": "fixed",
+        "total_steps": 140,
+        "prompts": 32,
+        "group_size": 8,
+        "max_new_tokens": 2048,
+        "beta": 0.0,
+        "price_warmup": 0.3,
+        "seed": 20261121,
+        "precision": "fp32",
+        "optimizer": "AdamW",
+        "adam_betas": [
+          0.9,
+          0.99
+        ],
+        "weight_decay": 0.1,
+        "learning_rate": 1e-06,
+        "gate_learning_rate": 0.0001,
+        "lr_warmup_fraction": 0.1,
+        "clip_grad": 0.1,
+        "kl_coef": 0.001,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+        "batched_decode": true,
+        "activation_recompute": {
+          "granularity": "full",
+          "method": "uniform",
+          "layers": 1
+        },
+        "shared_depth_weight_sync": true,
+        "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+        "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+        "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+        "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+        "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a"
+      },
+      "rollouts": [
+        {
+          "step": 0,
+          "finished_local": "2026-11-21 13:34:24",
+          "wall_seconds": 7550.8098311424255,
+          "mean_response_tokens": 1742.87109375,
+          "mean_queue_seconds": 3560.2864035457314,
+          "mean_request_seconds": 3791.9134263891538
+        }
+      ],
+      "updates": []
+    },
+    {
+      "lane": "stratified-v2",
+      "protocol": {
+        "backend": "slime_native_megatron_sglang",
+        "diagnostic_reward": false,
+        "arm": "stratified",
+        "total_steps": 140,
+        "prompts": 32,
+        "group_size": 8,
+        "max_new_tokens": 2048,
+        "beta": 0.0,
+        "price_warmup": 0.3,
+        "seed": 20261121,
+        "precision": "fp32",
+        "optimizer": "AdamW",
+        "adam_betas": [
+          0.9,
+          0.99
+        ],
+        "weight_decay": 0.1,
+        "learning_rate": 1e-06,
+        "gate_learning_rate": 0.0001,
+        "lr_warmup_fraction": 0.1,
+        "clip_grad": 0.1,
+        "kl_coef": 0.001,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+        "batched_decode": true,
+        "activation_recompute": {
+          "granularity": "full",
+          "method": "uniform",
+          "layers": 1
+        },
+        "shared_depth_weight_sync": true,
+        "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+        "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+        "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+        "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+        "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a"
+      },
+      "rollouts": [
+        {
+          "step": 0,
+          "finished_local": "2026-11-21 12:16:40",
+          "wall_seconds": 2608.9687778949738,
+          "mean_response_tokens": 1746.9609375,
+          "mean_queue_seconds": 849.7503634668756,
+          "mean_request_seconds": 1022.5816198353205
+        },
+        {
+          "step": 1,
+          "finished_local": "2026-11-21 13:20:46",
+          "wall_seconds": 2619.2241082191467,
+          "mean_response_tokens": 1670.28515625,
+          "mean_queue_seconds": 802.9306813024814,
+          "mean_request_seconds": 969.2818741549636
+        }
+      ],
+      "updates": [
+        {
+          "finished_local": "2026-11-21 12:37:05",
+          "metrics": {
+            "train/loss": 0.022405145689845085,
+            "train/pg_loss": 0.022405145689845085,
+            "train/kl_loss": 0.0,
+            "train/grad_norm": 0.10573641050670134,
+            "train/lr-pg_0": 7.142857142857142e-08,
+            "train/lr-pg_1": 7.142857142857142e-08,
+            "train/global_batch_size": 256,
+            "train/step": 0
+          }
+        },
+        {
+          "finished_local": "2026-11-21 13:40:23",
+          "metrics": {
+            "train/loss": 0.02603992074728012,
+            "train/pg_loss": 0.02603992074728012,
+            "train/kl_loss": 0.0,
+            "train/grad_norm": 0.1123897810609555,
+            "train/lr-pg_0": 1.4285714285714285e-07,
+            "train/lr-pg_1": 1.4285714285714285e-07,
+            "train/global_batch_size": 256,
+            "train/step": 1
+          }
+        }
+      ]
+    }
+  ],
+  "normal_batch8_decode_median_tokens_per_second": {
+    "fixed_depth4": 60.69,
+    "stratified_depth2": 123.64,
+    "stratified_depth3": 80.25,
+    "stratified_depth4": 61.82
+  },
+  "fixed_first_rollout": {
+    "response_tokens": 446175,
+    "seconds": 7550.8098311424255,
+    "aggregate_tokens_per_second": 59.089688388098956
+  },
+  "confirmed_configuration": {
+    "precision": "fp32",
+    "tf32": false,
+    "decode_batch_limit": 8,
+    "kv_token_capacity": 16384,
+    "cuda_graph": false,
+    "overlap_schedule": false,
+    "training_ranks_per_arm": 1,
+    "training_micro_batch_size": 1,
+    "activation_recompute": "full, each layer",
+    "physical_layers": 48,
+    "executed_blocks_per_token_depth2": 96,
+    "executed_blocks_per_token_depth4": 192
+  },
+  "kv_capacity_analysis": {
+    "heads": 16,
+    "head_dim": 128,
+    "fp32_depth4_mib_per_cached_token": 3,
+    "fp32_depth4_cache_16384_tokens_gib": 48,
+    "fp32_depth4_batch32_context2048_cache_gib": 192,
+    "note": "Formula: depth * 48 physical layers * K,V * 16 heads * 128 channels * 4 bytes. Excludes model weights, prompt tokens, temporary tensors and prefix sharing."
+  },
+  "profile_findings": {
+    "decode_kernels_per_step": 11362,
+    "decode_linear_ops_per_step": 768,
+    "decode_sdpa_calls_per_step": 192,
+    "cached_prefill_dtoh_count": 13440,
+    "cached_prefill_details": "8 requests, 512-token cached history, only one new token/request; native prefill creates full-length queries and runs each request separately.",
+    "note": "Profile includes overhead; do not treat profiled step duration as production latency. CUDA graph was separately benchmarked, not assumed to provide a large speedup."
+  },
+  "isolated_operator_results": {
+    "description": "Isolated Ouro-shaped operator benchmark; does not modify a running model.\n\nRandom tensors, fixed cache and one decoder block (without RoPE/cache writes).\nThis diagnoses precision, batching, and launch overhead, not end-to-end speedup.\n",
+    "batch8_context2048_fp32_eager_ms": 0.6415838375687599,
+    "tf32_speedup": 1.186296590018855,
+    "bf16_speedup": 1.9173780535889733,
+    "fp32_cuda_graph_speedup": 1.0527199905052347,
+    "fp32_batch16_per_token_speedup": 1.2583029400234154,
+    "bf16_batch32_per_token_speedup": 3.6015539745270306,
+    "all_graph_outputs_match_eager_exactly": true,
+    "limitation": "Random-tensor single-block microbenchmark omits RoPE/cache writes; precision/graph effects are not validated end-to-end model speedups or logprob consistency results."
+  },
+  "diagnostic_side_effects": {
+    "weights_changed": false,
+    "server_configuration_changed": false,
+    "live_engine_probes": "Small deterministic requests issued while rollout engines were idle during actor training; prefix cache populated and a four-forward trace captured. Profiling start/stop confirmed in server log. Exclude diagnostic interval from production throughput analysis.",
+    "isolated_operator_gpu": 1,
+    "initial_operator_attempt": "Required existing CUDA-13 compatibility LD_LIBRARY_PATH; first attempt failed before CUDA allocation, then completed using same runtime library path as running engines."
+  },
+  "prioritized_next_steps": [
+    "Replace native cached prefill scalar indexing/full-query recomputation and decode KV materialization with a recurrent-cache-compatible attention path; validate logits/logprobs.",
+    "Revisit BF16/TF32 numerical consistency using identical trajectories; prior BF16 failures must be resolved before changing the formal precision protocol.",
+    "Tune concurrent requests jointly with KV token capacity and measured memory; FP32 depth4 cannot hold 32 full 2048-token sequences in this GPU without prefix sharing/offload.",
+    "Fuse native normalization/RoPE/activation and add graph-compatible metadata; graph alone showed only a small benefit in the 2048-token block test.",
+    "After rollout throughput is fixed, reduce single-rank sequential training/recompute and depth-engine load imbalance while preserving on-policy semantics."
+  ],
+  "artifacts": [
+    "live-profile-summary.json",
+    "trace-depth4/",
+    "live-benchmarks.json",
+    "fixed-engine-control.json",
+    "operator-benchmarks.json"
+  ],
+  "reproduction_scripts": [
+    "scripts/benchmark_native_2a_live.py",
+    "scripts/benchmark_native_2a_ops.py"
+  ]
+}

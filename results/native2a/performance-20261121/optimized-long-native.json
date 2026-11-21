@@ -1,0 +1,96 @@
+{
+  "source": "results/native2a/performance-20261121/optimized-math-long.jsonl",
+  "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+  "cases": [
+    {
+      "index": 0,
+      "step": 0,
+      "total_tokens": 1727,
+      "response_tokens": 1645,
+      "max_error": 4.6193599700927734e-05,
+      "worst_response_position": 458,
+      "sampled_logp": -0.7974047660827637,
+      "native_logp": -0.7973585724830627,
+      "seconds": 1.1372791808098555
+    },
+    {
+      "index": 1,
+      "step": 0,
+      "total_tokens": 1395,
+      "response_tokens": 1334,
+      "max_error": 3.6835670471191406e-05,
+      "worst_response_position": 775,
+      "sampled_logp": -0.9050233364105225,
+      "native_logp": -0.9050601720809937,
+      "seconds": 0.722537511959672
+    },
+    {
+      "index": 2,
+      "step": 0,
+      "total_tokens": 2124,
+      "response_tokens": 2048,
+      "max_error": 3.2782554626464844e-05,
+      "worst_response_position": 1768,
+      "sampled_logp": -1.0561140775680542,
+      "native_logp": -1.0561468601226807,
+      "seconds": 1.205449789762497
+    },
+    {
+      "index": 3,
+      "step": 0,
+      "total_tokens": 2458,
+      "response_tokens": 2048,
+      "max_error": 7.212162017822266e-05,
+      "worst_response_position": 1281,
+      "sampled_logp": -1.2336268424987793,
+      "native_logp": -1.233554720878601,
+      "seconds": 1.3589171152561903
+    },
+    {
+      "index": 4,
+      "step": 0,
+      "total_tokens": 2135,
+      "response_tokens": 2048,
+      "max_error": 2.6285648345947266e-05,
+      "worst_response_position": 1874,
+      "sampled_logp": -0.7268792986869812,
+      "native_logp": -0.7268530130386353,
+      "seconds": 1.221415376290679
+    },
+    {
+      "index": 5,
+      "step": 0,
+      "total_tokens": 2168,
+      "response_tokens": 2048,
+      "max_error": 2.4557113647460938e-05,
+      "worst_response_position": 594,
+      "sampled_logp": -1.064493179321289,
+      "native_logp": -1.0645177364349365,
+      "seconds": 1.2277477774769068
+    },
+    {
+      "index": 6,
+      "step": 0,
+      "total_tokens": 917,
+      "response_tokens": 839,
+      "max_error": 2.3484230041503906e-05,
+      "worst_response_position": 267,
+      "sampled_logp": -0.4404962956905365,
+      "native_logp": -0.440472811460495,
+      "seconds": 0.5451763663440943
+    },
+    {
+      "index": 7,
+      "step": 0,
+      "total_tokens": 2192,
+      "response_tokens": 2028,
+      "max_error": 3.2901763916015625e-05,
+      "worst_response_position": 138,
+      "sampled_logp": -0.8415035605430603,
+      "native_logp": -0.8414706587791443,
+      "seconds": 1.2357175182551146
+    }
+  ],
+  "max_error": 7.212162017822266e-05,
+  "passed": true
+}

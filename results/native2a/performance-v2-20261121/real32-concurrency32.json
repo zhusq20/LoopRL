@@ -1,0 +1,56 @@
+{
+  "variant": "paged-fused",
+  "depth": 4,
+  "dtype": "float32",
+  "cuda_graph": true,
+  "concurrency": 32,
+  "kv_token_capacity": 36864,
+  "forward_args": {
+    "total_ut_steps": 4,
+    "ouro_batched_decode": true,
+    "ouro_paged_attention": true,
+    "ouro_fused_ops": true
+  },
+  "cases": [
+    {
+      "prompt_lengths": [
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        410,
+        410,
+        410,
+        410,
+        410,
+        410,
+        410,
+        410
+      ],
+      "batch": 32,
+      "seconds": 233.82154136896133,
+      "output_tokens": 64123,
+      "tokens_per_second": 274.2390612283938
+    }
+  ]
+}

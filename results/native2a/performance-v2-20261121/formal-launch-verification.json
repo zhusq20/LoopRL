@@ -1,0 +1,411 @@
+{
+  "observed_unix": 1795243952.2176454,
+  "queues": {
+    "fixed": {
+      "status": {
+        "status": "running",
+        "stage": "fixed4-beta0",
+        "pid": 53013,
+        "updated_unix": 1795243944.082452,
+        "child_pid": 53022,
+        "log": "/ossfs/workspace/LoopRL/runs/native2a-bf16-formal-20261121/fixed/fixed4-beta0.log"
+      },
+      "engines": [
+        {
+          "url": "http://10.10.12.112:29000",
+          "model_info": {
+            "model_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "served_model_name": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "tokenizer_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "is_generation": true,
+            "preferred_sampling_params": null,
+            "weight_version": "1",
+            "load_format": "auto",
+            "reasoning_parser": null,
+            "tool_call_parser": null,
+            "disaggregation_mode": "null",
+            "has_image_understanding": false,
+            "has_audio_understanding": false,
+            "model_type": "ouro",
+            "architectures": [
+              "OuroForCausalLM"
+            ],
+            "embedding": {
+              "family": "none",
+              "task": "none",
+              "execution": "none",
+              "attention": "none",
+              "pooling": "model_defined",
+              "normalize": false,
+              "postprocessor": "none",
+              "tokenizer_special_tokens": "model_default",
+              "supports_dimensions": false,
+              "supports_token_embeddings": false,
+              "supports_multimodal": false,
+              "requires_embedding_flag": false,
+              "auto_enable_embedding": false,
+              "bcg_eligibility": "disabled",
+              "safe_disable_kv_cache": false,
+              "safe_disable_radix_cache": false,
+              "safe_disable_chunked_prefill": false,
+              "enabled": false,
+              "matryoshka_dimensions": [],
+              "bcg": {
+                "prefill_backend": "disabled",
+                "enabled": false,
+                "capture_token_budget": -1,
+                "capture_batch_sizes": []
+              },
+              "cache": {
+                "kv_cache_disabled": false,
+                "radix_cache_disabled": false,
+                "chunked_prefill_disabled": true
+              }
+            }
+          },
+          "server_config": {
+            "dtype": "bfloat16",
+            "attention_backend": "flashinfer",
+            "max_running_requests": 32,
+            "max_total_tokens": 65536,
+            "mem_fraction_static": 0.85,
+            "json_model_override_args": "{\"total_ut_steps\": 4, \"ouro_learned_depth\": false, \"ouro_batched_decode\": true, \"ouro_paged_attention\": false, \"ouro_fused_ops\": true}"
+          }
+        },
+        {
+          "url": "http://10.10.12.112:29002",
+          "model_info": {
+            "model_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "served_model_name": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "tokenizer_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "is_generation": true,
+            "preferred_sampling_params": null,
+            "weight_version": "1",
+            "load_format": "auto",
+            "reasoning_parser": null,
+            "tool_call_parser": null,
+            "disaggregation_mode": "null",
+            "has_image_understanding": false,
+            "has_audio_understanding": false,
+            "model_type": "ouro",
+            "architectures": [
+              "OuroForCausalLM"
+            ],
+            "embedding": {
+              "family": "none",
+              "task": "none",
+              "execution": "none",
+              "attention": "none",
+              "pooling": "model_defined",
+              "normalize": false,
+              "postprocessor": "none",
+              "tokenizer_special_tokens": "model_default",
+              "supports_dimensions": false,
+              "supports_token_embeddings": false,
+              "supports_multimodal": false,
+              "requires_embedding_flag": false,
+              "auto_enable_embedding": false,
+              "bcg_eligibility": "disabled",
+              "safe_disable_kv_cache": false,
+              "safe_disable_radix_cache": false,
+              "safe_disable_chunked_prefill": false,
+              "enabled": false,
+              "matryoshka_dimensions": [],
+              "bcg": {
+                "prefill_backend": "disabled",
+                "enabled": false,
+                "capture_token_budget": -1,
+                "capture_batch_sizes": []
+              },
+              "cache": {
+                "kv_cache_disabled": false,
+                "radix_cache_disabled": false,
+                "chunked_prefill_disabled": true
+              }
+            }
+          },
+          "server_config": {
+            "dtype": "bfloat16",
+            "attention_backend": "flashinfer",
+            "max_running_requests": 32,
+            "max_total_tokens": 65536,
+            "mem_fraction_static": 0.85,
+            "json_model_override_args": "{\"total_ut_steps\": 4, \"ouro_learned_depth\": false, \"ouro_batched_decode\": true, \"ouro_paged_attention\": false, \"ouro_fused_ops\": true}"
+          }
+        }
+      ],
+      "first_batch_samples": 256,
+      "sample_weight_versions": [
+        "1"
+      ]
+    },
+    "stratified": {
+      "status": {
+        "status": "running",
+        "stage": "stratified-beta0",
+        "pid": 53014,
+        "updated_unix": 1795243944.0772011,
+        "child_pid": 53021,
+        "log": "/ossfs/workspace/LoopRL/runs/native2a-bf16-formal-20261121/stratified/stratified-beta0.log"
+      },
+      "engines": [
+        {
+          "url": "http://10.10.12.112:25000",
+          "model_info": {
+            "model_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "served_model_name": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "tokenizer_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "is_generation": true,
+            "preferred_sampling_params": null,
+            "weight_version": "1",
+            "load_format": "auto",
+            "reasoning_parser": null,
+            "tool_call_parser": null,
+            "disaggregation_mode": "null",
+            "has_image_understanding": false,
+            "has_audio_understanding": false,
+            "model_type": "ouro",
+            "architectures": [
+              "OuroForCausalLM"
+            ],
+            "embedding": {
+              "family": "none",
+              "task": "none",
+              "execution": "none",
+              "attention": "none",
+              "pooling": "model_defined",
+              "normalize": false,
+              "postprocessor": "none",
+              "tokenizer_special_tokens": "model_default",
+              "supports_dimensions": false,
+              "supports_token_embeddings": false,
+              "supports_multimodal": false,
+              "requires_embedding_flag": false,
+              "auto_enable_embedding": false,
+              "bcg_eligibility": "disabled",
+              "safe_disable_kv_cache": false,
+              "safe_disable_radix_cache": false,
+              "safe_disable_chunked_prefill": false,
+              "enabled": false,
+              "matryoshka_dimensions": [],
+              "bcg": {
+                "prefill_backend": "disabled",
+                "enabled": false,
+                "capture_token_budget": -1,
+                "capture_batch_sizes": []
+              },
+              "cache": {
+                "kv_cache_disabled": false,
+                "radix_cache_disabled": false,
+                "chunked_prefill_disabled": true
+              }
+            }
+          },
+          "server_config": {
+            "dtype": "bfloat16",
+            "attention_backend": "flashinfer",
+            "max_running_requests": 32,
+            "max_total_tokens": 65536,
+            "mem_fraction_static": 0.85,
+            "json_model_override_args": "{\"total_ut_steps\": 2, \"ouro_learned_depth\": false, \"ouro_batched_decode\": true, \"ouro_paged_attention\": false, \"ouro_fused_ops\": true}"
+          }
+        },
+        {
+          "url": "http://10.10.12.112:25165",
+          "model_info": {
+            "model_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "served_model_name": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "tokenizer_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "is_generation": true,
+            "preferred_sampling_params": null,
+            "weight_version": "1",
+            "load_format": "auto",
+            "reasoning_parser": null,
+            "tool_call_parser": null,
+            "disaggregation_mode": "null",
+            "has_image_understanding": false,
+            "has_audio_understanding": false,
+            "model_type": "ouro",
+            "architectures": [
+              "OuroForCausalLM"
+            ],
+            "embedding": {
+              "family": "none",
+              "task": "none",
+              "execution": "none",
+              "attention": "none",
+              "pooling": "model_defined",
+              "normalize": false,
+              "postprocessor": "none",
+              "tokenizer_special_tokens": "model_default",
+              "supports_dimensions": false,
+              "supports_token_embeddings": false,
+              "supports_multimodal": false,
+              "requires_embedding_flag": false,
+              "auto_enable_embedding": false,
+              "bcg_eligibility": "disabled",
+              "safe_disable_kv_cache": false,
+              "safe_disable_radix_cache": false,
+              "safe_disable_chunked_prefill": false,
+              "enabled": false,
+              "matryoshka_dimensions": [],
+              "bcg": {
+                "prefill_backend": "disabled",
+                "enabled": false,
+                "capture_token_budget": -1,
+                "capture_batch_sizes": []
+              },
+              "cache": {
+                "kv_cache_disabled": false,
+                "radix_cache_disabled": false,
+                "chunked_prefill_disabled": true
+              }
+            }
+          },
+          "server_config": {
+            "dtype": "bfloat16",
+            "attention_backend": "flashinfer",
+            "max_running_requests": 32,
+            "max_total_tokens": 65536,
+            "mem_fraction_static": 0.85,
+            "json_model_override_args": "{\"total_ut_steps\": 3, \"ouro_learned_depth\": false, \"ouro_batched_decode\": true, \"ouro_paged_attention\": false, \"ouro_fused_ops\": true}"
+          }
+        },
+        {
+          "url": "http://10.10.12.112:25330",
+          "model_info": {
+            "model_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "served_model_name": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "tokenizer_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "is_generation": true,
+            "preferred_sampling_params": null,
+            "weight_version": "1",
+            "load_format": "auto",
+            "reasoning_parser": null,
+            "tool_call_parser": null,
+            "disaggregation_mode": "null",
+            "has_image_understanding": false,
+            "has_audio_understanding": false,
+            "model_type": "ouro",
+            "architectures": [
+              "OuroForCausalLM"
+            ],
+            "embedding": {
+              "family": "none",
+              "task": "none",
+              "execution": "none",
+              "attention": "none",
+              "pooling": "model_defined",
+              "normalize": false,
+              "postprocessor": "none",
+              "tokenizer_special_tokens": "model_default",
+              "supports_dimensions": false,
+              "supports_token_embeddings": false,
+              "supports_multimodal": false,
+              "requires_embedding_flag": false,
+              "auto_enable_embedding": false,
+              "bcg_eligibility": "disabled",
+              "safe_disable_kv_cache": false,
+              "safe_disable_radix_cache": false,
+              "safe_disable_chunked_prefill": false,
+              "enabled": false,
+              "matryoshka_dimensions": [],
+              "bcg": {
+                "prefill_backend": "disabled",
+                "enabled": false,
+                "capture_token_budget": -1,
+                "capture_batch_sizes": []
+              },
+              "cache": {
+                "kv_cache_disabled": false,
+                "radix_cache_disabled": false,
+                "chunked_prefill_disabled": true
+              }
+            }
+          },
+          "server_config": {
+            "dtype": "bfloat16",
+            "attention_backend": "flashinfer",
+            "max_running_requests": 32,
+            "max_total_tokens": 65536,
+            "mem_fraction_static": 0.85,
+            "json_model_override_args": "{\"total_ut_steps\": 4, \"ouro_learned_depth\": false, \"ouro_batched_decode\": true, \"ouro_paged_attention\": false, \"ouro_fused_ops\": true}"
+          }
+        },
+        {
+          "url": "http://10.10.12.112:25332",
+          "model_info": {
+            "model_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "served_model_name": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "tokenizer_path": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+            "is_generation": true,
+            "preferred_sampling_params": null,
+            "weight_version": "1",
+            "load_format": "auto",
+            "reasoning_parser": null,
+            "tool_call_parser": null,
+            "disaggregation_mode": "null",
+            "has_image_understanding": false,
+            "has_audio_understanding": false,
+            "model_type": "ouro",
+            "architectures": [
+              "OuroForCausalLM"
+            ],
+            "embedding": {
+              "family": "none",
+              "task": "none",
+              "execution": "none",
+              "attention": "none",
+              "pooling": "model_defined",
+              "normalize": false,
+              "postprocessor": "none",
+              "tokenizer_special_tokens": "model_default",
+              "supports_dimensions": false,
+              "supports_token_embeddings": false,
+              "supports_multimodal": false,
+              "requires_embedding_flag": false,
+              "auto_enable_embedding": false,
+              "bcg_eligibility": "disabled",
+              "safe_disable_kv_cache": false,
+              "safe_disable_radix_cache": false,
+              "safe_disable_chunked_prefill": false,
+              "enabled": false,
+              "matryoshka_dimensions": [],
+              "bcg": {
+                "prefill_backend": "disabled",
+                "enabled": false,
+                "capture_token_budget": -1,
+                "capture_batch_sizes": []
+              },
+              "cache": {
+                "kv_cache_disabled": false,
+                "radix_cache_disabled": false,
+                "chunked_prefill_disabled": true
+              }
+            }
+          },
+          "server_config": {
+            "dtype": "bfloat16",
+            "attention_backend": "flashinfer",
+            "max_running_requests": 32,
+            "max_total_tokens": 65536,
+            "mem_fraction_static": 0.85,
+            "json_model_override_args": "{\"total_ut_steps\": 4, \"ouro_learned_depth\": false, \"ouro_batched_decode\": true, \"ouro_paged_attention\": false, \"ouro_fused_ops\": true}"
+          }
+        }
+      ],
+      "first_batch_samples": 256,
+      "sample_weight_versions": [
+        "1"
+      ]
+    }
+  },
+  "scope": "Launch and serving configuration verification, not completed formal training acceptance.",
+  "protocol_differences": {
+    "arm": [
+      "fixed",
+      "stratified"
+    ]
+  },
+  "passed": true
+}

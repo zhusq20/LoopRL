@@ -1,0 +1,199 @@
+{
+  "torch": "2.13.0+cu130",
+  "gpu": "NVIDIA L20X",
+  "note": "Isolated Ouro-shaped operator benchmark; does not modify a running model.\n\nRandom tensors, fixed cache and one decoder block (without RoPE/cache writes).\nThis diagnoses precision, batching, and launch overhead, not end-to-end speedup.\n",
+  "cases": [
+    {
+      "batch": 1,
+      "context": 2048,
+      "precision": "fp32",
+      "eager": {
+        "wall_ms": 0.3958835576971372,
+        "cuda_event_ms": 0.39376961390177406
+      },
+      "cuda_graph": {
+        "wall_ms": 0.3531904270251592,
+        "cuda_event_ms": 0.3521930694580078
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.120878504640039,
+      "peak_allocated_mib": 580.1669921875
+    },
+    {
+      "batch": 8,
+      "context": 2048,
+      "precision": "fp32",
+      "eager": {
+        "wall_ms": 0.6415838375687599,
+        "cuda_event_ms": 0.6405290603637696
+      },
+      "cuda_graph": {
+        "wall_ms": 0.6094534570972124,
+        "cuda_event_ms": 0.6085237503051758
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0527199905052347,
+      "peak_allocated_mib": 837.2744140625
+    },
+    {
+      "batch": 16,
+      "context": 2048,
+      "precision": "fp32",
+      "eager": {
+        "wall_ms": 1.0197605316837628,
+        "cuda_event_ms": 1.0187231699625652
+      },
+      "cuda_graph": {
+        "wall_ms": 0.984110434850057,
+        "cuda_event_ms": 0.9830730438232422
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0362257075743107,
+      "peak_allocated_mib": 1382.5400390625
+    },
+    {
+      "batch": 32,
+      "context": 2048,
+      "precision": "fp32",
+      "eager": {
+        "wall_ms": 1.7159393678108852,
+        "cuda_event_ms": 1.7148693084716797
+      },
+      "cuda_graph": {
+        "wall_ms": 1.6842431699236233,
+        "cuda_event_ms": 1.6807744344075521
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.01881925273813,
+      "peak_allocated_mib": 2441.0712890625
+    },
+    {
+      "batch": 1,
+      "context": 2048,
+      "precision": "tf32",
+      "eager": {
+        "wall_ms": 0.38369062046209973,
+        "cuda_event_ms": 0.3824480056762695
+      },
+      "cuda_graph": {
+        "wall_ms": 0.35204924643039703,
+        "cuda_event_ms": 0.351095453898112
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0898776928299958,
+      "peak_allocated_mib": 740.015625
+    },
+    {
+      "batch": 8,
+      "context": 2048,
+      "precision": "tf32",
+      "eager": {
+        "wall_ms": 0.5408292015393575,
+        "cuda_event_ms": 0.5397738774617513
+      },
+      "cuda_graph": {
+        "wall_ms": 0.508210559686025,
+        "cuda_event_ms": 0.5072277386983236
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0641833217190222,
+      "peak_allocated_mib": 965.2744140625
+    },
+    {
+      "batch": 16,
+      "context": 2048,
+      "precision": "tf32",
+      "eager": {
+        "wall_ms": 0.910999005039533,
+        "cuda_event_ms": 0.9097013473510742
+      },
+      "cuda_graph": {
+        "wall_ms": 0.8760877574483553,
+        "cuda_event_ms": 0.8750656127929688
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0398490302990402,
+      "peak_allocated_mib": 1510.5400390625
+    },
+    {
+      "batch": 32,
+      "context": 2048,
+      "precision": "tf32",
+      "eager": {
+        "wall_ms": 1.6318494454026222,
+        "cuda_event_ms": 1.6307178497314454
+      },
+      "cuda_graph": {
+        "wall_ms": 1.5965364873409271,
+        "cuda_event_ms": 1.5955188751220704
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0221184785576118,
+      "peak_allocated_mib": 2569.0712890625
+    },
+    {
+      "batch": 1,
+      "context": 2048,
+      "precision": "bf16",
+      "eager": {
+        "wall_ms": 0.30171535909175873,
+        "cuda_event_ms": 0.30034561157226564
+      },
+      "cuda_graph": {
+        "wall_ms": 0.20726664612690607,
+        "cuda_event_ms": 0.20633066495259603
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.4556869845185956,
+      "peak_allocated_mib": 594.0927734375
+    },
+    {
+      "batch": 8,
+      "context": 2048,
+      "precision": "bf16",
+      "eager": {
+        "wall_ms": 0.33461519827445346,
+        "cuda_event_ms": 0.3335850715637207
+      },
+      "cuda_graph": {
+        "wall_ms": 0.29756805549065274,
+        "cuda_event_ms": 0.29661334355672203
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.1244997307345863,
+      "peak_allocated_mib": 738.7080078125
+    },
+    {
+      "batch": 16,
+      "context": 2048,
+      "precision": "bf16",
+      "eager": {
+        "wall_ms": 0.4479208340247472,
+        "cuda_event_ms": 0.4469130516052246
+      },
+      "cuda_graph": {
+        "wall_ms": 0.40804122885068256,
+        "cuda_event_ms": 0.40706666310628253
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0977342541742467,
+      "peak_allocated_mib": 1027.4111328125
+    },
+    {
+      "batch": 32,
+      "context": 2048,
+      "precision": "bf16",
+      "eager": {
+        "wall_ms": 0.7125633458296458,
+        "cuda_event_ms": 0.7115317026774088
+      },
+      "cuda_graph": {
+        "wall_ms": 0.6726906324426333,
+        "cuda_event_ms": 0.6716362635294596
+      },
+      "graph_max_abs_difference": 0.0,
+      "graph_speedup": 1.0592734779763904,
+      "peak_allocated_mib": 1572.8173828125
+    }
+  ]
+}

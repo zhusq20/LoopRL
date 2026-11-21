@@ -1,0 +1,183 @@
+{
+  "passed": true,
+  "precision": "bf16",
+  "attention_implementation": "bf16-fast",
+  "rollout_correction": {
+    "mode": "tis",
+    "level": "token",
+    "clip_low": 0.0,
+    "clip_high": 2.0
+  },
+  "serving": {
+    "attention_implementation": "bf16-fast",
+    "backend": "flashinfer",
+    "cuda_graph": true,
+    "overlap": false,
+    "max_running_requests": 32,
+    "kv_token_capacity": 65536,
+    "memory_fraction": 0.85,
+    "depth4_replicas": 2
+  },
+  "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "source_sha256": {
+    "third_party/slime/slime_plugins/sglang_models/ouro.py": "9480cb2952a69d0b1ce84e02ec72045887018e9a4bbb91629454958f8fb9f4ee",
+    "third_party/slime/slime_plugins/ouro_2a.py": "329b6bf117c9013b8460536f04158a2b1cf12975d14e3c96fbb9065c05b2600d",
+    "third_party/slime/slime_plugins/models/ouro.py": "1539215aa4a16aaa6a6562c5857152c2aaef65a6ac99c8941e8c35c05247d14d",
+    "looprl/native_2a.py": "24f4f55a8fedbab7d5dd5e0c3912bb751b3ca9409f6631bbe353582b0880d326",
+    "scripts/run_native_2a.py": "c3e5bf79e2bf306e8eb751b7c7202cc4eeb26835f3bfa2594ebc5382e20eb249",
+    "scripts/advance_native_2a.py": "07ccc717e074c7e18a72266bbd5da6bb2f740716bf19c61130b487423cb9060f",
+    "scripts/summarize_native_2a.py": "623a0fe83c5f2ee9937cab4a400b0964aac4160267cde3abaf89e49c972c3a37"
+  },
+  "tests_passed": 35,
+  "pilot_acceptance": "results/native2a/performance-v2-20261121/bf16-tis-pilot-acceptance.json",
+  "correction_audit": {
+    "tokens": 63536,
+    "trajectories": 32,
+    "correction": "tokenwise_tis",
+    "clip_low": 0.0,
+    "clip_high": 2.0,
+    "max_logprob_error": 0.3970932960510254,
+    "weights_min": 0.6722713112831116,
+    "weights_max": 1.4005403518676758,
+    "tis_weight_mean": 0.9999241232872009,
+    "tis_clip_fraction": 0.0,
+    "tis_ess_fraction": 0.9991764426231384,
+    "mismatch_mean_abs": 0.010667339898645878,
+    "mismatch_k3": 0.0004115519695915282
+  },
+  "real32_fp32": {
+    "prompt_lengths": [
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      76,
+      76,
+      76,
+      76,
+      76,
+      76,
+      76,
+      76,
+      410,
+      410,
+      410,
+      410,
+      410,
+      410,
+      410,
+      410
+    ],
+    "batch": 32,
+    "seconds": 233.82154136896133,
+    "output_tokens": 64123,
+    "tokens_per_second": 274.2390612283938
+  },
+  "real32_bf16": {
+    "prompt_lengths": [
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      76,
+      76,
+      76,
+      76,
+      76,
+      76,
+      76,
+      76,
+      410,
+      410,
+      410,
+      410,
+      410,
+      410,
+      410,
+      410
+    ],
+    "batch": 32,
+    "seconds": 61.434210404753685,
+    "output_tokens": 63536,
+    "tokens_per_second": 1034.2120388851565
+  },
+  "training_fp32": [
+    {
+      "seconds": 5.420448074117303,
+      "max_error": 0.0,
+      "gradient_norm": 0.3452438712120056,
+      "peak_allocated_gib": 23.02509307861328
+    },
+    {
+      "seconds": 5.407393645495176,
+      "max_error": 0.0,
+      "gradient_norm": 0.34524422883987427,
+      "peak_allocated_gib": 23.025931358337402
+    },
+    {
+      "seconds": 5.4124026745557785,
+      "max_error": 0.0,
+      "gradient_norm": 0.34524354338645935,
+      "peak_allocated_gib": 23.025931358337402
+    }
+  ],
+  "training_bf16": [
+    {
+      "seconds": 1.9501060601323843,
+      "max_error": 0.0,
+      "gradient_norm": 0.30078125,
+      "peak_allocated_gib": 11.688587188720703
+    },
+    {
+      "seconds": 0.9999031201004982,
+      "max_error": 0.0,
+      "gradient_norm": 0.30078125,
+      "peak_allocated_gib": 11.699783325195312
+    },
+    {
+      "seconds": 1.0241953525692225,
+      "max_error": 0.0,
+      "gradient_norm": 0.30078125,
+      "peak_allocated_gib": 11.701032638549805
+    }
+  ],
+  "not_adopted": [
+    "Selective activation checkpointing: about 9% faster, but memory grows from 23 to 71 GiB for one trajectory.",
+    "FP32x3 GEMM: operator improvements did not improve the complete training probe.",
+    "Overlap scheduler: approximately 3% slower in both short controlled cases.",
+    "FP32 concurrency 32 vs 16: only about 1% faster on real long responses and caused KV retraction."
+  ],
+  "limitations": [
+    "Only the first stratified formal update is timed; steady-state throughput and held-out improvements remain unmeasured.",
+    "Two depth4 replicas per queue use additional available GPUs; separately account for hardware in throughput comparisons.",
+    "Tokenwise TIS with upper clipping is a biased surrogate, not exact sequence-level change of measure.",
+    "BF16 learned-depth training requires separate depth-action correction validation."
+  ],
+  "created_unix": 1795243508.0045784,
+  "formal_launch_verification": "results/native2a/performance-v2-20261121/formal-launch-verification.json",
+  "formal_first_batch": "results/native2a/performance-v2-20261121/formal-first-batch.json"
+}

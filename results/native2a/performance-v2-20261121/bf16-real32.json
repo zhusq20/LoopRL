@@ -1,0 +1,56 @@
+{
+  "variant": "reference",
+  "depth": 4,
+  "dtype": "bfloat16",
+  "cuda_graph": false,
+  "concurrency": 32,
+  "kv_token_capacity": 65536,
+  "forward_args": {
+    "total_ut_steps": 4,
+    "ouro_batched_decode": true,
+    "ouro_paged_attention": false,
+    "ouro_fused_ops": false
+  },
+  "cases": [
+    {
+      "prompt_lengths": [
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        410,
+        410,
+        410,
+        410,
+        410,
+        410,
+        410,
+        410
+      ],
+      "batch": 32,
+      "seconds": 308.0203024148941,
+      "output_tokens": 64098,
+      "tokens_per_second": 208.0966725162873
+    }
+  ]
+}

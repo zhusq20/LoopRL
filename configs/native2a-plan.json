@@ -1,14 +1,21 @@
 {
-  "status": "protocol_and_execution_plan; formal_sweep_not_yet_started",
+  "status": "bf16_tis_formal_queues_running",
   "model": "Ouro-2.6B-Thinking",
   "backend": "native_slime_megatron_sglang",
-  "precision": "float32",
-  "activation_recompute": {"granularity": "full", "method": "uniform", "layers": 1},
+  "precision": "bf16",
+  "activation_recompute": {
+    "granularity": "full",
+    "method": "uniform",
+    "layers": 1
+  },
   "batched_decode": true,
   "optimizer": "AdamW",
-  "adam_betas": [0.9, 0.99],
+  "adam_betas": [
+    0.9,
+    0.99
+  ],
   "weight_decay": 0.1,
-  "learning_rate": 0.000001,
+  "learning_rate": 1e-06,
   "gate_learning_rate": 0.0001,
   "gradient_clip": 0.1,
   "reference_kl_coefficient": 0.001,
@@ -23,26 +30,59 @@
   "validation": {
     "source": "first 256 examples after shuffling pinned MATH train with the training seed",
     "excluded_from_training": true,
-    "evaluation": {"repeats": 2, "max_new_tokens": 2048, "seed": 42, "dtype": "float32", "temperature": 1.0, "top_p": 1.0, "backend": "sglang_native_ouro"},
-    "selection_reference_cost_per_loop_token": 0.00001220703125,
+    "evaluation": {
+      "repeats": 2,
+      "max_new_tokens": 2048,
+      "seed": 42,
+      "dtype": "float32",
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "backend": "sglang_native_ouro"
+    },
+    "selection_reference_cost_per_loop_token": 1.220703125e-05,
     "selection_rule": "Choose priced stratified beta maximizing validation mean(correct - reference_cost_per_loop_token * response_loop_tokens), averaging fixed depths 2/3/4 equally. Tie: lower beta. Never use MATH-500/test for this selection.",
     "note": "Uniform stratified rollout fixes mean depth near 3; its mean depth cannot identify the best beta. Measure learned-policy depths after training the head."
   },
   "acceptance_gates": [
     "real_math_reward_and_2048_token_multi_depth_training",
     "all_depth_engines_share_updated_weights",
-    "sampling_recompute_and_grad_replay_max_logprob_error_at_most_0.001",
     "same_checkpoint_boundary_resume_comparison",
     "learned_head_end_to_end_update_save_restore",
-    "formal_batch_32_by_8_memory_and_throughput_measurement"
+    "formal_batch_32_by_8_memory_and_throughput_measurement",
+    "finite_sampler_trainer_probabilities_with_detached_tokenwise_TIS_and_logged_ESS",
+    "trainer_grad_no_grad_replay_max_logprob_error_at_most_0.001"
   ],
   "arms": [
-    {"name": "fixed4-beta0", "arm": "fixed", "beta": 0.0},
-    {"name": "stratified-beta0", "arm": "stratified", "beta": 0.0},
-    {"name": "stratified-beta002", "arm": "stratified", "beta": 0.02},
-    {"name": "stratified-beta005", "arm": "stratified", "beta": 0.05},
-    {"name": "stratified-beta010", "arm": "stratified", "beta": 0.1},
-    {"name": "stratified-beta020", "arm": "stratified", "beta": 0.2}
+    {
+      "name": "fixed4-beta0",
+      "arm": "fixed",
+      "beta": 0.0
+    },
+    {
+      "name": "stratified-beta0",
+      "arm": "stratified",
+      "beta": 0.0
+    },
+    {
+      "name": "stratified-beta002",
+      "arm": "stratified",
+      "beta": 0.02
+    },
+    {
+      "name": "stratified-beta005",
+      "arm": "stratified",
+      "beta": 0.05
+    },
+    {
+      "name": "stratified-beta010",
+      "arm": "stratified",
+      "beta": 0.1
+    },
+    {
+      "name": "stratified-beta020",
+      "arm": "stratified",
+      "beta": 0.2
+    }
   ],
   "adaptive_followups": [
     "Train learned-depth from the same base checkpoint at the validation-selected beta.",
@@ -50,5 +90,47 @@
     "Compare H4 at fixed depths 2/3; compare H5 using held-out accuracy versus executed loop-tokens, including depth-head prefill."
   ],
   "budget_rule": "When generation budget changes, preserve beta/(4*max_new_tokens).",
-  "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit."
+  "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit.",
+  "execution": {
+    "root": "runs/native2a-bf16-formal-20261121",
+    "mode": "new_bf16_tis_formal_runs_from_common_base",
+    "previous_fp32_root": "runs/native2a-formal-20261121",
+    "validation": "results/native2a/performance-v2-20261121/bf16-tis-pilot-acceptance.json",
+    "gpus_by_queue": {
+      "fixed": [
+        4,
+        5,
+        6
+      ],
+      "stratified": [
+        0,
+        1,
+        2,
+        3,
+        7
+      ]
+    },
+    "runtime_checks_retained": true,
+    "limitation": "Two-step BF16/TIS native pilot and first stratified formal update passed. Steady-state timing, all six completed runs, strict resume and algorithmic benefits remain unmeasured. Tokenwise TIS does not fully correct prefix distribution.",
+    "launch_verification": "results/native2a/performance-v2-20261121/formal-launch-verification.json"
+  },
+  "master_parameter_precision": "float32",
+  "gradient_accumulation_precision": "float32",
+  "optimizer_state_precision": "float32",
+  "rollout_correction": {
+    "mode": "tis",
+    "level": "token",
+    "clip_low": 0.0,
+    "clip_high": 2.0
+  },
+  "serving": {
+    "attention_implementation": "bf16-fast",
+    "backend": "flashinfer",
+    "cuda_graph": true,
+    "overlap": false,
+    "max_running_requests": 32,
+    "kv_token_capacity": 65536,
+    "memory_fraction": 0.85,
+    "depth4_replicas": 2
+  }
 }

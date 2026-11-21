@@ -1,0 +1,586 @@
+{
+  "elapsed_seconds": 25.072782503440976,
+  "request": {
+    "batch": 8,
+    "prompt_tokens": 512,
+    "max_new_tokens": 32
+  },
+  "result": [
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "29b76926c00d46288760d5283b5257f5",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.9922204,
+        "queue_time": 0.0013477988541126251,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.07004020549357,
+        "request_received_ts": 1795239310.9656322,
+        "first_token_latency": 25.070037327706814,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0356724,
+        "decode_throughput": 10772167.166343043,
+        "response_sent_to_client_ts": 1795239336.0362236
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "a46fbbaf16824e02b8781b101b882899",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.9928935,
+        "queue_time": 0.0012672152370214462,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.07018761523068,
+        "request_received_ts": 1795239310.96564,
+        "first_token_latency": 25.07018663920462,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0358276,
+        "decode_throughput": 31761447.083969466,
+        "response_sent_to_client_ts": 1795239336.0362356
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "d0d5f63de5e14fa6b155fea3a173c92e",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.9932177,
+        "queue_time": 0.0012242868542671204,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.07023611292243,
+        "request_received_ts": 1795239310.9656456,
+        "first_token_latency": 25.070235535502434,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0358818,
+        "decode_throughput": 53687091.2,
+        "response_sent_to_client_ts": 1795239336.0362408
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "12ad6c156e194b4f9b3b91b650fecfe8",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.993518,
+        "queue_time": 0.0011899322271347046,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.07027698867023,
+        "request_received_ts": 1795239310.9656498,
+        "first_token_latency": 25.070276567712426,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0359268,
+        "decode_throughput": 73641585.27433628,
+        "response_sent_to_client_ts": 1795239336.0362446
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "98d7b4c775f6421db3a292995dcd7e0d",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.9937937,
+        "queue_time": 0.0011601466685533524,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.0703166667372,
+        "request_received_ts": 1795239310.9656537,
+        "first_token_latency": 25.070316215977073,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0359702,
+        "decode_throughput": 68772720.1322314,
+        "response_sent_to_client_ts": 1795239336.0362484
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "0b10ed0c6b044646be35eef652911a0f",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.994068,
+        "queue_time": 0.0011318083852529526,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.070354668423533,
+        "request_received_ts": 1795239310.965658,
+        "first_token_latency": 25.070354286581278,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0360126,
+        "decode_throughput": 81185357.42439024,
+        "response_sent_to_client_ts": 1795239336.036252
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "7a86d054542e48348c32b96c81c292df",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.9943404,
+        "queue_time": 0.0011019427329301834,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.07039392925799,
+        "request_received_ts": 1795239310.9656622,
+        "first_token_latency": 25.070393627509475,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0360563,
+        "decode_throughput": 102734557.2345679,
+        "response_sent_to_client_ts": 1795239336.0362563
+      }
+    },
+    {
+      "text": " 4 + 9 in base 12. Let me verify that. In base 12, 4 + 9 is 13 in",
+      "output_ids": [
+        216,
+        36,
+        1232,
+        216,
+        41,
+        281,
+        3159,
+        216,
+        33,
+        34,
+        30,
+        2959,
+        549,
+        12198,
+        338,
+        30,
+        533,
+        3159,
+        216,
+        33,
+        34,
+        28,
+        216,
+        36,
+        1232,
+        216,
+        41,
+        314,
+        216,
+        33,
+        35,
+        281
+      ],
+      "meta_info": {
+        "id": "96699b67d9544bbe844870a739f4ec81",
+        "finish_reason": {
+          "type": "length",
+          "length": 32
+        },
+        "prompt_tokens": 512,
+        "weight_version": "2",
+        "num_retractions": 0,
+        "forward_entry_time": 1795239310.9680548,
+        "prefill_finished_time": 1795239311.9946048,
+        "queue_time": 0.0010672267526388168,
+        "reasoning_tokens": 0,
+        "completion_tokens": 32,
+        "cached_tokens": 511,
+        "weight_versions": [
+          {
+            "version": "2",
+            "start": 0,
+            "end": 32
+          }
+        ],
+        "cached_tokens_details": {
+          "device": 511,
+          "host": 0
+        },
+        "dp_rank": null,
+        "e2e_latency": 25.07043539918959,
+        "request_received_ts": 1795239310.9656663,
+        "first_token_latency": 25.0704348012805,
+        "api_server_dispatch_finish_ts": 1795239310.96614,
+        "request_finished_ts": 1795239336.0361018,
+        "decode_throughput": 51847346.64174455,
+        "response_sent_to_client_ts": 1795239336.0362601
+      }
+    }
+  ]
+}
