@@ -1,0 +1,103 @@
+{
+  "updated_at": "2026-11-22T02:58:03",
+  "repairs_passed": true,
+  "resumed_first_batches_passed": false,
+  "runs_complete": false,
+  "regression_tests": 34,
+  "evidence": [
+    "fixed-serving-validation.json",
+    "gate-serving-validation.json",
+    "recovery-boundaries.json"
+  ],
+  "queues": {
+    "fixed": {
+      "run": "runs/native2b-fixed-repaired-20261122/fixed4-beta0",
+      "resume_iteration": 49,
+      "queue_status": {
+        "status": "running",
+        "stage": "fixed4-beta0",
+        "pid": 89650,
+        "updated_unix": 1795286821.8806636,
+        "child_pid": 91373,
+        "log": "/ossfs/workspace/LoopRL/runs/native2b-fixed-repaired-20261122/fixed4-beta0.log"
+      },
+      "status_at_verification": {
+        "status": "running",
+        "started_unix": 1795286770.0744333,
+        "pid": 91373
+      },
+      "completed_resume_steps": [
+        50
+      ],
+      "first_batch_passed": true,
+      "training": {
+        "train/loss": 0.01209728978574276,
+        "train/pg_loss": 0.01209384948015213,
+        "train/kl_loss": 0.003438136074692011,
+        "train/tis_weight_mean": 0.9999814629554749,
+        "train/tis_clip_fraction": 0.0,
+        "train/tis_ess_fraction": 0.9994758367538452,
+        "train/mismatch_mean_abs": 0.006988567765802145,
+        "train/mismatch_k3": 0.0002621974563226104,
+        "train/grad_norm": 0.09772312735368406,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 256,
+        "train/step": 50
+      },
+      "consistency": {
+        "step": 50,
+        "correction": "tis",
+        "reference_finite": true,
+        "tokens": 363794,
+        "samples": 256,
+        "audit_samples": 4,
+        "data_parallel_size": 1,
+        "old_policy_source": "detached_training_forward",
+        "grad_no_grad_max_error": 0.0,
+        "sampler_recompute_max_error": 0.7451143264770508,
+        "tis_weight_mean": 0.9999927998131756,
+        "tis_clip_fraction": 0.0,
+        "tis_ess_fraction": 0.9994468978141801,
+        "mismatch_mean_abs": 0.007322236036784698,
+        "mismatch_k3": 0.0002765031219897809
+      },
+      "rollout": {
+        "step": 50,
+        "beta": 0.0,
+        "samples": 256,
+        "reward_mean": 0.640625,
+        "mean_response_tokens": 1421.0703125,
+        "mean_depth": 4.0,
+        "depth_counts": {
+          "2": 0,
+          "3": 0,
+          "4": 256
+        },
+        "mean_loop_tokens": 5684.28125,
+        "mean_executed_loop_tokens": 6108.65625,
+        "truncation_rate": 0.34765625,
+        "nonzero_advantages": 48,
+        "generation_seconds": 26667.171546570957
+      }
+    },
+    "token_exit": {
+      "run": "runs/native2b-gate-repaired-20261122/gate-beta0",
+      "resume_iteration": 4,
+      "queue_status": {
+        "status": "running",
+        "stage": "gate-beta0",
+        "pid": 94408,
+        "updated_unix": 1795286823.2729087,
+        "child_pid": 94435,
+        "log": "/ossfs/workspace/LoopRL/runs/native2b-gate-repaired-20261122/gate-beta0.log"
+      },
+      "status_at_verification": {
+        "status": "running",
+        "started_unix": 1795286818.2581973,
+        "pid": 94435
+      },
+      "completed_resume_steps": []
+    }
+  }
+}

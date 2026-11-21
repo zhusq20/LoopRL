@@ -14,6 +14,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from looprl.data import read_jsonl, sha256, write_json
+from looprl.native_serving import configure_token_exit_serving, context_capacity
 
 
 def validate_resume_protocol(previous, current, allow_serving_upgrade=False, allow_training_upgrade=False):
@@ -26,6 +27,9 @@ def validate_resume_protocol(previous, current, allow_serving_upgrade=False, all
         value["serving"].setdefault("cuda_graph",False)
         value["serving"].setdefault("memory_fraction",.55)
         value["serving"].setdefault("depth4_replicas",1)
+        value["serving"].setdefault("context_length", max(4096, value.get("max_new_tokens", 2048)+2048))
+        if value.get("arm") == "token_exit":
+            value["serving"].setdefault("token_exit_kv_reservation", "adaptive")
         value.setdefault("training_execution", dict(reuse_old_log_probs=False,
             micro_batch_size=1, data_parallel_size=1, group_by_depth=False))
     if previous == current:
@@ -137,6 +141,7 @@ def main():
     if options.trainer_gpus > 1 and not options.reuse_old_log_probs:
         p.error("Multi-GPU Ouro requires the aggregated reuse audit")
     token_exit = options.arm == "token_exit"
+    reservation = configure_token_exit_serving(options.max_new_tokens) if token_exit else None
     if token_exit and (not options.reuse_old_log_probs or options.cuda_graph or options.recompute != "full"):
         p.error("Token-exit training requires audited probability reuse, full functional recomputation and eager serving")
     if token_exit and (options.serving_replicas < 1 or not math.isfinite(options.gate_shift)):
@@ -172,6 +177,13 @@ def main():
     with (output/"validation.jsonl").open("w") as f:
         for row in validation:
             f.write(json.dumps(row, ensure_ascii=False)+"\n")
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True)
+    config = json.loads((Path(checkpoint)/"config.json").read_text())
+    capacity = context_capacity(tokenizer,
+        [r["problem"]+"\nPlease put your final answer in \\boxed{}." for r in rows],
+        options.max_new_tokens, config["max_position_embeddings"], options.kv_token_capacity)
+    write_json(output/"context-capacity.json", capacity)
     protocol = dict(backend="slime_native_megatron_sglang", diagnostic_reward=False,
         arm=options.arm, total_steps=options.steps, prompts=options.prompts,
         group_size=options.group_size, max_new_tokens=options.max_new_tokens,
@@ -191,7 +203,8 @@ def main():
     protocol["serving"] = dict(attention_implementation=options.attention_implementation,
         max_running_requests=options.max_running_requests,
         kv_token_capacity=options.kv_token_capacity,cuda_graph=options.cuda_graph,
-        memory_fraction=options.serving_memory_fraction,depth4_replicas=options.depth4_replicas)
+        memory_fraction=options.serving_memory_fraction,depth4_replicas=options.depth4_replicas,
+        context_length=capacity["context_length"])
     protocol["rollout_correction"] = dict(mode=options.rollout_correction,
         clip_low=0.,clip_high=options.tis_clip,level="token")
     protocol["training_execution"] = dict(reuse_old_log_probs=options.reuse_old_log_probs,
@@ -205,6 +218,7 @@ def main():
             reference_kl="joint_exit_token_on_recorded_history", correction="joint_action_tokenwise_TIS")
         protocol["serving"]["serving_replicas"] = options.serving_replicas
         protocol["serving"]["radix_cache"] = False
+        protocol["serving"]["token_exit_kv_reservation"] = reservation
     if options.recompute != "full":
         protocol["activation_recompute"] = (dict(granularity=None) if options.recompute == "none"
             else dict(granularity="selective", modules=["core_attn"] +
@@ -240,7 +254,13 @@ def main():
             required = {"third_party/slime/slime_plugins/ouro_attention.py",
                         "third_party/slime/slime_plugins/ouro_kernels.py",
                         "third_party/slime/slime_plugins/sglang_models/ouro.py"}
-            if set(validation.get("source_sha256", {})) != required or any(
+            old_serving = change['previous']
+            if any(old_serving.get(key) != protocol['serving'].get(key)
+                   for key in ('context_length', 'token_exit_kv_reservation')):
+                required |= {"looprl/native_serving.py", "looprl/native_2b.py", "scripts/run_native_2a.py"}
+                if protocol['serving'] not in validation.get('validated_serving_configurations', []):
+                    raise ValueError("Serving repair lacks a passing matching capacity/reservation validation")
+            if not required <= set(validation.get("source_sha256", {})) or any(
                     sha256(ROOT/name) != digest for name, digest in validation["source_sha256"].items()):
                 raise ValueError("Serving source differs from the validated implementation")
             write_json(output/"serving-upgrade.json", dict(**change,
@@ -314,7 +334,7 @@ def main():
         "--sglang-config", str(output/"engines.json"),
         "--sglang-attention-backend", "flashinfer" if options.attention_implementation=="bf16-fast" else "triton" if options.cuda_graph else "torch_native",
         "--sglang-disable-overlap-schedule", "--sglang-chunked-prefill-size", "-1",
-        "--sglang-context-length", str(max(4096, options.max_new_tokens+2048)),
+        "--sglang-context-length", str(capacity['context_length']),
         "--sglang-max-total-tokens", str(options.kv_token_capacity),
         "--sglang-mem-fraction-static", str(options.serving_memory_fraction), "--sglang-max-running-requests", str(options.max_running_requests),
         "--custom-config-path", str(output/"custom.json"), "--dump-details", str(output/"details")]
@@ -345,7 +365,7 @@ def main():
         # Protocol equality was checked above; restore its saved scheduler.
         argv += ['--use-checkpoint-opt-param-scheduler', '--exit-on-missing-checkpoint']
     write_json(output/"launch.json", dict(argv=argv, gpus=visible, engine_base_port=engine_base_port,
-        external_model_package=package))
+        external_model_package=package, token_exit_env=reservation))
     source = output/"source"
     source.mkdir()
     for name in ["looprl/native_2a.py", "scripts/run_native_2a.py", "third_party/slime/slime_plugins/ouro_2a.py",

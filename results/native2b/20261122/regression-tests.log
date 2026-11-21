@@ -1,0 +1,94 @@
+..................................                                       [100%]
+=============================== warnings summary ===============================
+tests/native/test_native_serving.py: 14 warnings
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/fused_moe/cute_dsl/blackwell/blockscaled_contiguous_gather_grouped_gemm_act_fusion.py:3446: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/fused_moe/cute_dsl/blackwell/moe_w4a16_kernel.py:2326: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gemm/kernels/grouped_gemm_masked_blackwell.py:427: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    epi_layout: utils.LayoutEnum,
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gemm/kernels/grouped_gemm_masked_blackwell.py:2391: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gemm/kernels/grouped_gemm_masked_rubin.py:215: DeprecationWarning: cutlass.utils.LayoutEnum is deprecated; use cutlass.tensor_utils.LayoutEnum instead. It will be removed in a future release.
+    c_layout: utils.LayoutEnum,
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gdn_kernels/blackwell/gated_delta_net_chunked.py:95: DeprecationWarning: cutlass.utils.TensorMapUpdateMode is deprecated; use cutlass.tensor_utils.TensorMapUpdateMode instead. It will be removed in a future release.
+    from cutlass.utils import TensorMapManager, TensorMapUpdateMode
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gdn_kernels/delta_rule_dsl/collective_store_tma.py:6: DeprecationWarning: cutlass.utils.tensormap_manager.TensorMapUpdateMode is deprecated; use cutlass.tensor_utils.TensorMapUpdateMode instead. It will be removed in a future release.
+    from cutlass.utils.tensormap_manager import TensorMapManager, TensorMapUpdateMode
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/gdn_kernels/blackwell/gated_delta_net_cp_prefill.py:55: DeprecationWarning: cutlass.utils.TensorMapUpdateMode is deprecated; use cutlass.tensor_utils.TensorMapUpdateMode instead. It will be removed in a future release.
+    from cutlass.utils import TensorMapManager, TensorMapUpdateMode
+
+tests/native/test_native_serving.py::test_pinned_scheduler_does_not_silently_reduce_response_budget
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/flashinfer/cute_dsl/availability.py:135: DeprecationWarning: Arch from arch.py is deprecated. Use Arch from enums.py instead.
+    from cutlass.base_dsl.arch import Arch
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/inference/contexts/__init__.py:9: DeprecationWarning: The following imports from `dynamic_context.py` will be removed in this file in `megatron-core` 0.14. The imports here result in a cyclic import issue that causes rotary embeddings to import from Apex rather than Transformer Engine.
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/training/utils/common_utils.py:28: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_l2norm
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/models/mimo/config/base_configs.py:12: UserWarning: MimoModelConfig is experimental and still under active development. The API may change without notice in future releases.
+    class MimoModelConfig:
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/extensions/transformer_engine_spec_provider.py:121: UserWarning: Only transformer-engine>=1.7.0 supports MoE experts, but your version is 0.0.0. Use local linear implementation instead.
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/rl/inference/inference_interface.py:11: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class InferenceInterface(BaseModel):
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/rl/__init__.py:31: PydanticDeprecatedSince20: The `__fields__` attribute is deprecated, use the `model_fields` class property instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    cls.Library.type_names[register_type.__fields__['type_name'].default] = register_type
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+34 passed, 38 warnings in 12.03s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

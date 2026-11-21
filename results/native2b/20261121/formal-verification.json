@@ -1,0 +1,333 @@
+{
+  "passed": true,
+  "updated_at": "2026-11-21T17:34:35.948179",
+  "runs_complete": false,
+  "scope": "First full 256-response optimizer update, not completed 140-step experiments or held-out effects",
+  "paired_first_batch_prompts": true,
+  "queues": {
+    "fixed": {
+      "passed": true,
+      "run": "runs/native2b-fixed-formal-20261121/fixed4-beta0",
+      "status_at_verification": {
+        "status": "running",
+        "started_unix": 1795252557.1353831,
+        "pid": 224314
+      },
+      "completed_steps_observed": [
+        0,
+        1
+      ],
+      "verified_steps": [
+        0
+      ],
+      "protocol": {
+        "backend": "slime_native_megatron_sglang",
+        "diagnostic_reward": false,
+        "arm": "fixed",
+        "total_steps": 140,
+        "prompts": 32,
+        "group_size": 8,
+        "max_new_tokens": 2048,
+        "beta": 0.0,
+        "price_warmup": 0.3,
+        "seed": 20261121,
+        "precision": "bf16",
+        "optimizer": "AdamW",
+        "adam_betas": [
+          0.9,
+          0.99
+        ],
+        "weight_decay": 0.1,
+        "learning_rate": 1e-06,
+        "gate_learning_rate": 0.0001,
+        "lr_warmup_fraction": 0.1,
+        "clip_grad": 0.1,
+        "kl_coef": 0.001,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+        "batched_decode": true,
+        "activation_recompute": {
+          "granularity": "full",
+          "method": "uniform",
+          "layers": 1
+        },
+        "shared_depth_weight_sync": true,
+        "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+        "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+        "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+        "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+        "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a",
+        "serving": {
+          "attention_implementation": "bf16-fast",
+          "max_running_requests": 32,
+          "kv_token_capacity": 65536,
+          "cuda_graph": true,
+          "memory_fraction": 0.85,
+          "depth4_replicas": 2
+        },
+        "rollout_correction": {
+          "mode": "tis",
+          "clip_low": 0.0,
+          "clip_high": 2.0,
+          "level": "token"
+        },
+        "training_execution": {
+          "reuse_old_log_probs": true,
+          "micro_batch_size": 4,
+          "data_parallel_size": 1,
+          "group_by_depth": true
+        }
+      },
+      "weight_versions": [
+        "1"
+      ],
+      "rollout": {
+        "step": 0,
+        "beta": 0.0,
+        "samples": 256,
+        "reward_mean": 0.41015625,
+        "mean_response_tokens": 1746.60546875,
+        "mean_depth": 4.0,
+        "depth_counts": {
+          "2": 0,
+          "3": 0,
+          "4": 256
+        },
+        "mean_loop_tokens": 6986.421875,
+        "mean_executed_loop_tokens": 7498.671875,
+        "truncation_rate": 0.59375,
+        "nonzero_advantages": 64,
+        "generation_seconds": 32111.89441347681
+      },
+      "consistency": {
+        "step": 0,
+        "correction": "tis",
+        "reference_finite": true,
+        "tokens": 447131,
+        "samples": 256,
+        "audit_samples": 4,
+        "data_parallel_size": 1,
+        "old_policy_source": "detached_training_forward",
+        "grad_no_grad_max_error": 0.0,
+        "sampler_recompute_max_error": 1.080423355102539,
+        "tis_weight_mean": 0.9999764994766634,
+        "tis_clip_fraction": 2.2364810312861332e-06,
+        "tis_ess_fraction": 0.9993220006563436,
+        "mismatch_mean_abs": 0.00901658423171719,
+        "mismatch_k3": 0.00033954932016419574
+      },
+      "training": {
+        "train/loss": 0.019037391990423203,
+        "train/pg_loss": 0.019037391990423203,
+        "train/kl_loss": 0.0,
+        "train/tis_weight_mean": 0.9999690651893616,
+        "train/tis_clip_fraction": 1.9073486328125e-06,
+        "train/tis_ess_fraction": 0.9993488192558289,
+        "train/mismatch_mean_abs": 0.008671813644468784,
+        "train/mismatch_k3": 0.0003261700039729476,
+        "train/grad_norm": 0.09807869615186438,
+        "train/lr-pg_0": 7.142857142857142e-08,
+        "train/lr-pg_1": 7.142857142857142e-08,
+        "train/global_batch_size": 256,
+        "train/step": 0
+      },
+      "timing": {
+        "perf/update_weights_time": 1.2823660373687744,
+        "perf/data_preprocess_time": 0.08577084541320801,
+        "perf/train_wait_time": 298.1183731555939,
+        "perf/ref_log_probs_time": 44.296013832092285,
+        "perf/audit_log_probs_time": 0.785740852355957,
+        "perf/actor_train_time": 161.04243874549866,
+        "perf/train_time": 206.49861550331116,
+        "perf/ref_log_probs_tflops": 59.94098595205198,
+        "perf/actor_train_tflops": 49.461746174324354,
+        "perf/actor_train_tok_per_s": 2981.642626257244,
+        "perf/step_time": 504.61698865890503,
+        "perf/wait_time_ratio": 0.5907814834928328
+      },
+      "source_manifest_sha256": "560b123643ce5da197a7e3ecbc55973d90382a63773e916ac0ba30b007b1eefb",
+      "prompt_ids_sha256": "53d494e5682359316ba01fdfb0aaa177525aca38745ea8f9a2797d99e8077dee"
+    },
+    "token_exit": {
+      "passed": true,
+      "run": "runs/native2b-formal-20261121/gate-beta0",
+      "status_at_verification": {
+        "status": "running",
+        "started_unix": 1795252984.067339,
+        "pid": 233642
+      },
+      "completed_steps_observed": [
+        0
+      ],
+      "verified_steps": [
+        0
+      ],
+      "protocol": {
+        "backend": "slime_native_megatron_sglang",
+        "diagnostic_reward": false,
+        "arm": "token_exit",
+        "total_steps": 140,
+        "prompts": 32,
+        "group_size": 8,
+        "max_new_tokens": 2048,
+        "beta": 0.0,
+        "price_warmup": 0.3,
+        "seed": 20261121,
+        "precision": "bf16",
+        "optimizer": "AdamW",
+        "adam_betas": [
+          0.9,
+          0.99
+        ],
+        "weight_decay": 0.1,
+        "learning_rate": 1e-06,
+        "gate_learning_rate": 0.0001,
+        "lr_warmup_fraction": 0.1,
+        "clip_grad": 0.1,
+        "kl_coef": 0.001,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+        "batched_decode": true,
+        "activation_recompute": {
+          "granularity": "full",
+          "method": "uniform",
+          "layers": 1
+        },
+        "shared_depth_weight_sync": true,
+        "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+        "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+        "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+        "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+        "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a",
+        "serving": {
+          "attention_implementation": "bf16-fast",
+          "max_running_requests": 32,
+          "kv_token_capacity": 65536,
+          "cuda_graph": false,
+          "memory_fraction": 0.85,
+          "depth4_replicas": 1,
+          "serving_replicas": 3,
+          "radix_cache": false
+        },
+        "rollout_correction": {
+          "mode": "tis",
+          "clip_low": 0.0,
+          "clip_high": 2.0,
+          "level": "token"
+        },
+        "training_execution": {
+          "reuse_old_log_probs": true,
+          "micro_batch_size": 4,
+          "data_parallel_size": 2,
+          "group_by_depth": true
+        },
+        "token_exit": {
+          "scheme": "2b",
+          "exits": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gate_shift": 3.0,
+          "final_exit_forced": true,
+          "prompt_kv": "dense_four_loops",
+          "past_kv": "last_exited",
+          "objective": "sampled_joint_exit_token_ppo",
+          "kappa": 1.0,
+          "compute_price": "executed_prefill_plus_decode_loop_tokens",
+          "cost_normalizer": 8192,
+          "reference_kl": "joint_exit_token_on_recorded_history",
+          "correction": "joint_action_tokenwise_TIS"
+        }
+      },
+      "weight_versions": [
+        "1"
+      ],
+      "rollout": {
+        "step": 0,
+        "beta": 0.0,
+        "samples": 256,
+        "reward_mean": 0.40625,
+        "mean_depth": 3.902647999963482,
+        "exit_counts": {
+          "1": 3125,
+          "2": 7573,
+          "3": 18133,
+          "4": 409311
+        },
+        "mean_response_tokens": 1711.4921875,
+        "mean_executed_loop_tokens": 7191.6328125,
+        "truncation_rate": 0.58984375,
+        "nonzero_advantages": 88
+      },
+      "consistency": {
+        "step": 0,
+        "correction": "tis",
+        "reference_finite": true,
+        "tokens": 438142,
+        "samples": 256,
+        "audit_samples": 8,
+        "data_parallel_size": 2,
+        "old_policy_source": "detached_training_forward",
+        "grad_no_grad_max_error": 0.0,
+        "sampler_recompute_max_error": 1.0699188709259033,
+        "tis_weight_mean": 1.0000139616551256,
+        "tis_clip_fraction": 4.56473015597683e-06,
+        "tis_ess_fraction": 0.999182513027146,
+        "mismatch_mean_abs": 0.011080004321540703,
+        "mismatch_k3": 0.0004079610353656273,
+        "policy_space": "joint_exit_token",
+        "gate_grad_no_grad_max_error": 0.0,
+        "gate_sampler_recompute_max_error": 0.21865415573120117
+      },
+      "training": {
+        "train/loss": 0.02826160565018654,
+        "train/pg_loss": 0.02826160565018654,
+        "train/kl_loss": 0.0,
+        "train/tis_weight_mean": 1.000019907951355,
+        "train/tis_clip_fraction": 3.814697265625e-06,
+        "train/tis_ess_fraction": 0.9992296695709229,
+        "train/mismatch_mean_abs": 0.01051507517695427,
+        "train/mismatch_k3": 0.000384506827685982,
+        "train/grad_norm": 0.1213073001117607,
+        "train/lr-pg_0": 7.142857142857142e-08,
+        "train/lr-pg_1": 7.1428571428571436e-06,
+        "train/lr-pg_2": 7.1428571428571436e-06,
+        "train/lr-pg_3": 7.142857142857142e-08,
+        "train/global_batch_size": 256,
+        "train/step": 0
+      },
+      "timing": {
+        "perf/update_weights_time": 1.5737354755401611,
+        "perf/data_preprocess_time": 0.06175661087036133,
+        "perf/train_wait_time": 488.12912678718567,
+        "perf/ref_log_probs_time": 20.59024477005005,
+        "perf/audit_log_probs_time": 0.8096859455108643,
+        "perf/actor_train_time": 85.43128371238708,
+        "perf/train_time": 107.15870094299316,
+        "perf/ref_log_probs_tflops": 63.249643926413334,
+        "perf/actor_train_tflops": 45.73239193435635,
+        "perf/actor_train_tok_per_s": 5515.333254107255,
+        "perf/step_time": 595.2878277301788,
+        "perf/wait_time_ratio": 0.8199884224886854
+      },
+      "source_manifest_sha256": "560b123643ce5da197a7e3ecbc55973d90382a63773e916ac0ba30b007b1eefb",
+      "prompt_ids_sha256": "53d494e5682359316ba01fdfb0aaa177525aca38745ea8f9a2797d99e8077dee"
+    }
+  },
+  "pending_gate_arms": [
+    "gate-beta002",
+    "gate-beta005",
+    "gate-beta010",
+    "gate-beta020"
+  ],
+  "limitations": [
+    "First update uses warmup LR zero; real gate parameter change verified separately in pilot and resumed step.",
+    "Queue timing uses different GPU allocations and implementation paths; not a matched-hardware speed comparison.",
+    "No held-out algorithmic benefit or token-exit wall-clock speedup claim.",
+    "Tokenwise joint-action TIS does not fully correct trajectory distribution."
+  ]
+}

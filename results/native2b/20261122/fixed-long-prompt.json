@@ -1,0 +1,23 @@
+{
+  "passed": false,
+  "mode": "fixed",
+  "capacity": {
+    "context_length": 4119,
+    "max_prompt_tokens": 2071,
+    "required_tokens": 4119,
+    "prompt_count": 7242,
+    "max_new_tokens": 2048
+  },
+  "requests": 1,
+  "kv_capacity": 65536,
+  "seconds": 28.62923029065132,
+  "total_retractions": 0,
+  "cases": [
+    {
+      "prompt_tokens": 2071,
+      "tokens": 2046,
+      "completion_tokens": 2046,
+      "retractions": 0
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "checkpoint": "runs/native2b-formal-20261121/gate-beta0/checkpoints/iter_0000004",
+  "engines": [
+    {
+      "port": 25000,
+      "tensors": {
+        "weight": {
+          "elements": 2048,
+          "exact_match": true
+        },
+        "bias": {
+          "elements": 1,
+          "exact_match": true
+        }
+      }
+    },
+    {
+      "port": 25002,
+      "tensors": {
+        "weight": {
+          "elements": 2048,
+          "exact_match": true
+        },
+        "bias": {
+          "elements": 1,
+          "exact_match": true
+        }
+      }
+    },
+    {
+      "port": 25004,
+      "tensors": {
+        "weight": {
+          "elements": 2048,
+          "exact_match": true
+        },
+        "bias": {
+          "elements": 1,
+          "exact_match": true
+        }
+      }
+    }
+  ],
+  "scope": "Actual sampler gate weights during the first resumed batch, before its optimizer update"
+}

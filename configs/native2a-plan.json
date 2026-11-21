@@ -1,5 +1,5 @@
 {
-  "status": "token_exit_2b_formal_running_first_full_batch_pending",
+  "status": "native_2b_serving_repaired_resume_first_batch_pending",
   "model": "Ouro-2.6B-Thinking",
   "backend": "native_slime_megatron_sglang",
   "precision": "bf16",
@@ -50,7 +50,9 @@
     "gate_end_to_end_update_save_restore",
     "formal_batch_32_by_8_memory_and_throughput_measurement",
     "finite_joint_exit_token_TIS_with_logged_ESS",
-    "trainer_joint_and_gate_grad_no_grad_replay_error_at_most_0.001"
+    "trainer_joint_and_gate_grad_no_grad_replay_error_at_most_0.001",
+    "zero_retractions_for_every_token_exit_trajectory",
+    "full_prompt_plus_generation_budget_fits_context_and_kv"
   ],
   "arms": [
     {
@@ -91,8 +93,8 @@
   "budget_rule": "When generation budget changes, preserve beta/(4*max_new_tokens).",
   "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit.",
   "execution": {
-    "root": "runs/native2b-fixed-formal-20261121",
-    "mode": "fresh_bf16_fixed_baseline_and_token_exit_scan",
+    "root": "runs/native2b-fixed-repaired-20261122",
+    "mode": "resume_after_validated_serving_repair",
     "previous_fp32_root": "runs/native2a-formal-20261121",
     "validation": "results/native2b/20261121/training-validation.json",
     "gpus_by_queue": {
@@ -110,8 +112,8 @@
       ]
     },
     "runtime_checks_retained": true,
-    "limitation": "Native 2b pilot, exact gate restore, three-engine actual gate weights, continuation and 52 tests passed. First 256-response gate update remains pending. Held-out effects, matched-hardware wall-clock speedup and bitwise full continuation remain unverified. Tokenwise TIS does not fully correct trajectory distribution.",
-    "launch_verification": "results/native2b/20261121/gate-fresh-launch.json",
+    "limitation": "Serving faults reproduced and repaired; 34 regression tests, full generation budgets and zero-retraction stress passed. Resumed first full batches pending. Full 140-step arms, held-out effects, matched-hardware speedup and bitwise continuation equivalence remain unverified.",
+    "launch_verification": "results/native2b/20261121/formal-verification.json",
     "previous_bf16_root": "runs/native2a-bf16-formal-20261121",
     "training_by_queue": {
       "fixed": {
@@ -125,20 +127,41 @@
         "serving_replicas": 3
       }
     },
-    "verified_at": "2026-11-21T17:25:26",
+    "verified_at": "2026-11-22T02:47:05",
     "cancelled_stratified_queue": "runs/native2a-speed-formal-20261121/stratified",
     "cancellation_record": "results/native2a/gate-plan-20261121/stratified-cancellation.json",
     "active_queues": [
       "fixed",
       "token_exit"
     ],
-    "gate_launch_status": "gate_beta0_running_first_full_batch_pending",
+    "gate_launch_status": "resuming_beta0_after_serving_repair_first_batch_pending",
     "previous_plan": "results/native2a/gate-plan-20261121/previous-plan.json",
-    "gate_root": "runs/native2b-formal-20261121",
+    "gate_root": "runs/native2b-gate-repaired-20261122",
     "previous_fixed_root": "runs/native2a-speed-formal-20261121/fixed",
     "fixed_reset_record": "results/native2b/20261121/fixed-baseline-reset.json",
     "fixed_launch_record": "results/native2b/20261121/fixed-fresh-launch.json",
-    "gate_launch_record": "results/native2b/20261121/gate-fresh-launch.json"
+    "gate_launch_record": "results/native2b/20261121/gate-fresh-launch.json",
+    "completed_updates_at_verification": {
+      "fixed": 50,
+      "token_exit": 5
+    },
+    "repair_record": "results/native2b/20261122/recovery-verification.json",
+    "serving_repair_validation": {
+      "fixed": "results/native2b/20261122/fixed-serving-validation.json",
+      "token_exit": "results/native2b/20261122/gate-serving-validation.json"
+    },
+    "resume_sources": {
+      "fixed": {
+        "run": "runs/native2b-fixed-formal-20261121/fixed4-beta0",
+        "iteration": 49,
+        "completed_updates": 50
+      },
+      "token_exit": {
+        "run": "runs/native2b-formal-20261121/gate-beta0",
+        "iteration": 4,
+        "completed_updates": 5
+      }
+    }
   },
   "master_parameter_precision": "float32",
   "gradient_accumulation_precision": "float32",
@@ -164,8 +187,15 @@
       "cuda_graph": false,
       "reason": "dynamic active-row compaction; loop graphs not implemented",
       "radix_cache": false,
-      "serving_replicas": 3
-    }
+      "serving_replicas": 3,
+      "kv_reservation_env": {
+        "SGLANG_INIT_NEW_TOKEN_RATIO": "1",
+        "SGLANG_MIN_NEW_TOKEN_RATIO_FACTOR": "1",
+        "SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION": "4096"
+      }
+    },
+    "context_length": 4121,
+    "context_length_policy": "maximum actual templated prompt plus response budget plus two scheduler-reserved positions"
   },
   "training_execution": {
     "reuse_old_log_probs": true,
@@ -204,7 +234,7 @@
     }
   ],
   "planned_gate_experiments": {
-    "status": "beta0_running_positive_prices_queued",
+    "status": "resuming_beta0_after_serving_repair_positive_prices_queued",
     "arms": [
       {
         "name": "gate-beta0",
@@ -247,9 +277,9 @@
     "resume_report": "results/native2b/20261121/resume-acceptance.json",
     "launch_record": "results/native2b/20261121/gate-fresh-launch.json",
     "remaining_validation": [
-      "first full 256-response runtime update",
       "held-out actual gated policy accuracy and full executed compute",
       "matched-hardware inference timing including gate overhead"
-    ]
+    ],
+    "first_full_batch_report": "results/native2b/20261121/formal-verification.json"
   }
 }

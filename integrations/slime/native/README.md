@@ -1,10 +1,12 @@
 # Ouro 原生 slime 接入
 
-2026-11-21，用户已取消均匀混合深度扫描，确认直接进行逐 token、逐 loop 退出的方案 2b。全新固定四轮 β=0 参照与 gate β=0 已从原始基座启动，其余正价格 gate 组按队列执行。新 gate 路径使用原生 Megatron/SGLang、BF16 与联合 exit/token TIS，两步长回答 pilot、精确 gate 状态恢复、实际三副本权重同步和续训已通过；最新状态见 [EXPERIMENTS.md](../../../EXPERIMENTS.md)。`looprl/slime_backend.py` 仅保留作 HF 参考。
+2026-11-22，逐 token、逐 loop 退出的方案 2b 正式队列已完成中断核查。gate 的 KV 撤回/重新预填充与固定组长题上下文容量错误均已复现并修复；原模型检查点保留，正式队列从保存边界恢复，其余正价格 gate 组按队列执行。新 gate 路径使用原生 Megatron/SGLang、BF16 与联合 exit/token TIS；最新验证范围及运行状态见 [EXPERIMENTS.md](../../../EXPERIMENTS.md)。`looprl/slime_backend.py` 仅保留作 HF 参考。
 
 新增 `slime_plugins/models/ouro_token_exit.py` 用实际退出轨迹重放并保留跨轮 KV 梯度；`slime_plugins/sglang_models/ouro_token_exit.py` 物理过滤已退出行并补齐 last-exited KV。SGLang 补丁还为 gate 请求保留逐请求采样种子。`looprl/native_2b.py` 联合训练 gate 和 token，按实际执行的预填充与 decode loop 数计价；解析成本项不重复叠加。训练选用 `--arm token_exit --reuse-old-log-probs --rollout-correction tis --gate-shift 3 --serving-replicas 3`，与其余原生 BF16 配置配合。动态 batch 收缩暂不支持当前整模型 CUDA Graph，入口拒绝 `--cuda-graph`；不能据 loop 数减少声称墙钟加速。
 
 2b 验收脚本为 `check_native_token_exit.py`、`check_native_token_exit_serving.py`；`summarize_native_2a.py` 已识别 token_exit、独立 gate 概率审计与可训练 gate 的主权重/Adam 矩。恢复时额外实读并核对 gate 模型、FP32 主权重和 Adam 分片。导出使用 `export_native_2a.py`，真实 gated 评测使用 `evaluate_native_2a.py --mode token_exit --depth 4 --gate-shift 3`。
+
+训练与评测入口通过 `looprl/native_serving.py` 按同一聊天模板预检最长题目，容量包含完整回答预算和 pinned SGLang 预留的两个位置；当前正式数据需 4121。gate 服务固定剩余输出预算比例为 1，并将估计上限至少设为回答预算，避免 KV 超额接纳后的撤回。调用方仍须检查 `num_retractions=0`；撤回后的 dense prefill 不保留 last-exited KV，禁止裁剪 trace 后继续训练。容量/预留设置记录在 `protocol.json`，旧检查点恢复需匹配配置和源码哈希的 `--serving-upgrade-report`。真实压力复现入口为 `scripts/check_native_serving_repair.py`，证据见 [20261122](../../../results/native2b/20261122/recovery-verification.json)。
 
 ## 代码与版本
 
@@ -97,7 +99,7 @@ CUDA_VISIBLE_DEVICES=2,3 "$LOOPRL_NATIVE_PYTHON" scripts/run_ouro_native_smoke.p
 ## 仍待完成
 
 - 长序列真实奖励两步 BF16/TIS 验收及首个正式 32×8 更新已完成；更长稳定性、同一 checkpoint 边界的严格恢复对照和正式稳态吞吐仍待验证。
-- 逐 token gate 的长序列更新、保存/恢复与实际采样权重同步已通过；完整 32×8 首批验收正在执行。状态以最新实验记录为准，序列级深度头不属于本次任务。
+- 逐 token gate 的长序列更新、保存/恢复与实际采样权重同步已通过；11 月 22 日完成撤回故障修复后重新验收续训。状态以最新实验记录为准，序列级深度头不属于本次任务。
 - 140 步 β 扫描、验证集选价、同价固定深度对照及配对重复评测。数学 reward、价格升温、初始参考 KL、分层引擎路由和权重版本检查均已接入新入口。
 
 用户已授权固定四轮参照与 gate β=0/0.02/0.05/0.1/0.2；均匀混合训练已取消。未完成的严格恢复与 held-out 效果继续单独记录，工程验收不等于算法收益。

@@ -9,9 +9,10 @@ import torch
 import torch.distributed as dist
 from megatron.core import parallel_state
 from megatron.core.tensor_parallel.random import model_parallel_cuda_manual_seed
-from sglang import Engine
 from transformers import AutoTokenizer
 from check_native_rollout_logprobs import load_model
+from looprl.native_serving import configure_token_exit_serving
+from looprl.native_2b import parse_generation_trace
 
 
 def main():
@@ -19,6 +20,8 @@ def main():
     p.add_argument('--dtype',choices=['float32','bfloat16'],default='float32');p.add_argument('--tokens',type=int,default=32)
     p.add_argument('--gate-shift',type=float,default=3.);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
     a.output.parent.mkdir(parents=True,exist_ok=True)
+    configure_token_exit_serving(a.tokens)
+    from sglang import Engine
     torch.set_num_threads(4);torch.cuda.set_device(0);torch.backends.cuda.matmul.allow_tf32=False
     tokenizer=AutoTokenizer.from_pretrained(a.checkpoint,trust_remote_code=True)
     prompts=[tokenizer.apply_chat_template([dict(role='user',content=q)],tokenize=True,add_generation_prompt=True,return_dict=False)
@@ -38,12 +41,10 @@ def main():
         report=dict(passed=False,dtype=a.dtype,gate_shift=a.gate_shift,generation_seconds=time.monotonic()-start,cases=[])
         rows=[]
         for ids,result in zip(prompts,outputs,strict=True):
-            raw=result['meta_info']['hidden_states']
-            traces=[raw[0][-1]]+raw[1:] if isinstance(raw[0][0],list) else raw
             tokens=[r[1] for r in result['meta_info']['output_token_logprobs']]
             conditional=[r[0] for r in result['meta_info']['output_token_logprobs']]
-            assert len(traces)==len(tokens)==a.tokens,(len(traces),len(tokens))
-            exits=[int(r[0]) for r in traces];gates=[r[1] for r in traces]
+            exits,gates=parse_generation_trace(result['meta_info'],len(tokens))
+            assert len(tokens)==a.tokens,len(tokens)
             assert all(e in (1,2,3,4) for e in exits)
             rows.append(dict(prompt=ids,response=tokens,exits=exits,gate_log_probs=gates,token_log_probs=conditional,text=result['text']))
         a.output.with_suffix('.samples.json').write_text(json.dumps(rows,indent=2)+'\n')

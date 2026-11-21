@@ -17,14 +17,24 @@ def parse_trace(raw, count):
     if not raw:
         raise ValueError("Missing actual token-exit trace")
     rows = [raw[0][-1]] + raw[1:] if raw[0] and isinstance(raw[0][0], list) else raw
-    if len(rows) != count or any(len(row) != 2 for row in rows):
-        raise ValueError("Token/exit trace length mismatch")
+    if len(rows) != count or any(len(row) != 2 or isinstance(row[0], list) for row in rows):
+        raise ValueError(f"Token/exit trace length mismatch: tokens={count}, trace_entries={len(rows)}; "
+                         "expected one prefill followed by decode rows, without retraction")
     exits, gates = [], []
     for depth, logq in rows:
         if depth not in (1., 2., 3., 4.) or not math.isfinite(logq) or logq > 1e-6:
             raise ValueError("Invalid exit depth or gate probability")
         exits.append(int(depth));gates.append(float(logq))
     return exits, gates
+
+
+def parse_generation_trace(info, count):
+    if info.get("num_retractions") != 0:
+        raise ValueError(f"Token-exit generation requires zero KV retractions; "
+                         f"reported={info.get('num_retractions')!r}. Dense re-prefill changes the sampled policy")
+    if info.get("completion_tokens") != count:
+        raise ValueError("Token log probabilities do not cover the complete generation")
+    return parse_trace(info.get("hidden_states"), count)
 
 
 async def generate(args, sample, sampling_params, evaluation=False):
@@ -43,7 +53,13 @@ async def generate(args, sample, sampling_params, evaluation=False):
     info = output["meta_info"]
     values = info.get("output_token_logprobs", [])
     tokens, conditional = [v[1] for v in values], [v[0] for v in values]
-    exits, gates = parse_trace(info.get("hidden_states"), len(tokens))
+    try:
+        exits, gates = parse_generation_trace(info, len(tokens))
+    except ValueError as exc:
+        append_record(args.ouro_output, 'rollout-failures.jsonl', dict(
+            step=args.ouro_rollout_id, index=sample.index, group=sample.group_index,
+            error=str(exc), prompt_tokens=prompt, sampling_params=params, output=output))
+        raise
     if not tokens or not all(math.isfinite(x) for x in conditional):
         raise ValueError("Missing or nonfinite token probabilities")
     step = args.ouro_rollout_id
@@ -53,6 +69,7 @@ async def generate(args, sample, sampling_params, evaluation=False):
         ouro_depth=4, ouro_exits=exits, ouro_gate_log_probs=gates,
         ouro_token_log_probs=conditional, ouro_gate_shift=args.ouro_gate_shift,
         ouro_step=step, ouro_seed=params['sampling_seed'],
+        ouro_num_retractions=info['num_retractions'],
         ouro_beta=price_at_step(args.ouro_beta,step,args.ouro_total_steps,args.ouro_price_warmup),
         prefill_loop_tokens=4*len(prompt), executed_loop_tokens=4*len(prompt)+sum(exits[1:]),
         generation_seconds=time.monotonic()-started)
@@ -83,6 +100,8 @@ def post_process_rewards(args, samples):
         m=s.train_metadata;trace=m['ouro_exits'];n=s.response_length
         if len(trace)!=n or len(m['ouro_gate_log_probs'])!=n or len(m['ouro_token_log_probs'])!=n or any(e not in (1,2,3,4) for e in trace):
             raise ValueError("Incomplete sampled exit trajectory")
+        if m.get('ouro_num_retractions', 0) != 0:
+            raise ValueError("Retracted token-exit trajectory cannot be used for training")
         expected=4*(len(s.tokens)-n)+sum(trace[1:])
         if m['executed_loop_tokens']!=expected or m['ouro_gate_shift']!=args.ouro_gate_shift:
             raise ValueError("Incorrect executed compute or gate shift")

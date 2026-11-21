@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-21T17:25:26.947580",
+  "updated_at": "2026-11-22T02:47:05",
   "user_request": "Replace uniform mixed-depth experiments with gated policies at beta=0 and multiple positive compute prices.",
   "cancelled_arms": [
     {
@@ -60,14 +60,16 @@
   "beta_zero_recommendation": "Keep as the clean correctness-only gated control; reduced compute is not guaranteed without a cost term.",
   "gate_granularity_status": "confirmed",
   "existing_code": "Native per-token early_exit_gate with physical exit and differentiable last-exited KV replay; original sequence head unused.",
-  "implementation_gap": "Full 256-response gate update and held-out effect remain unverified; dynamic early-exit CUDA graphs not implemented.",
+  "implementation_gap": "Full 140-step arms and held-out effects remain unfinished; token-exit CUDA graphs and matched-hardware wall-clock speedup remain unverified.",
   "cancellation_record": "results/native2a/gate-plan-20261121/stratified-cancellation.json",
   "gate_granularity": "per_token_per_loop",
   "scheme": "2b",
   "clarification": "User explicitly selected per-token per-loop exit",
-  "gate_status": "native_2b_formal_beta0_running_first_full_batch_pending",
-  "fixed_baseline_root": "runs/native2b-fixed-formal-20261121",
+  "gate_status": "serving_repaired_resume_first_batch_pending",
+  "fixed_baseline_root": "runs/native2b-fixed-repaired-20261122",
   "fixed_baseline_reset": "results/native2b/20261121/fixed-baseline-reset.json",
-  "gate_root": "runs/native2b-formal-20261121",
-  "validation": "results/native2b/20261121/training-validation.json"
+  "gate_root": "runs/native2b-gate-repaired-20261122",
+  "validation": "results/native2b/20261121/training-validation.json",
+  "formal_verification": "results/native2b/20261121/formal-verification.json",
+  "repair_record": "results/native2b/20261122/recovery-verification.json"
 }

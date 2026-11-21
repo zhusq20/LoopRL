@@ -1,0 +1,22 @@
+{
+  "fixed4-beta0": {
+    "steps": 54,
+    "grad_norm_min": 0.05901495814874588,
+    "grad_norm_max": 0.46790679750822567,
+    "last_kl": 0.0038621409330517054,
+    "all_train_metrics_finite": true,
+    "first9_reward": 0.4670138888888889
+  },
+  "gate-beta0": {
+    "steps": 9,
+    "grad_norm_min": 0.08696279338336457,
+    "grad_norm_max": 0.16042456597121896,
+    "last_kl": 0.000364855513907969,
+    "all_train_metrics_finite": true,
+    "first9_reward": 0.4618055555555556,
+    "mean_depth_range": [
+      3.9004428765402333,
+      3.9056928377381572
+    ]
+  }
+}

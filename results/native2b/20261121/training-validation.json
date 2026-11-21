@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "scope": "native_2b_pilot_restore_and_actual_serving_weight_sync",
+  "scope": "native_2b_pilot_restore_actual_sync_and_first_full_formal_update",
   "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
   "source_sha256": {
     "looprl/native_2a.py": "abb492b62eca367f04d5e314a0df160c3b7f4bbc2f03d6194df9447ec3fdaecb",
@@ -29,13 +29,14 @@
     "pilot-acceptance.json",
     "resume-acceptance.json",
     "gate-weight-sync.json",
-    "patch-validation.json"
+    "patch-validation.json",
+    "formal-verification.json"
   ],
   "gate_restore": "/ossfs/workspace/LoopRL/runs/native2b-resume-v4-20261121/gate-restore.json",
   "regression_tests": 52,
-  "validated_global_batch_size": 32,
+  "validated_global_batch_size": 256,
   "formal_global_batch_size": 256,
-  "full_batch_validated": false,
+  "full_batch_validated": true,
   "validated_execution": {
     "training_execution": {
       "reuse_old_log_probs": true,
@@ -82,7 +83,12 @@
     "No held-out algorithmic benefit claim",
     "Tokenwise joint-action TIS does not fully correct trajectory distribution",
     "Exact gate restore is not bitwise full continuation equivalence",
-    "Token-exit CUDA graphs and wall-clock speedup are not validated",
-    "Full 256-response runtime acceptance remains pending"
-  ]
+    "Token-exit CUDA graphs and wall-clock speedup are not validated"
+  ],
+  "validated_global_batch_sizes": [
+    32,
+    256
+  ],
+  "full_batch_report": "results/native2b/20261121/formal-verification.json",
+  "pilot_global_batch_size": 32
 }

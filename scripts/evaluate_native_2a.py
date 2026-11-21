@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 from looprl.data import read_jsonl, sha256, write_json
 from looprl.native_2a import append_record, sample_seed
 from looprl.rewards import score_answer
+from looprl.native_serving import configure_token_exit_serving, context_capacity
 
 
 def main():
@@ -35,15 +36,21 @@ def main():
         p.error("Evaluation sizes and budgets must be positive")
     output = Path(a.output)
     output.mkdir(parents=True, exist_ok=False)
+    reservation = configure_token_exit_serving(a.max_new_tokens) if gated else None
     from sglang import Engine
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(a.checkpoint, trust_remote_code=True)
     rows = read_jsonl(a.data)
     random.Random(a.seed).shuffle(rows)
     selected = rows[:a.limit]
+    capacity = context_capacity(tokenizer,
+        [r['problem']+'\nPlease put your final answer in \\boxed{}.' for r in selected],
+        a.max_new_tokens, json.loads((Path(a.checkpoint)/'config.json').read_text())['max_position_embeddings'],
+        65536)
     tasks = [(row, repeat) for row in selected for repeat in range(a.repeats)]
     protocol = dict(vars(a), data_sha256=sha256(a.data), ids=[r["id"] for r in selected],
                     dtype="float32", temperature=1., top_p=1., backend="sglang_native_ouro",
+                    context_capacity=capacity, token_exit_env=reservation,
                     purpose="paired_baseline; do not select training hyperparameters on this test subset")
     write_json(output/"protocol.json", protocol)
     write_json(output/"status.json", dict(status="running", completed=0, planned=len(tasks), pid=os.getpid()))
@@ -56,7 +63,7 @@ def main():
     try:
         for device, depth in enumerate(depths):
             engines[depth] = Engine(model_path=a.checkpoint, trust_remote_code=True, dtype="float32",
-                tp_size=1, pp_size=1, base_gpu_id=device, context_length=a.max_new_tokens+2048, max_total_tokens=65536,
+                tp_size=1, pp_size=1, base_gpu_id=device, context_length=capacity['context_length'], max_total_tokens=65536,
                 max_running_requests=a.batch_size, mem_fraction_static=.65, attention_backend="torch_native",
                 disable_cuda_graph=True, disable_overlap_schedule=True, chunked_prefill_size=-1,
                 json_model_override_args=json.dumps({"total_ut_steps": depth, "ouro_batched_decode": a.batched_decode,
@@ -113,8 +120,9 @@ def main():
                     truncated=info["finish_reason"]["type"] == "length",
                     meta_info=info)
                 if gated:
-                    from looprl.native_2b import parse_trace
-                    exits,gates=parse_trace(info.pop('hidden_states'),length)
+                    from looprl.native_2b import parse_generation_trace
+                    exits,gates=parse_generation_trace(info,length)
+                    info.pop('hidden_states')
                     record.update(exits=exits,gate_log_probs=gates,depth=sum(exits)/length,
                         loop_tokens=sum(exits),executed_loop_tokens=4*len(ids)+sum(exits[1:]))
                 records.append(record)

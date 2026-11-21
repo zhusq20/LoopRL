@@ -1,5 +1,34 @@
 # 方案二实现与首轮实验
 
+## 正式队列中断核查与修复（2026-11-22）
+
+11 月 22 日核查确认旧队列均已停止：gate β=0 在 11 月 21 日 18:57 完成 9/140 次更新后失败，最近完整保存为 iteration 4（5 次更新）；固定四轮在 23:22 完成 54/140 次更新后失败，最近完整保存为 iteration 49（50 次更新）。两组各有最后 4 次更新未保存，续训须从保存边界重算。模型分片、rollout 数据游标、Adam 步数和 scheduler 样本数已核对，[边界记录](results/native2b/20261122/recovery-boundaries.json) 保留。下方 11 月 21 日的“运行中”描述属于当时的历史状态。
+
+固定组失败题目为 `train/geometry/101`：应用聊天模板后输入为 2071 token，加 2048-token 回答预算超过入口写死的 4096。入口与评测现在按实际题目、同一聊天模板和 tokenizer 预检容量，不删题、不缩短回答预算。真实引擎测试还发现 pinned SGLang 的 worker 与 scheduler 共保留两个位置，设置 4119 虽能接收请求却只生成 2046 token；这一失败证据保留为 [fixed-long-prompt.json](results/native2b/20261122/fixed-long-prompt.json)。最终容量为 4121，最长题目已完整生成 2048 token，CUDA Graph 保持开启，见 [通过报告](results/native2b/20261122/fixed-long-prompt-v2.json)。超过模型或 KV 容量时预检报错，避免静默截断。
+
+gate 组在 18:53:28 出现 `KV cache pool is full. Retract requests`。SGLang 的剩余生成预算估计衰减至 0.098，允许 KV 超额接纳；撤回后将已有回答重新作 dense prefill，既在 trace 中混入第二个嵌套预填充块，也改变 last-exited KV，不能靠裁剪/拼接 trace 修补。真实 32 请求压力测试已[复现](results/native2b/20261122/retraction-root-cause.json)原解析错误。gate 训练、评测和采样验收入口现均将预算比例固定为 1，预留完整剩余输出，并把估计上限至少设为回答预算；解析端显式要求 `num_retractions=0`、token 概率和 completion 数一致，失败时保存原请求及返回证据。同一低容量压力测试修复后撤回为 0，全部 32 条 trace 通过，见 [retraction-repair.json](results/native2b/20261122/retraction-repair.json)。
+
+34 项针对性回归测试通过，见 [日志](results/native2b/20261122/regression-tests.log)。正式容量的 gate 压力测试也已通过：32 条回答各生成 2048 token，共 65,536 个 token，全部 trace 对齐、撤回为 0，见 [gate-capacity-stress-v2.json](results/native2b/20261122/gate-capacity-stress-v2.json)。服务容量和 gate 的预算预留配置写入 protocol，恢复必须提供匹配配置及源码哈希的显式服务验证报告。训练步数、数据、seed、β、2048-token 预算、精度、优化器和训练/采样卡配置保持原实验设置。两条正式队列已从原保存边界恢复到 `runs/native2b-fixed-repaired-20261122` 与 `runs/native2b-gate-repaired-20261122`；当前验收状态见 [recovery-verification.json](results/native2b/20261122/recovery-verification.json)。完整 140 步、held-out 效果和同硬件墙钟加速仍未完成。
+
+### Reward 趋势与续训判断
+
+本次两个错误都发生在未完成的采样/请求阶段，失败批次没有进入优化器更新。gate 的首次缓存撤回出现在第 10 批，早于它的 5 次更新检查点可保留；固定组第 55 批才因长题被拒绝，50 次更新检查点可保留。恢复实读 gate 模型、FP32 主权重及 Adam 分片完全匹配，三个 gate 采样进程的完整预算预留配置也已实读确认。不需要从原基座重新开始；应重算每组最后 4 个未保存的更新。
+
+中断前固定组的训练日志呈上升趋势。下面选择第 1–10 批与第 41–50 批，各为 320 道题、2560 条回答，后一窗口全部处于已保存边界之内；不把续跑产生的重复批次混入统计。
+
+| 固定四轮指标 | 第 1–10 批 | 第 41–50 批 |
+|---|---:|---:|
+| 原始 0/1 outcome reward | 46.17% | 67.03% |
+| 回答截断率 | 53.36% | 31.41% |
+| 平均回答 token 数 | 1702.87 | 1386.94 |
+| 未截断回答中的正确比例 | 98.83% | 97.67% |
+
+[曲线](results/native2b/20261122/reward-trends.png) 同时画出逐批值与五批移动平均；[窗口明细](results/native2b/20261122/reward-window-analysis.json) 保留分母和失败原因。reward 提升伴随更少截断和更短回答，支持模型更会在固定 2048-token 预算内结束思考、提交可验证答案的解释。未截断回答的正确比例没有相同上升，而且这部分样本的组成在变，不能据此推断纯数学能力提升或下降。不同窗口题目不同，训练曲线不能替代基座与检查点在同一 held-out 集上的配对评测。
+
+固定与 gate 的共同前 9 批原始 reward 均值分别为 46.70%、46.18%；gate 平均退出深度在 3.9004–3.9057，仍处于 14 步学习率 warmup 内，尚无自适应深度优势证据。β=0 本来也没有显式节省计算的激励，正价格扫描尚未开始。所有已完成批次训练指标有限，独立 grad/no-grad 重放误差为 0，TIS ESS 最低固定 99.926%、gate 99.913%，见 [稳定性统计](results/native2b/20261122/training-stability.json)。48 条正 reward 回答重新评分全部一致，错配标准答案的负对照全部为 0，见 [评分抽查](results/native2b/20261122/reward-scorer-audit.json)。这些检查未发现明显数值发散或评分常量错误，但不是全量正确性证明。
+
+看训练效果应使用 `rollout-metrics.jsonl` 的 `reward_mean` 或日志中的 `rollout/raw_reward`。`rollout/rewards` 已被自定义 post-process 替换为组内中心化的训练信号，均值接近零是预期行为。
+
 
 ## 用户确认 token gate 与原生 2b 验收（2026-11-21）
 
@@ -15,7 +44,9 @@
 
 旧固定四轮速度升级运行同样在非 offload 恢复首批经过这条同步路径，不能继续作为严格配对的正式参照。保留第 15 次更新的 checkpoint 和日志，旧队列已停止，`runs/native2b-fixed-formal-20261121` 已从原始基座重新运行 BF16 固定四轮 β=0，与本轮 gate 组保持相同初始 checkpoint、140 步、32×8、2048-token 和 seed。旧结果仅保留为工程历史。
 
-17:22 正式 gate 队列已启动，目录 `runs/native2b-formal-20261121`：先运行 β=0，随后依次运行 β=0.02、0.05、0.1、0.2，每组均从相同原始基座初始化。两卡训练、三个采样副本、微批次 4、每步 256 回答；首个完整批次的运行验收仍待完成。启动前证据绑定见 [training-validation.json](results/native2b/20261121/training-validation.json)，它明确区分已验证的 32 回答 pilot 和待验证的 256 回答正式批次。
+17:22 正式 gate 队列已启动，目录 `runs/native2b-formal-20261121`：先运行 β=0，随后依次运行 β=0.02、0.05、0.1、0.2，每组均从相同原始基座初始化。两卡训练、三个采样副本、微批次 4、每步 256 回答；17:34 首个完整批次已通过验收并开始下一批。启动前证据绑定见 [training-validation.json](results/native2b/20261121/training-validation.json)，它分别记录 32 回答 pilot 和 256 回答正式首批的证据。
+
+首批完整运行见 [formal-verification.json](results/native2b/20261121/formal-verification.json)：256 回答、438,142 个 response token，四个退出深度均有覆盖，平均深度 3.90265，joint 与 gate 的独立重算误差均为 0，TIS ESS 99.918%。训练 107.16 秒，采样/等待 488.13 秒，合计 595.29 秒；不含一次性启动和保存。固定组首批 504.62 秒，但训练/采样卡分配和生成文本不同，不能由此隔离 CUDA Graph 或 gate 的速度贡献。首批仍处于学习率为零的 warmup 起点，实际参数更新已由 pilot 第二步和恢复续训验证；全部 140 步及 held-out 效果尚未完成。
 
 **CUDA Graph 的当前限制：**固定四轮参照保持开启；2b 暂时关闭现有整模型 decode graph。当前实现每轮按 gate 结果压缩活跃请求，包含动态索引、CPU 元数据更新与重新构造 attention 元数据，尚未接入图重放。逐 token gate 并非原则上不能使用 CUDA Graph，后续可实现单轮图和活跃 batch 分桶；不能只打开旧开关就认为正确。实际执行轮数与端到端耗时分开报告，目前没有 2b 墙钟加速结论。固定组与 gate 组还使用不同训练/采样卡分配，队列总耗时不能直接充当模型推理速度对照，最终需在相同硬件预算下单独测量。
 

@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "run": "runs/native2b-formal-20261121/gate-beta0",
+      "iteration": 4,
+      "adam_steps": [
+        5.0
+      ],
+      "scheduler_samples": 1280
+    },
+    {
+      "run": "runs/native2b-fixed-formal-20261121/fixed4-beta0",
+      "iteration": 49,
+      "adam_steps": [
+        50.0
+      ],
+      "scheduler_samples": 12800
+    }
+  ]
+}

@@ -1,0 +1,488 @@
+{
+  "samples": 48,
+  "recompute_matches": true,
+  "wrong_label_positive": 0.0,
+  "cases": [
+    {
+      "id": "train/prealgebra/276",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "36",
+      "gold": "36",
+      "wrong_gold": "56"
+    },
+    {
+      "id": "train/algebra/1600",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "56",
+      "gold": "56",
+      "wrong_gold": "28\\sqrt{3}"
+    },
+    {
+      "id": "train/geometry/665",
+      "step": 9,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "28\\sqrt{3}",
+      "gold": "28\\sqrt{3}",
+      "wrong_gold": "\\frac{144}{625}"
+    },
+    {
+      "id": "train/counting_and_probability/512",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{144}{625}",
+      "gold": "\\frac{144}{625}",
+      "wrong_gold": "-12x -3"
+    },
+    {
+      "id": "train/prealgebra/499",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "-12x - 3",
+      "gold": "-12x -3",
+      "wrong_gold": "5"
+    },
+    {
+      "id": "train/algebra/281",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "5",
+      "gold": "5",
+      "wrong_gold": "12"
+    },
+    {
+      "id": "train/prealgebra/1128",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "12",
+      "gold": "12",
+      "wrong_gold": "3-i"
+    },
+    {
+      "id": "train/algebra/1318",
+      "step": 0,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "3 - i",
+      "gold": "3-i",
+      "wrong_gold": "\\frac{1}{10}"
+    },
+    {
+      "id": "train/prealgebra/460",
+      "step": 0,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{1}{10}",
+      "gold": "\\frac{1}{10}",
+      "wrong_gold": "\\frac{144}{625}"
+    },
+    {
+      "id": "train/counting_and_probability/512",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{144}{625}",
+      "gold": "\\frac{144}{625}",
+      "wrong_gold": "56"
+    },
+    {
+      "id": "train/counting_and_probability/148",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "56",
+      "gold": "56",
+      "wrong_gold": "108"
+    },
+    {
+      "id": "train/algebra/1510",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "108",
+      "gold": "108",
+      "wrong_gold": "26"
+    },
+    {
+      "id": "train/number_theory/440",
+      "step": 0,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "26",
+      "gold": "26",
+      "wrong_gold": "2y"
+    },
+    {
+      "id": "train/algebra/1184",
+      "step": 4,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "2y",
+      "gold": "2y",
+      "wrong_gold": "\\frac12"
+    },
+    {
+      "id": "train/algebra/551",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{1}{2}",
+      "gold": "\\frac12",
+      "wrong_gold": "(2,-3)"
+    },
+    {
+      "id": "train/intermediate_algebra/428",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "(2, -3)",
+      "gold": "(2,-3)",
+      "wrong_gold": "261"
+    },
+    {
+      "id": "train/algebra/1720",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "261",
+      "gold": "261",
+      "wrong_gold": "8"
+    },
+    {
+      "id": "train/algebra/917",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "8",
+      "gold": "8",
+      "wrong_gold": "14"
+    },
+    {
+      "id": "train/algebra/776",
+      "step": 4,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "14",
+      "gold": "14",
+      "wrong_gold": "-3"
+    },
+    {
+      "id": "train/algebra/790",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "-3",
+      "gold": "-3",
+      "wrong_gold": "5"
+    },
+    {
+      "id": "train/precalculus/407",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "5",
+      "gold": "5",
+      "wrong_gold": "8x^9-125y^6"
+    },
+    {
+      "id": "train/intermediate_algebra/1176",
+      "step": 9,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "8x^9 - 125y^6",
+      "gold": "8x^9-125y^6",
+      "wrong_gold": "0"
+    },
+    {
+      "id": "train/algebra/680",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "0",
+      "gold": "0",
+      "wrong_gold": "\\frac14"
+    },
+    {
+      "id": "train/algebra/1704",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{1}{4}",
+      "gold": "\\frac14",
+      "wrong_gold": "-6"
+    },
+    {
+      "id": "train/algebra/1326",
+      "step": 9,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "-6",
+      "gold": "-6",
+      "wrong_gold": "2"
+    },
+    {
+      "id": "train/algebra/365",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "2",
+      "gold": "2",
+      "wrong_gold": "8"
+    },
+    {
+      "id": "train/intermediate_algebra/161",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "8",
+      "gold": "8",
+      "wrong_gold": "108"
+    },
+    {
+      "id": "train/algebra/1510",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "108",
+      "gold": "108",
+      "wrong_gold": "\\frac{\\sqrt{3}}{12}"
+    },
+    {
+      "id": "train/algebra/1506",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{\\sqrt{3}}{12}",
+      "gold": "\\frac{\\sqrt{3}}{12}",
+      "wrong_gold": "109"
+    },
+    {
+      "id": "train/algebra/928",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "109",
+      "gold": "109",
+      "wrong_gold": "4015"
+    },
+    {
+      "id": "train/intermediate_algebra/971",
+      "step": 9,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "4015",
+      "gold": "4015",
+      "wrong_gold": "x^4+4"
+    },
+    {
+      "id": "train/algebra/1245",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "x^4 + 4",
+      "gold": "x^4+4",
+      "wrong_gold": "\\frac{11}{15}"
+    },
+    {
+      "id": "train/prealgebra/971",
+      "step": 4,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{11}{15}",
+      "gold": "\\frac{11}{15}",
+      "wrong_gold": "\\frac{3}{4}"
+    },
+    {
+      "id": "train/precalculus/552",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{3}{4}",
+      "gold": "\\frac{3}{4}",
+      "wrong_gold": "4"
+    },
+    {
+      "id": "train/prealgebra/465",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "4",
+      "gold": "4",
+      "wrong_gold": "\\frac{\\sqrt{3}}{12}"
+    },
+    {
+      "id": "train/algebra/1506",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{\\sqrt{3}}{12}",
+      "gold": "\\frac{\\sqrt{3}}{12}",
+      "wrong_gold": "5"
+    },
+    {
+      "id": "train/precalculus/407",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "5",
+      "gold": "5",
+      "wrong_gold": "\\frac{1}{64}"
+    },
+    {
+      "id": "train/algebra/1358",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{1}{64}",
+      "gold": "\\frac{1}{64}",
+      "wrong_gold": "\\frac12"
+    },
+    {
+      "id": "train/algebra/551",
+      "step": 40,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{1}{2}",
+      "gold": "\\frac12",
+      "wrong_gold": "15"
+    },
+    {
+      "id": "train/algebra/368",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "15",
+      "gold": "15",
+      "wrong_gold": "14"
+    },
+    {
+      "id": "train/algebra/776",
+      "step": 4,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "14",
+      "gold": "14",
+      "wrong_gold": "64\\%"
+    },
+    {
+      "id": "train/algebra/1503",
+      "step": 49,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "64\\%",
+      "gold": "64\\%",
+      "wrong_gold": "-3"
+    },
+    {
+      "id": "train/algebra/790",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "-3",
+      "gold": "-3",
+      "wrong_gold": "(2,-1)"
+    },
+    {
+      "id": "train/algebra/754",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "(2, -1)",
+      "gold": "(2,-1)",
+      "wrong_gold": "400"
+    },
+    {
+      "id": "train/prealgebra/548",
+      "step": 9,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "400",
+      "gold": "400",
+      "wrong_gold": "2 - 9i, -2 + 9i"
+    },
+    {
+      "id": "train/intermediate_algebra/70",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "2 - 9i, -2 + 9i",
+      "gold": "2 - 9i, -2 + 9i",
+      "wrong_gold": "\\frac{3}{4}"
+    },
+    {
+      "id": "train/counting_and_probability/738",
+      "step": 4,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "\\frac{3}{4}",
+      "gold": "\\frac{3}{4}",
+      "wrong_gold": "(2,-3)"
+    },
+    {
+      "id": "train/intermediate_algebra/428",
+      "step": 44,
+      "original_reward": 1.0,
+      "recomputed": 1.0,
+      "wrong_label_reward": 0.0,
+      "answer": "(2, -3)",
+      "gold": "(2,-3)",
+      "wrong_gold": "36"
+    }
+  ],
+  "scope": "Scorer spot-check and mismatched-label negative control; not a held-out policy evaluation"
+}

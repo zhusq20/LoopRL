@@ -1,0 +1,12 @@
+[
+  {
+    "tokens": 256,
+    "trace_entries": 256,
+    "nested_prefill_indices": [
+      0,
+      152
+    ],
+    "old_parser_rejects": true,
+    "retractions": 1
+  }
+]

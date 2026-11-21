@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "workers": [
+    {
+      "pid": 98690,
+      "env": {
+        "SGLANG_INIT_NEW_TOKEN_RATIO": "1",
+        "SGLANG_MIN_NEW_TOKEN_RATIO_FACTOR": "1",
+        "SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION": "4096"
+      }
+    },
+    {
+      "pid": 98691,
+      "env": {
+        "SGLANG_INIT_NEW_TOKEN_RATIO": "1",
+        "SGLANG_MIN_NEW_TOKEN_RATIO_FACTOR": "1",
+        "SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION": "4096"
+      }
+    },
+    {
+      "pid": 98694,
+      "env": {
+        "SGLANG_INIT_NEW_TOKEN_RATIO": "1",
+        "SGLANG_MIN_NEW_TOKEN_RATIO_FACTOR": "1",
+        "SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION": "4096"
+      }
+    }
+  ]
+}

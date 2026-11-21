@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "attention_implementation": "bf16-fast",
+  "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "validated_serving_configurations": [
+    {
+      "attention_implementation": "bf16-fast",
+      "max_running_requests": 32,
+      "kv_token_capacity": 65536,
+      "cuda_graph": false,
+      "memory_fraction": 0.85,
+      "depth4_replicas": 1,
+      "serving_replicas": 3,
+      "radix_cache": false,
+      "context_length": 4121,
+      "token_exit_kv_reservation": {
+        "SGLANG_INIT_NEW_TOKEN_RATIO": "1",
+        "SGLANG_MIN_NEW_TOKEN_RATIO_FACTOR": "1",
+        "SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION": "4096"
+      }
+    }
+  ],
+  "source_sha256": {
+    "looprl/native_serving.py": "203028b057c36966836ebf44501fbc2b7ddbdccf5710d3c1528727175b5274f8",
+    "looprl/native_2b.py": "249d4eedee7c432d9a59cf02c558105a0ef268d6b3b9987a9a9f26f6d592b494",
+    "scripts/run_native_2a.py": "136b92f402bcf1fedfb2246fe15ceee4747f77ed849f3b505160d6b51ee66267",
+    "third_party/slime/slime_plugins/ouro_attention.py": "21b0b56293b47d476f69390f9f95f16b2554ab3cdcfac72a4c0cdcd201525504",
+    "third_party/slime/slime_plugins/ouro_kernels.py": "c7490a95c799ff8c53e39412f4a5dd299ae22dffbcb09639dbe2cc20d0c2228d",
+    "third_party/slime/slime_plugins/sglang_models/ouro.py": "9f38b65559834631fd2e6f690aa617b07ac270d81bce52ccf9fc808616666605"
+  },
+  "evidence": [
+    "results/native2b/20261122/retraction-root-cause.json",
+    "results/native2b/20261122/retraction-repair.json",
+    "results/native2b/20261122/gate-capacity-stress-v2.json"
+  ],
+  "scope": "Per-engine full-budget KV admission and trace integrity at formal serving settings, with existing DP2/three-engine topology retained",
+  "limitations": [
+    "No held-out effect or matched-hardware speedup claim"
+  ]
+}

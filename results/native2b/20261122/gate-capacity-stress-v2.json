@@ -1,0 +1,274 @@
+{
+  "passed": true,
+  "mode": "gate",
+  "capacity": {
+    "context_length": 4121,
+    "max_prompt_tokens": 2071,
+    "required_tokens": 4119,
+    "scheduler_reserve_tokens": 2,
+    "prompt_count": 7242,
+    "max_new_tokens": 2048
+  },
+  "requests": 32,
+  "kv_capacity": 65536,
+  "seconds": 299.0982663035393,
+  "total_retractions": 0,
+  "cases": [
+    {
+      "prompt_tokens": 2071,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.916015625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.921875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90771484375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.89599609375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.91748046875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90576171875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90185546875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.89306640625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.89697265625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9208984375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.91357421875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9111328125
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90087890625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.908203125
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.91552734375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.896484375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90478515625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9130859375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.89990234375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.92333984375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9169921875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90380859375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.90283203125
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9033203125
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.89990234375
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.91796875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9267578125
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.900390625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.9169921875
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.89306640625
+    },
+    {
+      "prompt_tokens": 116,
+      "tokens": 2048,
+      "completion_tokens": 2048,
+      "retractions": 0,
+      "trace_valid": true,
+      "mean_depth": 3.8916015625
+    }
+  ]
+}
