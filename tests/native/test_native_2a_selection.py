@@ -45,6 +45,32 @@ def test_predeclared_cost_and_lower_price_tiebreak(evaluation):
     assert [r["utility"] for r in report["results"]] == [-1., 0., 0.]
 
 
+def test_token_exit_selection_requires_actual_trajectory_and_trained_shift(evaluation):
+    root,validation,plan=evaluation
+    for arm in plan['arms']:
+        arm['arm']='token_exit'
+        export_path=root/(arm['name']+'-model')/'export.json'
+        export=json.loads(export_path.read_text())
+        export['protocol'].update(arm='token_exit',token_exit=dict(gate_shift=3.))
+        export_path.write_text(json.dumps(export))
+        previous=root/arm['name']/'depth4';dest=root/arm['name']/'token_exit';dest.mkdir()
+        protocol=json.loads((previous/'protocol.json').read_text())
+        protocol.update(mode='token_exit',gate_shift=3.)
+        (dest/'protocol.json').write_text(json.dumps(protocol))
+        (dest/'status.json').write_text(json.dumps(dict(status='completed')))
+        exits=[4,4,4] if arm['beta']==.02 else [4,1,1]
+        row=dict(id='validation/example',repeat=0,depth=sum(exits)/3,score=dict(reward=1.),
+                 exits=exits,prompt_tokens=1,response_tokens=3,loop_tokens=sum(exits),
+                 executed_loop_tokens=4+sum(exits[1:]))
+        (dest/'samples.jsonl').write_text(json.dumps(row)+'\n')
+    report=module.select(root,validation,plan)
+    assert report['selected_beta']==.05
+    assert [r['utility'] for r in report['results']]==[.88,.94,.94]
+    path=root/'beta0.05/token_exit/protocol.json';protocol=json.loads(path.read_text())
+    protocol['gate_shift']=4.;path.write_text(json.dumps(protocol))
+    with pytest.raises(ValueError,match='gate shift'):module.select(root,validation,plan)
+
+
 @pytest.mark.parametrize("fault", ["wrong_data", "missing_question", "duplicate", "wrong_checkpoint"])
 def test_rejects_unpaired_or_mislabeled_evaluation(evaluation, fault):
     root, validation, plan = evaluation

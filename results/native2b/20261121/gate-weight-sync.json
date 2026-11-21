@@ -1,0 +1,73 @@
+{
+  "passed": true,
+  "checkpoint": "runs/native2b-pilot-20261121/export-step1",
+  "changed_bf16_elements": {
+    "weight": 1182,
+    "bias": 0
+  },
+  "engines": [
+    {
+      "url": "http://10.10.12.112:25000",
+      "tensors": {
+        "weight": {
+          "shape": [
+            1,
+            2048
+          ],
+          "exact_match": true,
+          "max_error": 0.0
+        },
+        "bias": {
+          "shape": [
+            1
+          ],
+          "exact_match": true,
+          "max_error": 0.0
+        }
+      },
+      "exact_gate_match": true
+    },
+    {
+      "url": "http://10.10.12.112:25002",
+      "tensors": {
+        "weight": {
+          "shape": [
+            1,
+            2048
+          ],
+          "exact_match": true,
+          "max_error": 0.0
+        },
+        "bias": {
+          "shape": [
+            1
+          ],
+          "exact_match": true,
+          "max_error": 0.0
+        }
+      },
+      "exact_gate_match": true
+    },
+    {
+      "url": "http://10.10.12.112:25004",
+      "tensors": {
+        "weight": {
+          "shape": [
+            1,
+            2048
+          ],
+          "exact_match": true,
+          "max_error": 0.0
+        },
+        "bias": {
+          "shape": [
+            1
+          ],
+          "exact_match": true,
+          "max_error": 0.0
+        }
+      },
+      "exact_gate_match": true
+    }
+  ]
+}

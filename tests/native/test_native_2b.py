@@ -71,3 +71,36 @@ def test_gate_audit_is_independent_of_joint_cancellation(tmp_path):
     record_reuse(args,data,torch.cat(data['log_probs']),q)
     report=finish_reuse_audit(args)
     assert report['policy_space']=='joint_exit_token' and report['gate_grad_no_grad_max_error']==0
+
+
+def test_missing_resume_cannot_silently_start_base_training(tmp_path):
+    import subprocess
+    import sys
+    from pathlib import Path
+    script=Path(__file__).resolve().parents[2]/'scripts/run_native_2a.py'
+    result=subprocess.run([sys.executable,str(script),'--output',str(tmp_path/'out'),
+                           '--resume',str(tmp_path/'missing'),'--resume-step','1'],
+                          capture_output=True,text=True)
+    assert result.returncode!=0 and 'checkpoint directory does not exist' in result.stderr
+    assert not (tmp_path/'out').exists()
+
+
+def test_short_execution_boundary_preserves_full_optimizer_schedule():
+    from slime.backends.megatron_utils.model import get_optimizer_param_scheduler
+    def make(stop,restore=False):
+        args=NS(num_rollout=stop,rollout_batch_size=4,n_samples_per_prompt=8,global_batch_size=32,
+            ouro_total_steps=140,lr_decay_iters=140,lr_wsd_decay_iters=None,lr_warmup_fraction=None,
+            lr_warmup_iters=14,lr_warmup_init=0.,lr=1e-6,min_lr=0.,lr_decay_style='constant',
+            start_weight_decay=.1,end_weight_decay=.1,weight_decay_incr_style='constant',
+            use_checkpoint_opt_param_scheduler=restore,override_opt_param_scheduler=False,
+            lr_wsd_decay_style='linear')
+        optimizer=torch.optim.AdamW([torch.nn.Parameter(torch.ones(1))],lr=1e-6)
+        return get_optimizer_param_scheduler(args,optimizer)
+    original=make(2);original.step(64)
+    resumed=make(3);resumed.load_state_dict(original.state_dict())
+    assert resumed.num_steps==64 and resumed.wd_incr_steps==140*32
+    resumed.step(32);assert resumed.num_steps==96
+    legacy=original.state_dict();legacy['wd_incr_steps']=64
+    restored=make(3,restore=True);restored.load_state_dict(legacy)
+    assert restored.num_steps==64 and restored.wd_incr_steps==64
+    assert restored.start_wd==restored.end_wd==.1

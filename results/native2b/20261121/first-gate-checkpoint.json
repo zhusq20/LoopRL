@@ -1,0 +1,69 @@
+{
+  "checkpoint": "runs/native2b-pilot-20261121/checkpoints/iter_0000000",
+  "parameters": {
+    "optimizer.state.param.early_exit_gate.bias": {
+      "dtype": "torch.float32",
+      "shape": [
+        1
+      ],
+      "max_abs": 0.06298828125,
+      "delta_from_base": 0.0
+    },
+    "optimizer.state.exp_avg.early_exit_gate.bias": {
+      "dtype": "torch.float32",
+      "shape": [
+        1
+      ],
+      "max_abs": 2.661024609551532e-06
+    },
+    "early_exit_gate.weight": {
+      "dtype": "torch.bfloat16",
+      "shape": [
+        1,
+        2048
+      ],
+      "max_abs": 1.859375,
+      "delta_from_base": 0.0
+    },
+    "early_exit_gate.bias": {
+      "dtype": "torch.bfloat16",
+      "shape": [
+        1
+      ],
+      "max_abs": 0.06298828125,
+      "delta_from_base": 0.0
+    },
+    "optimizer.state.exp_avg_sq.early_exit_gate.bias": {
+      "dtype": "torch.float32",
+      "shape": [
+        1
+      ],
+      "max_abs": 7.081051023316576e-12
+    },
+    "optimizer.state.param.early_exit_gate.weight": {
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        2048
+      ],
+      "max_abs": 1.859375,
+      "delta_from_base": 0.0
+    },
+    "optimizer.state.exp_avg.early_exit_gate.weight": {
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        2048
+      ],
+      "max_abs": 7.515771721955389e-05
+    },
+    "optimizer.state.exp_avg_sq.early_exit_gate.weight": {
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        2048
+      ],
+      "max_abs": 5.648681966619051e-09
+    }
+  }
+}

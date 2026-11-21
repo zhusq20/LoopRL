@@ -1,6 +1,10 @@
 # Ouro 原生 slime 接入
 
-2026-11-21，正式方案 2a 在 slime 的原生 Megatron trainer、rollout manager 和 SGLang 引擎上实现。`looprl/slime_backend.py` 保留作 HF 参考；本目录结果不使用该 HF actor。14:45 起正式固定/分层扫描统一使用 BF16 + TIS，最新状态见 [EXPERIMENTS.md](../../../EXPERIMENTS.md)。
+2026-11-21，用户已取消均匀混合深度扫描，确认直接进行逐 token、逐 loop 退出的方案 2b。全新固定四轮 β=0 参照与 gate β=0 已从原始基座启动，其余正价格 gate 组按队列执行。新 gate 路径使用原生 Megatron/SGLang、BF16 与联合 exit/token TIS，两步长回答 pilot、精确 gate 状态恢复、实际三副本权重同步和续训已通过；最新状态见 [EXPERIMENTS.md](../../../EXPERIMENTS.md)。`looprl/slime_backend.py` 仅保留作 HF 参考。
+
+新增 `slime_plugins/models/ouro_token_exit.py` 用实际退出轨迹重放并保留跨轮 KV 梯度；`slime_plugins/sglang_models/ouro_token_exit.py` 物理过滤已退出行并补齐 last-exited KV。SGLang 补丁还为 gate 请求保留逐请求采样种子。`looprl/native_2b.py` 联合训练 gate 和 token，按实际执行的预填充与 decode loop 数计价；解析成本项不重复叠加。训练选用 `--arm token_exit --reuse-old-log-probs --rollout-correction tis --gate-shift 3 --serving-replicas 3`，与其余原生 BF16 配置配合。动态 batch 收缩暂不支持当前整模型 CUDA Graph，入口拒绝 `--cuda-graph`；不能据 loop 数减少声称墙钟加速。
+
+2b 验收脚本为 `check_native_token_exit.py`、`check_native_token_exit_serving.py`；`summarize_native_2a.py` 已识别 token_exit、独立 gate 概率审计与可训练 gate 的主权重/Adam 矩。恢复时额外实读并核对 gate 模型、FP32 主权重和 Adam 分片。导出使用 `export_native_2a.py`，真实 gated 评测使用 `evaluate_native_2a.py --mode token_exit --depth 4 --gate-shift 3`。
 
 ## 代码与版本
 
@@ -17,7 +21,7 @@
 3. `slime_plugins/sglang_models/ouro.py`：SGLang 外部模型，投影权重共享，每轮使用独立 KV 槽；一个引擎固定一个深度。两处 SGLang 核心缓存计数通过单独补丁适配。
 4. `slime_plugins/ouro_2a.py`：样本执行深度贯穿 batch 分发、旧策略重算与带梯度 forward；混合深度 microbatch 拒绝执行。`--micro-batch-size` 大于 1 时，按深度和长度分组，保留不足一批的尾部样本。`--ouro-beta` 指定计算价格（默认 0）；计价后按 prompt group 中心化，除以整个 batch 原始 outcome 标准差，恒定 outcome 使用单位尺度。PPO token 项按固定生成预算归一化。
 5. 原生训练支持 FP32 与 BF16、forward kwargs hook。FP32 无校正模式的采样/重算误差超过 0.001 时拒绝更新；BF16 要求显式 `--rollout-correction tis`，自定义 PPO loss 乘以停止梯度的旧训练策略/采样策略重要性权重，上截断为 2。同一训练实现的带梯度/无梯度重放保留 0.001 门槛。记录原始误差、TIS 权重、截断率和 ESS，不声称 TIS 使两个引擎数值相等。
-6. `slime_plugins/ouro_training.py`：`--reuse-old-log-probs` 只允许无 dropout、每批一次更新的固定/分层 GRPO/TIS；此时更新前的训练 forward 同时提供停止梯度的旧策略概率。每卡、每个实际深度独立重放一个最长完整微批次，保留相同 packing 形状；每条回答检查有限值和恰好一次覆盖，优化器更新前聚合完整 token 级 TIS 统计并验收。`--trainer-gpus 2` 使用数据并行，FP32 梯度累积和全局损失归一化保持不变；TP/PP/CP 仍为 1。
+6. `slime_plugins/ouro_training.py`：`--reuse-old-log-probs` 只允许无 dropout、每批一次更新的固定/分层或逐 token 联合策略 GRPO/TIS；此时更新前的训练 forward 同时提供停止梯度的旧策略概率。每卡、每个实际深度独立重放一个最长完整微批次，保留相同 packing 形状；每条回答检查有限值和恰好一次覆盖，优化器更新前聚合完整 token 级 TIS 统计并验收。`--trainer-gpus 2` 使用数据并行，FP32 梯度累积和全局损失归一化保持不变；TP/PP/CP 仍为 1。
 
 训练执行配置写入 `protocol.json`。从旧配置续训必须提供 `--training-upgrade-report`，其配置、基座版本和源码哈希均须匹配；允许改变微批次、数据并行、重算策略及四轮引擎副本数，禁止借此修改算法、数据、精度或训练总步数。执行回放证据见 [replay-summary.json](../../../results/native2a/performance-v3-20261121/replay-summary.json)；正式切换和实测整步吞吐以 [实验记录](../../../EXPERIMENTS.md) 为准。
 
@@ -93,10 +97,10 @@ CUDA_VISIBLE_DEVICES=2,3 "$LOOPRL_NATIVE_PYTHON" scripts/run_ouro_native_smoke.p
 ## 仍待完成
 
 - 长序列真实奖励两步 BF16/TIS 验收及首个正式 32×8 更新已完成；更长稳定性、同一 checkpoint 边界的严格恢复对照和正式稳态吞吐仍待验证。
-- 学习深度头的原生端到端训练/保存/恢复验收。模型与动作 loss 已实现，完整模型的采样/重算深度概率及共享 LM 梯度检查已通过。
+- 逐 token gate 的长序列更新、保存/恢复与实际采样权重同步已通过；完整 32×8 首批验收正在执行。状态以最新实验记录为准，序列级深度头不属于本次任务。
 - 140 步 β 扫描、验证集选价、同价固定深度对照及配对重复评测。数学 reward、价格升温、初始参考 KL、分层引擎路由和权重版本检查均已接入新入口。
 
-用户已授权先运行固定/分层 140 步扫描；未完成的严格恢复与学习深度头验收继续单独记录，不声称 2a 已有算法收益。
+用户已授权固定四轮参照与 gate β=0/0.02/0.05/0.1/0.2；均匀混合训练已取消。未完成的严格恢复与 held-out 效果继续单独记录，工程验收不等于算法收益。
 
 当前正式训练使用 BF16、标准 AdamW、逐层激活重算，主权重、梯度累积与优化器状态保留 FP32；学习率、采样参数、价格与数据划分固定在每次运行的 `protocol.json`。运行保存独立源码快照，开发中的后续修改不影响已启动的 actor。`scripts/advance_native_2a.py --direct-formal` 可直接排队正式组，任一阶段失败就停止后续阶段；`status.json` 与各阶段日志保存于队列目录。具体计划见 [native2a-plan.json](../../../configs/native2a-plan.json)。
 

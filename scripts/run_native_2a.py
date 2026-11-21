@@ -89,6 +89,17 @@ def main():
     p.add_argument("--stop-after", type=int)
     p.add_argument("--dry-run", action="store_true")
     options = p.parse_args()
+    if options.resume:
+        # Actors run from an isolated source directory. Resolve before chdir;
+        # slime otherwise treats a missing path as a new HF finetune.
+        options.resume = str(Path(options.resume).resolve())
+        if not Path(options.resume).is_dir():
+            p.error('Resume checkpoint directory does not exist')
+        if options.resume_step is not None:
+            boundary=Path(options.resume)/f'iter_{options.resume_step:07d}'
+            cursor=Path(options.resume)/'rollout'/f'global_dataset_state_dict_{options.resume_step}.pt'
+            if not (boundary/'.metadata').is_file() or not cursor.is_file():
+                p.error('Resume requires a complete model and rollout checkpoint at the requested boundary')
     # A native run must not depend on an interactive shell exporting this.
     # Without it SGLang silently falls back to the generic Transformers model.
     package = os.environ.get("SGLANG_EXTERNAL_MODEL_PACKAGE", "slime_plugins.sglang_models")
@@ -329,6 +340,10 @@ def main():
         if not options.resume:
             p.error("resume-step requires resume")
         argv += ["--ckpt-step", str(options.resume_step)]
+    if options.resume:
+        # --stop-after is an execution boundary, not a new optimizer schedule.
+        # Protocol equality was checked above; restore its saved scheduler.
+        argv += ['--use-checkpoint-opt-param-scheduler', '--exit-on-missing-checkpoint']
     write_json(output/"launch.json", dict(argv=argv, gpus=visible, engine_base_port=engine_base_port,
         external_model_package=package))
     source = output/"source"
@@ -368,6 +383,8 @@ def main():
     import train
     from slime.utils.arguments import parse_args
     args, restore_plan = parse_args(return_restore_plan=True)
+    if options.resume and (Path(args.load).resolve()!=Path(options.resume) or args.finetune or args.no_load_optim):
+        raise ValueError('Requested checkpoint resume was replaced by base finetuning; refusing to train')
     write_json(output/"status.json", dict(status="running", started_unix=time.time(), pid=os.getpid()))
     ray.init(address="local", num_gpus=len(visible), num_cpus=24, include_dashboard=False,
              _temp_dir=str(Path("/tmp")/("ray-2a-"+hashlib.sha256(str(output).encode()).hexdigest()[:12])))

@@ -1,0 +1,40 @@
+....................................................                     [100%]
+=============================== warnings summary ===============================
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/training/utils/common_utils.py:28: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_l2norm
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/models/mimo/config/base_configs.py:12: UserWarning: MimoModelConfig is experimental and still under active development. The API may change without notice in future releases.
+    class MimoModelConfig:
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/extensions/transformer_engine_spec_provider.py:121: UserWarning: Only transformer-engine>=1.7.0 supports MoE experts, but your version is 0.0.0. Use local linear implementation instead.
+    warnings.warn(
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/rl/inference/inference_interface.py:11: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class InferenceInterface(BaseModel):
+
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+tests/native/test_native_2b.py::test_short_execution_boundary_preserves_full_optimizer_schedule
+  /tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/rl/__init__.py:31: PydanticDeprecatedSince20: The `__fields__` attribute is deprecated, use the `model_fields` class property instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    cls.Library.type_names[register_type.__fields__['type_name'].default] = register_type
+
+tests/native/test_native_resume_compare.py::test_read_tensor_payload_preserves_names_shapes_and_values
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to save in a single process.
+    return func(*args, **kwargs)
+
+tests/native/test_native_resume_compare.py::test_read_tensor_payload_preserves_names_shapes_and_values
+  /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to load in a single process.
+    return func(*args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+52 passed, 10 warnings in 9.12s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

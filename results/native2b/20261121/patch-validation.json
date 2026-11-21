@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "native_forward_reverse": true,
+  "sglang_forward_reverse": true,
+  "source_sha256": {
+    "integrations/slime/ouro-native.patch": "8f146c71d19b91d73f5375babf1b52aacfd2ee067a8ceb7bf15f7de04f8a9b9b",
+    "integrations/slime/native/sglang-ouro.patch": "cd8bb4bdd41f8a1f520aeae2ac7f4d153247f622dadc1c33a2dae99d3c8e4953"
+  }
+}

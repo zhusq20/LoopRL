@@ -49,3 +49,27 @@ def test_both_serving_owners_select_all_depths(owner):
         select = cls._get_updatable_server
     holder = NS(args=NS(ouro_shared_depth_engines=True, ouro_arm="learned"), servers=servers())
     assert select(holder).engines == ["engine2", "engine3", "engine4"]
+
+
+def test_first_nccl_broadcast_restores_actor_after_reference_load(monkeypatch):
+    import torch
+    from slime.backends.megatron_utils import actor as module
+    live=torch.tensor([1.])  # Frozen reference currently loaded in the model.
+    trained=torch.tensor([2.])
+    holder=NS(args=NS(debug_train_only=False,debug_rollout_only=False,
+                     rollout_external=True,use_fault_tolerance=False,offload_train=False),
+              _active_model_tag='ref',rollout_manager=NS(get_updatable_engines_and_lock=
+                  NS(remote=lambda: (['engine'],None,0,[1],[0],[{}]))))
+    broadcasts=[]
+    def switch(tag):
+        assert tag=='actor';live.copy_(trained);holder._active_model_tag=tag
+    holder._switch_model=switch
+    holder.weight_updater=NS(update_weights=lambda:broadcasts.append(live.clone()))
+    monkeypatch.setattr(module.ray,'get',lambda value:value)
+    monkeypatch.setattr(module,'print_memory',lambda *args:None)
+    update=module.MegatronTrainRayActor.update_weights.__wrapped__
+    update(holder)
+    assert torch.equal(broadcasts[0],trained)
+    # The steady path must not reload an older backup over new live weights.
+    live.fill_(3.);update(holder)
+    assert broadcasts[1].item()==3.

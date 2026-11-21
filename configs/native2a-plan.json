@@ -1,5 +1,5 @@
 {
-  "status": "token_exit_2b_implementation_and_acceptance",
+  "status": "token_exit_2b_formal_running_first_full_batch_pending",
   "model": "Ouro-2.6B-Thinking",
   "backend": "native_slime_megatron_sglang",
   "precision": "bf16",
@@ -44,13 +44,13 @@
     "note": "Uniform mixed-depth training and its beta scan were cancelled by the user."
   },
   "acceptance_gates": [
-    "real_math_reward_and_2048_token_multi_depth_training",
-    "all_depth_engines_share_updated_weights",
-    "same_checkpoint_boundary_resume_comparison",
-    "learned_head_end_to_end_update_save_restore",
+    "real_math_reward_and_2048_token_ragged_training",
+    "all_token_exit_engines_share_updated_weights",
+    "exact_gate_model_master_adam_restore_before_continuation",
+    "gate_end_to_end_update_save_restore",
     "formal_batch_32_by_8_memory_and_throughput_measurement",
-    "finite_sampler_trainer_probabilities_with_detached_tokenwise_TIS_and_logged_ESS",
-    "trainer_grad_no_grad_replay_max_logprob_error_at_most_0.001"
+    "finite_joint_exit_token_TIS_with_logged_ESS",
+    "trainer_joint_and_gate_grad_no_grad_replay_error_at_most_0.001"
   ],
   "arms": [
     {
@@ -91,10 +91,10 @@
   "budget_rule": "When generation budget changes, preserve beta/(4*max_new_tokens).",
   "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit.",
   "execution": {
-    "root": "runs/native2a-speed-formal-20261121",
-    "mode": "validated_training_execution_upgrade_resume_at_update_5",
+    "root": "runs/native2b-fixed-formal-20261121",
+    "mode": "fresh_bf16_fixed_baseline_and_token_exit_scan",
     "previous_fp32_root": "runs/native2a-formal-20261121",
-    "validation": "results/native2a/performance-v3-20261121/training-validation.json",
+    "validation": "results/native2b/20261121/training-validation.json",
     "gpus_by_queue": {
       "fixed": [
         4,
@@ -110,34 +110,35 @@
       ]
     },
     "runtime_checks_retained": true,
-    "limitation": "Native DP2 pilot and optimizer checkpoint, DP1/DP2 replay, 29 tests, and full 256-response updates in both resumed formal queues passed. Before/after timing uses different batches; fixed has one measured update. All six completed runs, bitwise resume and held-out algorithmic benefits remain unverified. Tokenwise TIS does not fully correct prefix distribution.",
-    "launch_verification": "results/native2a/performance-v3-20261121/formal-speed-verification.json",
+    "limitation": "Native 2b pilot, exact gate restore, three-engine actual gate weights, continuation and 52 tests passed. First 256-response gate update remains pending. Held-out effects, matched-hardware wall-clock speedup and bitwise full continuation remain unverified. Tokenwise TIS does not fully correct trajectory distribution.",
+    "launch_verification": "results/native2b/20261121/gate-fresh-launch.json",
     "previous_bf16_root": "runs/native2a-bf16-formal-20261121",
-    "resume_boundary": 4,
     "training_by_queue": {
       "fixed": {
         "trainer_gpus": 1,
         "serving_gpus": 2,
         "depth4_replicas": 2
       },
-      "stratified": {
+      "token_exit": {
         "trainer_gpus": 2,
         "serving_gpus": 3,
-        "depth4_replicas": 1
+        "serving_replicas": 3
       }
     },
-    "verified_at": "2026-11-21 15:59",
-    "completed_updates_at_verification": {
-      "stratified": 8,
-      "fixed": 6
-    },
+    "verified_at": "2026-11-21T17:25:26",
     "cancelled_stratified_queue": "runs/native2a-speed-formal-20261121/stratified",
     "cancellation_record": "results/native2a/gate-plan-20261121/stratified-cancellation.json",
     "active_queues": [
-      "fixed"
+      "fixed",
+      "token_exit"
     ],
-    "gate_launch_status": "native_acceptance_in_progress",
-    "previous_plan": "results/native2a/gate-plan-20261121/previous-plan.json"
+    "gate_launch_status": "gate_beta0_running_first_full_batch_pending",
+    "previous_plan": "results/native2a/gate-plan-20261121/previous-plan.json",
+    "gate_root": "runs/native2b-formal-20261121",
+    "previous_fixed_root": "runs/native2a-speed-formal-20261121/fixed",
+    "fixed_reset_record": "results/native2b/20261121/fixed-baseline-reset.json",
+    "fixed_launch_record": "results/native2b/20261121/fixed-fresh-launch.json",
+    "gate_launch_record": "results/native2b/20261121/gate-fresh-launch.json"
   },
   "master_parameter_precision": "float32",
   "gradient_accumulation_precision": "float32",
@@ -157,8 +158,13 @@
     "kv_token_capacity": 65536,
     "memory_fraction": 0.85,
     "depth4_replicas_by_queue": {
-      "fixed": 2,
-      "stratified": 1
+      "fixed": 2
+    },
+    "token_exit": {
+      "cuda_graph": false,
+      "reason": "dynamic active-row compaction; loop graphs not implemented",
+      "radix_cache": false,
+      "serving_replicas": 3
     }
   },
   "training_execution": {
@@ -167,7 +173,7 @@
     "group_by_depth": true,
     "data_parallel_size_by_queue": {
       "fixed": 1,
-      "stratified": 2
+      "token_exit": 2
     }
   },
   "cancelled_arms": [
@@ -198,7 +204,7 @@
     }
   ],
   "planned_gate_experiments": {
-    "status": "native_acceptance_in_progress",
+    "status": "beta0_running_positive_prices_queued",
     "arms": [
       {
         "name": "gate-beta0",
@@ -230,12 +236,20 @@
     "gate_granularity": "per_token_per_loop",
     "zero_price_control": "Measures learned depth choice driven by correctness alone; separates gate effects from explicit compute pricing.",
     "required_before_launch": [
-      "confirmed: per-token per-loop exits (2b)",
-      "validate native rollout/recompute probabilities for depth actions as well as tokens",
-      "validate gate gradients, shared weights, optimizer save/restore and full-batch execution",
-      "evaluate the actual gated policy with its full executed compute"
+      "confirmed per-token per-loop exits (2b)",
+      "native joint and gate probability replay validated",
+      "gate gradients, actual serving weights, checkpoint save/restore and continuation validated"
     ],
     "scheme": "2b",
-    "gate_initialization": "pretrained early_exit_gate with shared fixed logit shift; calibrate before training"
+    "gate_initialization": "pretrained early_exit_gate; subtract 3 from logits in every arm",
+    "gate_shift": 3.0,
+    "pilot_report": "results/native2b/20261121/pilot-acceptance.json",
+    "resume_report": "results/native2b/20261121/resume-acceptance.json",
+    "launch_record": "results/native2b/20261121/gate-fresh-launch.json",
+    "remaining_validation": [
+      "first full 256-response runtime update",
+      "held-out actual gated policy accuracy and full executed compute",
+      "matched-hardware inference timing including gate overhead"
+    ]
   }
 }

@@ -1,0 +1,88 @@
+{
+  "passed": true,
+  "scope": "native_2b_pilot_restore_and_actual_serving_weight_sync",
+  "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "source_sha256": {
+    "looprl/native_2a.py": "abb492b62eca367f04d5e314a0df160c3b7f4bbc2f03d6194df9447ec3fdaecb",
+    "looprl/native_2b.py": "79a7b0eb76e81869e43847bc4b8fc5e3609225fb5c185a39d9accb66bd972a60",
+    "scripts/run_native_2a.py": "a055b10f92291fbd4cf4979e0f073d8449bef904054e4e0b11460614f76d6e30",
+    "scripts/advance_native_2a.py": "a9845f272fabef53f94a6f985ae2af80d0550b986171330920e5c5ef492cdb78",
+    "scripts/summarize_native_2a.py": "f64db54bc8b35b67cb4d531571d0453ec6d1f2bedc74ec6348a668d392a0b91f",
+    "third_party/slime/slime_plugins/models/ouro.py": "460948459b950bade4db02ce6d0260da8d2c0bde3dcdead95c24f7f0ecdb24a1",
+    "third_party/slime/slime_plugins/models/ouro_token_exit.py": "d3d261fe4cffa1173bc49f5694383f1ebf8e6e092faa838701c591556d44662c",
+    "third_party/slime/slime_plugins/sglang_models/ouro.py": "9f38b65559834631fd2e6f690aa617b07ac270d81bce52ccf9fc808616666605",
+    "third_party/slime/slime_plugins/sglang_models/ouro_token_exit.py": "f410aeab0a47e2c1af5735db9610055f7cb7575a4cf1d23a3b14395b40ab518a",
+    "third_party/slime/slime_plugins/ouro_training.py": "14ae717206dd1e4d6f2533f89c47bee9448c1c4df8d04fffef6cac97b151dc09",
+    "third_party/slime/slime_plugins/ouro_2a.py": "cbca232f89770983cd58bf137bffd9cc8cec6a02173ae87f22bc3c6d899ef283",
+    "third_party/slime/slime/backends/megatron_utils/actor.py": "3b491e3afc6ada1e59665f11704171e370e5a20912515c01dcc4ae32d0eb84c4",
+    "third_party/slime/slime/backends/megatron_utils/model.py": "a0789ea29f810d7feab28820aca446b91a0e2094fa6011c122b00a9909c2da02",
+    "third_party/slime/slime/backends/megatron_utils/loss.py": "2c2c0a0121452851fd3b58dd23d7c9b596e86d6f4d5641431d2d276918cee622",
+    "third_party/slime/slime/backends/megatron_utils/checkpoint.py": "f02cee985d90f31a935051358915996f2bbae8d5da0ee5673ddb59b31bdc5b2b",
+    "third_party/slime/slime/backends/sglang_utils/shared_weights.py": "6aaa8b46e099ec4d35cc393d8a36f09419c905dfc534e605aa661c53e548bb33",
+    "integrations/slime/ouro-native.patch": "8f146c71d19b91d73f5375babf1b52aacfd2ee067a8ceb7bf15f7de04f8a9b9b",
+    "integrations/slime/native/sglang-ouro.patch": "cd8bb4bdd41f8a1f520aeae2ac7f4d153247f622dadc1c33a2dae99d3c8e4953"
+  },
+  "evidence": [
+    "native-replay.json",
+    "serving-fp32.json",
+    "serving-bf16.json",
+    "pilot-acceptance.json",
+    "resume-acceptance.json",
+    "gate-weight-sync.json",
+    "patch-validation.json"
+  ],
+  "gate_restore": "/ossfs/workspace/LoopRL/runs/native2b-resume-v4-20261121/gate-restore.json",
+  "regression_tests": 52,
+  "validated_global_batch_size": 32,
+  "formal_global_batch_size": 256,
+  "full_batch_validated": false,
+  "validated_execution": {
+    "training_execution": {
+      "reuse_old_log_probs": true,
+      "micro_batch_size": 4,
+      "data_parallel_size": 2,
+      "group_by_depth": true
+    },
+    "activation_recompute": {
+      "granularity": "full",
+      "method": "uniform",
+      "layers": 1
+    },
+    "serving": {
+      "attention_implementation": "bf16-fast",
+      "max_running_requests": 32,
+      "kv_token_capacity": 65536,
+      "cuda_graph": false,
+      "memory_fraction": 0.85,
+      "depth4_replicas": 1,
+      "serving_replicas": 3,
+      "radix_cache": false
+    },
+    "token_exit": {
+      "scheme": "2b",
+      "exits": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "gate_shift": 3.0,
+      "final_exit_forced": true,
+      "prompt_kv": "dense_four_loops",
+      "past_kv": "last_exited",
+      "objective": "sampled_joint_exit_token_ppo",
+      "kappa": 1.0,
+      "compute_price": "executed_prefill_plus_decode_loop_tokens",
+      "cost_normalizer": 8192,
+      "reference_kl": "joint_exit_token_on_recorded_history",
+      "correction": "joint_action_tokenwise_TIS"
+    }
+  },
+  "limitations": [
+    "No held-out algorithmic benefit claim",
+    "Tokenwise joint-action TIS does not fully correct trajectory distribution",
+    "Exact gate restore is not bitwise full continuation equivalence",
+    "Token-exit CUDA graphs and wall-clock speedup are not validated",
+    "Full 256-response runtime acceptance remains pending"
+  ]
+}

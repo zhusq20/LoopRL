@@ -1,5 +1,5 @@
 diff --git a/slime/backends/megatron_utils/actor.py b/slime/backends/megatron_utils/actor.py
-index f4851ef5cf68b74ed833284117d122adaeac146e..51526db15a5168c85a45f91f4f2f264a5a84a2cb 100644
+index f4851ef..c0effd9 100644
 --- a/slime/backends/megatron_utils/actor.py
 +++ b/slime/backends/megatron_utils/actor.py
 @@ -448,6 +448,9 @@ class MegatronTrainRayActor(TrainRayActor):
@@ -32,8 +32,20 @@ index f4851ef5cf68b74ed833284117d122adaeac146e..51526db15a5168c85a45f91f4f2f264a
                      if self.args.use_routing_replay:
                          if self.args.use_rollout_routing_replay:
                              os.environ["ROUTING_REPLAY_STAGE"] = "replay_forward"
+@@ -674,6 +681,11 @@ class MegatronTrainRayActor(TrainRayActor):
+                 ray.get(self.rollout_manager.clear_updatable_num_new_engines.remote())
+ 
+         with torch_memory_saver.disable() if self.args.offload_train else nullcontext():
++            # NCCL sync iterates live model parameters, not weights_getter.
++            # Initialization may leave the frozen reference loaded after the
++            # actor backup; always restore the actor before the first broadcast.
++            if self._active_model_tag != "actor":
++                self._switch_model("actor")
+             print_memory("before update_weights")
+             self.weight_updater.update_weights()
+             print_memory("after update_weights")
 diff --git a/slime/backends/megatron_utils/arguments.py b/slime/backends/megatron_utils/arguments.py
-index c6bd7e5e4d1d9a5483d307290e37bf8a7b4254d0..6055c6d0b4fb2d4598570c54858f3dd468193436 100644
+index c6bd7e5..6055c6d 100644
 --- a/slime/backends/megatron_utils/arguments.py
 +++ b/slime/backends/megatron_utils/arguments.py
 @@ -175,11 +175,13 @@ def _set_default_megatron_args(args):
@@ -53,7 +65,7 @@ index c6bd7e5e4d1d9a5483d307290e37bf8a7b4254d0..6055c6d0b4fb2d4598570c54858f3dd4
      # placeholders
      if args.seq_length is None:
 diff --git a/slime/backends/megatron_utils/checkpoint.py b/slime/backends/megatron_utils/checkpoint.py
-index 44e9d7d30cde7f0b76c3a84d67d23013482e0a3b..ddb8fd33e63cc752c36f7e2d4159195a2a6c5cf1 100644
+index 44e9d7d..ddb8fd3 100644
 --- a/slime/backends/megatron_utils/checkpoint.py
 +++ b/slime/backends/megatron_utils/checkpoint.py
 @@ -187,6 +187,9 @@ def load_checkpoint(ddp_model, optimizer, opt_param_scheduler, checkpointing_con
@@ -67,7 +79,7 @@ index 44e9d7d30cde7f0b76c3a84d67d23013482e0a3b..ddb8fd33e63cc752c36f7e2d4159195a
      else:
          return _load_checkpoint_hf(
 diff --git a/slime/backends/megatron_utils/hf_to_megatron/__init__.py b/slime/backends/megatron_utils/hf_to_megatron/__init__.py
-index b0f41a999e1c6cb0c7ab39ab570e7d79fa751727..80d79ab00c09905cc236c35585c054d7d6d84f3e 100644
+index b0f41a9..80d79ab 100644
 --- a/slime/backends/megatron_utils/hf_to_megatron/__init__.py
 +++ b/slime/backends/megatron_utils/hf_to_megatron/__init__.py
 @@ -8,6 +8,7 @@ from .glm import glm4_hf_tensor, glm4_moe_hf_tensor
@@ -88,7 +100,7 @@ index b0f41a999e1c6cb0c7ab39ab570e7d79fa751727..80d79ab00c09905cc236c35585c054d7
      "qwen3": qwen_hf_tensor,
 diff --git a/slime/backends/megatron_utils/hf_to_megatron/ouro.py b/slime/backends/megatron_utils/hf_to_megatron/ouro.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..bea63f03d7b87dfb0a0fc77de767b70787bbac56
+index 0000000..bea63f0
 --- /dev/null
 +++ b/slime/backends/megatron_utils/hf_to_megatron/ouro.py
 @@ -0,0 +1,27 @@
@@ -120,7 +132,7 @@ index 0000000000000000000000000000000000000000..bea63f03d7b87dfb0a0fc77de767b707
 +    name = name.replace(".input_layernorm.weight", ".self_attention.linear_qkv.layer_norm_weight")
 +    return qwen_hf_tensor(name, reader, config)
 diff --git a/slime/backends/megatron_utils/loss.py b/slime/backends/megatron_utils/loss.py
-index 917a2b66986fba917614a07d4d81a55ed0f9d0b1..8f28e0dd682d019fce2359598d61640d2867647b 100644
+index 917a2b6..8f28e0d 100644
 --- a/slime/backends/megatron_utils/loss.py
 +++ b/slime/backends/megatron_utils/loss.py
 @@ -556,6 +556,7 @@ def get_log_probs_and_entropy(
@@ -146,7 +158,7 @@ index 917a2b66986fba917614a07d4d81a55ed0f9d0b1..8f28e0dd682d019fce2359598d61640d
          res["entropy"] = entropy_list
  
 diff --git a/slime/backends/megatron_utils/megatron_to_hf/__init__.py b/slime/backends/megatron_utils/megatron_to_hf/__init__.py
-index 30c6615bb000b4a507463b20ad86cdfc214ddab4..11c2b221c66e4d8eb8ad58d0b1e1bf091c797107 100644
+index 30c6615..11c2b22 100644
 --- a/slime/backends/megatron_utils/megatron_to_hf/__init__.py
 +++ b/slime/backends/megatron_utils/megatron_to_hf/__init__.py
 @@ -7,6 +7,7 @@ from .mimo import convert_mimo_to_hf
@@ -170,7 +182,7 @@ index 30c6615bb000b4a507463b20ad86cdfc214ddab4..11c2b221c66e4d8eb8ad58d0b1e1bf09
          # otherwise reach the text-only converter and die on the first
 diff --git a/slime/backends/megatron_utils/megatron_to_hf/ouro.py b/slime/backends/megatron_utils/megatron_to_hf/ouro.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..dccef7c35758fb752ea08dcd539ccd57326ad487
+index 0000000..dccef7c
 --- /dev/null
 +++ b/slime/backends/megatron_utils/megatron_to_hf/ouro.py
 @@ -0,0 +1,20 @@
@@ -195,7 +207,7 @@ index 0000000000000000000000000000000000000000..dccef7c35758fb752ea08dcd539ccd57
 +    name = name.replace(".input_layernorm.weight", ".self_attention.linear_qkv.layer_norm_weight")
 +    return convert_llama_to_hf(args, f"module.module.{name}", param)
 diff --git a/slime/backends/megatron_utils/model.py b/slime/backends/megatron_utils/model.py
-index 51884e952eeb2863fe0b7307e7417b88acd9c239..0247a0bdb3cbe04fec2e35a0e381f14de3d0972b 100644
+index 51884e9..291c737 100644
 --- a/slime/backends/megatron_utils/model.py
 +++ b/slime/backends/megatron_utils/model.py
 @@ -42,6 +42,19 @@ from .stateless_adam import StatelessAdam
@@ -218,6 +230,15 @@ index 51884e952eeb2863fe0b7307e7417b88acd9c239..0247a0bdb3cbe04fec2e35a0e381f14d
  def _finalize_model_grads(*args, **kwargs):
      # NCCL initializes some gradient communicators only after the last
      # backward. Its allocations bypass PyTorch's cache reclamation, so free
+@@ -220,7 +233,7 @@ def get_optimizer_param_scheduler(args: Namespace, optimizer: MegatronOptimizer)
+     if args.lr_decay_iters is None:
+         args.lr_decay_iters = args.train_iters
+     lr_decay_steps = args.lr_decay_iters * args.global_batch_size
+-    wd_incr_steps = args.train_iters * args.global_batch_size
++    wd_incr_steps = getattr(args, 'ouro_total_steps', args.train_iters) * args.global_batch_size
+     wsd_decay_steps = None
+     if args.lr_wsd_decay_iters is not None:
+         wsd_decay_steps = args.lr_wsd_decay_iters * args.global_batch_size
 @@ -325,12 +338,19 @@ def setup_model_and_optimizer(
          assert args.no_save_optim, "Stateless Adam does not save Adam moment states. Please set --no-save-optim."
  
@@ -310,7 +331,7 @@ index 51884e952eeb2863fe0b7307e7417b88acd9c239..0247a0bdb3cbe04fec2e35a0e381f14d
      grad_norm = float("nan")
      if not getattr(args, "check_for_nan_in_loss_and_grad", True):
 diff --git a/slime/backends/sglang_utils/engine_group.py b/slime/backends/sglang_utils/engine_group.py
-index 1da05c4d223ca64497136610c4eda1498f8d2c2e..e43557f176307f4d76535937649f03fcd5c9f27e 100644
+index 1da05c4..e43557f 100644
 --- a/slime/backends/sglang_utils/engine_group.py
 +++ b/slime/backends/sglang_utils/engine_group.py
 @@ -238,7 +238,10 @@ class ServerGroup:
@@ -327,7 +348,7 @@ index 1da05c4d223ca64497136610c4eda1498f8d2c2e..e43557f176307f4d76535937649f03fc
              rollout_engines=rollout_engines,
 diff --git a/slime/backends/sglang_utils/shared_weights.py b/slime/backends/sglang_utils/shared_weights.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..01c02115ee275b266d0b16def8ad7cefb322dcc1
+index 0000000..01c0211
 --- /dev/null
 +++ b/slime/backends/sglang_utils/shared_weights.py
 @@ -0,0 +1,18 @@
@@ -350,7 +371,7 @@ index 0000000000000000000000000000000000000000..01c02115ee275b266d0b16def8ad7cef
 +    return RolloutServer(server_groups=[g for _, server in selected for g in server.server_groups],
 +                         model_name="ouro_shared_depths", update_weights=True)
 diff --git a/slime/data/batch_builder.py b/slime/data/batch_builder.py
-index 3e178b7007c14b3874172789d3ff19af4dc327a5..f247a79a6dba4003f8dc1e7b2530c05a591fda9a 100644
+index 3e178b7..f247a79 100644
 --- a/slime/data/batch_builder.py
 +++ b/slime/data/batch_builder.py
 @@ -60,6 +60,9 @@ class BatchBuilder:
@@ -372,7 +393,7 @@ index 3e178b7007c14b3874172789d3ff19af4dc327a5..f247a79a6dba4003f8dc1e7b2530c05a
              "response_lengths",
              "rewards",
 diff --git a/slime/observability/train_metric_utils.py b/slime/observability/train_metric_utils.py
-index 07ddd931c5e3fb3147ed8bb86e25bf9c676a478b..03cd84afc0f93748c42ceaf80ff8af3681f03d7f 100644
+index 07ddd93..03cd84a 100644
 --- a/slime/observability/train_metric_utils.py
 +++ b/slime/observability/train_metric_utils.py
 @@ -161,6 +161,7 @@ def log_rollout_data(
@@ -384,7 +405,7 @@ index 07ddd931c5e3fb3147ed8bb86e25bf9c676a478b..03cd84afc0f93748c42ceaf80ff8af36
              "loss_masks",
              "sample_indices",
 diff --git a/slime/ray/rollout.py b/slime/ray/rollout.py
-index 07c83ab439b074ec2359833a172b5bb50f7af365..f982c4efc0c657b2fbcbe11e0f413643e1e2233f 100644
+index 07c83ab..f982c4e 100644
 --- a/slime/ray/rollout.py
 +++ b/slime/ray/rollout.py
 @@ -284,10 +284,11 @@ class RolloutManager:
@@ -403,7 +424,7 @@ index 07c83ab439b074ec2359833a172b5bb50f7af365..f982c4efc0c657b2fbcbe11e0f413643
      @property
      def rollout_engines(self):
 diff --git a/slime/ray/serving.py b/slime/ray/serving.py
-index b7e979b49e924c80b54d15dda1bd083fa21fcc36..119db18a35ec2fcfc6ad492cdcd693f628566782 100644
+index b7e979b..119db18 100644
 --- a/slime/ray/serving.py
 +++ b/slime/ray/serving.py
 @@ -219,7 +219,8 @@ class ServingCluster:
@@ -417,7 +438,7 @@ index b7e979b49e924c80b54d15dda1bd083fa21fcc36..119db18a35ec2fcfc6ad492cdcd693f6
      def get_updatable_engines_and_lock(self):
          server = self._updatable_server()
 diff --git a/slime/utils/arguments.py b/slime/utils/arguments.py
-index 269f9683317898d49093c483a87a44a3d5ca215c..ef028252d689fec413a13979be2df0dba2bc3dc1 100644
+index 269f968..ef02825 100644
 --- a/slime/utils/arguments.py
 +++ b/slime/utils/arguments.py
 @@ -106,6 +106,16 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
@@ -439,7 +460,7 @@ index 269f9683317898d49093c483a87a44a3d5ca215c..ef028252d689fec413a13979be2df0db
              reset_arg(parser, "--post-mlp-layernorm", action="store_true", default=False)
 diff --git a/slime_plugins/models/ouro.py b/slime_plugins/models/ouro.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..b5f1378cc2ce1066d6a1e61ff41dcd75fc8f1308
+index 0000000..b5f1378
 --- /dev/null
 +++ b/slime_plugins/models/ouro.py
 @@ -0,0 +1,218 @@
@@ -661,113 +682,9 @@ index 0000000000000000000000000000000000000000..b5f1378cc2ce1066d6a1e61ff41dcd75
 +            gate_shift=getattr(args, "ouro_gate_shift", 3.))
 +
 +    return model_provider
-diff --git a/slime_plugins/models/ouro_token_exit.py b/slime_plugins/models/ouro_token_exit.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..9a3108202d93eb44d4cf1ab29b64f631592a3469
---- /dev/null
-+++ b/slime_plugins/models/ouro_token_exit.py
-@@ -0,0 +1,98 @@
-+"""Functional replay of the *executed* token-exit trajectory (joint score).
-+
-+Only readouts/hazards through the recorded exit enter the objective. This lets
-+all queries at a loop share last-exited K/V: the diagonal differs only for
-+already exited queries, whose counterfactual readouts are deliberately unused.
-+K/V crossing recurrent loops remain differentiable checkpoint outputs.
-+"""
-+from functools import partial
-+
-+import torch
-+from torch.nn import functional as F
-+from torch.utils.checkpoint import checkpoint
-+from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
-+
-+
-+def exit_layout(tokens, total_lengths, response_lengths, traces):
-+    if not (len(total_lengths) == len(response_lengths) == len(traces)):
-+        raise ValueError("Mismatched token-exit batch metadata")
-+    readout = torch.full((tokens.shape[-1],), 4, device=tokens.device, dtype=torch.long)
-+    cache = readout.clone()
-+    offset = 0
-+    for total, response, trace in zip(total_lengths, response_lengths, traces, strict=True):
-+        prompt = total - response
-+        if prompt < 1 or response < 1 or len(trace) != response or any(type(e) is not int or e not in (1, 2, 3, 4) for e in trace):
-+            raise ValueError("Invalid per-token exit trace")
-+        if offset + total > tokens.shape[-1]:
-+            raise ValueError("Token-exit trace exceeds packed tokens")
-+        values = torch.tensor(trace, device=tokens.device, dtype=torch.long)
-+        readout[offset + prompt - 1:offset + total - 1] = values
-+        # The first prediction reads the last prompt position. All prompt KV
-+        # is dense, including that position, regardless of its selected readout.
-+        cache[offset + prompt:offset + total - 1] = values[1:]
-+        offset += total
-+    return readout, cache
-+
-+
-+def recurrent_layer(layer, hidden, previous_k, previous_v, *, loop, cache_exits, rope, packed):
-+    attn = layer.self_attention
-+    query, key, value = attn.get_query_key_value_tensors(layer.input_layernorm(hidden))
-+    if packed is not None:
-+        query, key, value = (x.squeeze(1) for x in (query, key, value))
-+    kwargs = dict(config=layer.config, cu_seqlens=packed.cu_seqlens_q if packed is not None else None)
-+    if packed is not None:
-+        kwargs["max_seqlen"] = packed.max_seqlen_q
-+    query = apply_rotary_pos_emb(query, rope, **kwargs)
-+    key = apply_rotary_pos_emb(key, rope, **kwargs)
-+    if previous_k is not None:
-+        active = (cache_exits >= loop).reshape((-1,) + (1,) * (key.ndim - 1))
-+        key = torch.where(active, key, previous_k)
-+        value = torch.where(active, value, previous_v)
-+    context = attn.core_attention(query, key, value, packed_seq_params=packed)
-+    if packed is not None:
-+        context = context.reshape(hidden.shape[0], 1, -1)
-+    branch, bias = attn.linear_proj(context)
-+    if bias is not None:
-+        raise ValueError("Ouro token-exit attention must be bias-free")
-+    hidden = hidden + layer.post_self_attn_layernorm(branch)
-+    branch, bias = layer.mlp(layer.pre_mlp_layernorm(hidden))
-+    if bias is not None:
-+        raise ValueError("Ouro token-exit MLP must be bias-free")
-+    return hidden + layer.post_mlp_layernorm(branch), key, value
-+
-+
-+def forward(model, input_ids, packed_seq_params, total_lengths, response_lengths, traces):
-+    if input_ids.shape[0] != 1 or model.config.context_parallel_size != 1:
-+        raise ValueError("Token-exit replay requires packed batch=1 and CP=1")
-+    readout, cache_exits = exit_layout(input_ids, total_lengths, response_lengths, traces)
-+    prep = model._preprocess(input_ids, None, packed_seq_params=packed_seq_params)
-+    hidden, rope = prep[:2]
-+    initial = hidden
-+    selected = torch.zeros_like(hidden)
-+    logq = torch.zeros(input_ids.shape[-1], device=hidden.device, dtype=torch.float32)
-+    states = [(None, None)] * len(model.decoder.layers)
-+    use_checkpoint = torch.is_grad_enabled() and model.config.recompute_granularity == "full"
-+    for loop in range(1, 5):
-+        for index, layer in enumerate(model.decoder.layers):
-+            function = partial(recurrent_layer, layer, loop=loop, cache_exits=cache_exits,
-+                               rope=rope, packed=packed_seq_params)
-+            if use_checkpoint:
-+                hidden, key, value = checkpoint(function, hidden, *states[index],
-+                                                use_reentrant=False, preserve_rng_state=False)
-+            else:
-+                hidden, key, value = function(hidden, *states[index])
-+            states[index] = key, value
-+        hidden = model.decoder.final_layernorm(hidden)
-+        selected = torch.where((readout == loop)[:, None, None], hidden, selected)
-+        if loop < 4:
-+            hazard = model.early_exit_gate(hidden).squeeze(-1).squeeze(-1).float() - model.gate_shift
-+            logq = logq + torch.where(readout == loop, F.logsigmoid(hazard),
-+                                     torch.where(readout > loop, F.logsigmoid(-hazard), 0.))
-+    output = model._postprocess(hidden_states=selected, input_ids=input_ids,
-+        position_ids=None, labels=None, rotary_pos_emb=rope, rotary_pos_cos=None,
-+        rotary_pos_sin=None, mtp_in_postprocess=False,
-+        decoder_input=initial, attention_mask=None, packed_seq_params=packed_seq_params)
-+    # Float16Module preserves an already-FP32 Tensor and its attached score.
-+    output = output.float()
-+    output.ouro_exit_log_probs = logq
-+    return output
 diff --git a/slime_plugins/ouro_2a.py b/slime_plugins/ouro_2a.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..969dc60f3bab0672b4e56976e2c5762fd87ac2d2
+index 0000000..969dc60
 --- /dev/null
 +++ b/slime_plugins/ouro_2a.py
 @@ -0,0 +1,151 @@
@@ -924,7 +841,7 @@ index 0000000000000000000000000000000000000000..969dc60f3bab0672b4e56976e2c5762f
 +                     for k,v in correction_metrics.items()}}
 diff --git a/slime_plugins/ouro_attention.py b/slime_plugins/ouro_attention.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..7ff5af40fcf88af6ee3c48249f5e1e03780ec8cc
+index 0000000..7ff5af4
 --- /dev/null
 +++ b/slime_plugins/ouro_attention.py
 @@ -0,0 +1,154 @@
@@ -1082,9 +999,704 @@ index 0000000000000000000000000000000000000000..7ff5af40fcf88af6ee3c48249f5e1e03
 +    # SGLang intentionally disables graphs for torch_native. Register Ouro's
 +    # actual Triton implementation on the graph-capable backend as well.
 +    ATTENTION_BACKENDS["triton"] = create_triton
+diff --git a/slime_plugins/ouro_smoke.py b/slime_plugins/ouro_smoke.py
+new file mode 100644
+index 0000000..49559c9
+--- /dev/null
++++ b/slime_plugins/ouro_smoke.py
+@@ -0,0 +1,7 @@
++"""Diagnostic fixture for native lifecycle checks, never an evaluation reward."""
++
++
++async def reward(args, sample, **kwargs):
++    # Guarantees a nonzero group-centered training signal in a two-sample
++    # smoke test even when both short responses are unfinished.
++    return float(sample.index % 2)
+diff --git a/slime_plugins/sglang_models/__init__.py b/slime_plugins/sglang_models/__init__.py
+new file mode 100644
+index 0000000..234d9b0
+--- /dev/null
++++ b/slime_plugins/sglang_models/__init__.py
+@@ -0,0 +1 @@
++"""External SGLang architectures supplied by slime."""
+diff --git a/slime_plugins/sglang_models/ouro.py b/slime_plugins/sglang_models/ouro.py
+new file mode 100644
+index 0000000..7adf32a
+--- /dev/null
++++ b/slime_plugins/sglang_models/ouro.py
+@@ -0,0 +1,196 @@
++"""Fixed sequence-depth Ouro serving with shared weights and per-loop KV slots.
++
++Set SGLANG_EXTERNAL_MODEL_PACKAGE=slime_plugins.sglang_models and select the
++depth with --json-model-override-args '{"total_ut_steps": 2}'. A serving engine
++has one depth; changing depth for a live KV cache is intentionally unsupported.
++"""
++
++import torch
++from torch import nn
++
++from sglang.srt.layers.linear import QKVParallelLinear, RowParallelLinear
++from sglang.srt.layers.radix_attention import RadixAttention
++from sglang.srt.layers.rotary_embedding import get_rope
++from sglang.srt.layers.vocab_parallel_embedding import VocabParallelEmbedding
++from sglang.srt.model_loader.weight_utils import default_weight_loader
++from sglang.srt.models.llama import LlamaForCausalLM, LlamaMLP
++from sglang.srt.utils import add_prefix
++from sglang.srt.runtime_context import get_parallel
++from slime_plugins.ouro_attention import install as install_ouro_attention
++
++install_ouro_attention()
++
++
++class OuroRMSNorm(nn.Module):
++    def __init__(self, hidden_size, eps, fused=False):
++        super().__init__()
++        self.weight = nn.Parameter(torch.ones(hidden_size))
++        self.eps = eps
++        self.fused = fused
++
++    def forward(self, hidden):
++        if self.fused:
++            if hidden.dtype == torch.bfloat16:
++                from sgl_kernel import rmsnorm
++                return rmsnorm(hidden, self.weight, self.eps)
++            from slime_plugins.ouro_kernels import rms_norm
++            return rms_norm(hidden, self.weight, self.eps)
++        value = hidden.float()
++        value = value * torch.rsqrt(value.square().mean(-1, keepdim=True) + self.eps)
++        return self.weight * value.to(hidden.dtype)
++
++
++class OuroAttention(nn.Module):
++    def __init__(self, config, layer_id, prefix):
++        super().__init__()
++        self.num_heads = config.num_attention_heads
++        self.num_kv_heads = config.num_key_value_heads
++        self.head_dim = getattr(config, "head_dim", config.hidden_size // self.num_heads)
++        self.fused = getattr(config, "ouro_fused_ops", False)
++        self.q_size = self.num_heads * self.head_dim
++        self.kv_size = self.num_kv_heads * self.head_dim
++        self.qkv_proj = QKVParallelLinear(config.hidden_size, self.head_dim,
++            self.num_heads, self.num_kv_heads, bias=False, prefix=add_prefix("qkv_proj", prefix))
++        self.o_proj = RowParallelLinear(self.q_size, config.hidden_size,
++            bias=False, prefix=add_prefix("o_proj", prefix))
++        self.rotary_emb = get_rope(self.head_dim, rotary_dim=self.head_dim,
++            max_position=config.max_position_embeddings, base=config.rope_theta,
++            rope_scaling=getattr(config, "rope_scaling", None), is_neox_style=True)
++        self.attn = nn.ModuleList([
++            RadixAttention(self.num_heads, self.head_dim, self.head_dim ** -0.5,
++                num_kv_heads=self.num_kv_heads,
++                layer_id=loop * config.num_hidden_layers + layer_id,
++                prefix=add_prefix(f"attn.{loop}", prefix))
++            for loop in range(config.total_ut_steps)
++        ])
++
++    def forward(self, positions, hidden, forward_batch, loop):
++        qkv, _ = self.qkv_proj(hidden)
++        q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
++        # Select the separately validated FP32 or BF16 performance kernels.
++        # BF16's engine mismatch is measured and corrected by the TIS protocol.
++        if self.fused and q.dtype == torch.float32:
++            from slime_plugins.ouro_kernels import rotary
++            q, k = rotary(positions, q, k, self.rotary_emb.cos_sin_cache, self.head_dim)
++        elif self.fused:
++            q, k = self.rotary_emb(positions, q, k)
++        else:
++            q, k = self.rotary_emb.forward_native(positions, q, k)
++        output = self.attn[loop](q, k, v, forward_batch)
++        return self.o_proj(output)[0]
++
++
++class OuroMLP(LlamaMLP):
++    def forward(self, hidden, forward_batch=None):
++        gate_up, _ = self.gate_up_proj(hidden)
++        activated = (self.act_fn(gate_up) if getattr(self,"fused",False) and hidden.dtype==torch.bfloat16
++                     else self.act_fn.forward_native(gate_up))
++        return self.down_proj(activated)[0]
++
++
++class OuroDecoderLayer(nn.Module):
++    def __init__(self, config, layer_id, prefix):
++        super().__init__()
++        self.self_attn = OuroAttention(config, layer_id, add_prefix("self_attn", prefix))
++        self.mlp = OuroMLP(config.hidden_size, config.intermediate_size, config.hidden_act,
++                            prefix=add_prefix("mlp", prefix))
++        self.mlp.fused = getattr(config,"ouro_fused_ops",False)
++        for name in ("input_layernorm", "input_layernorm_2",
++                     "post_attention_layernorm", "post_attention_layernorm_2"):
++            setattr(self, name, OuroRMSNorm(config.hidden_size, config.rms_norm_eps,
++                                         getattr(config, "ouro_fused_ops", False)))
++
++    def forward(self, positions, hidden, forward_batch, loop):
++        branch = self.self_attn(positions, self.input_layernorm(hidden), forward_batch, loop)
++        hidden = hidden + self.input_layernorm_2(branch)
++        branch = self.mlp(self.post_attention_layernorm(hidden))
++        return hidden + self.post_attention_layernorm_2(branch)
++
++
++class OuroModel(nn.Module):
++    def __init__(self, config, quant_config=None, prefix=""):
++        super().__init__()
++        if get_parallel().tp_size != 1 or get_parallel().pp_group.world_size != 1:
++            raise ValueError("Initial Ouro serving supports TP=PP=1")
++        if quant_config is not None:
++            raise ValueError("Ouro numerical acceptance requires unquantized weights")
++        depth = config.total_ut_steps
++        if type(depth) is not int or depth not in range(1, 5):
++            raise ValueError("Ouro total_ut_steps must be an integer in [1, 4]")
++        self.config = config
++        self.start_layer, self.end_layer = 0, config.num_hidden_layers
++        self.embed_tokens = VocabParallelEmbedding(config.vocab_size, config.hidden_size,
++                                                   prefix=add_prefix("embed_tokens", prefix))
++        self.layers = nn.ModuleList([OuroDecoderLayer(config, i, add_prefix(f"layers.{i}", prefix))
++                                     for i in range(config.num_hidden_layers)])
++        self.norm = OuroRMSNorm(config.hidden_size, config.rms_norm_eps,
++                               getattr(config, "ouro_fused_ops", False))
++        self.early_exit_gate = nn.Linear(config.hidden_size, 1)
++        self.early_exit_gate.requires_grad_(False)
++        if getattr(config, "ouro_learned_depth", False):
++            self.sequence_depth_head = nn.Linear(config.hidden_size, 3)
++            with torch.no_grad():
++                self.sequence_depth_head.weight.zero_()
++                self.sequence_depth_head.bias.copy_(torch.tensor([.1, .1, .8]).log())
++
++    def forward(self, input_ids, positions, forward_batch, input_embeds=None, pp_proxy_tensors=None):
++        if pp_proxy_tensors is not None:
++            raise ValueError("Ouro does not support pipeline parallel serving")
++        if getattr(self.config, "ouro_token_exit", False):
++            from .ouro_token_exit import forward
++            return forward(self, input_ids, positions, forward_batch, input_embeds)
++        hidden = self.embed_tokens(input_ids) if input_embeds is None else input_embeds
++        for loop in range(self.config.total_ut_steps):
++            for layer in self.layers:
++                hidden = layer(positions, hidden, forward_batch, loop)
++            hidden = self.norm(hidden)
++        return hidden
++
++
++class OuroForCausalLM(LlamaForCausalLM):
++    def _init_model(self, config, quant_config=None, prefix=""):
++        return OuroModel(config, quant_config, prefix)
++
++    @torch.no_grad()
++    def forward(self, *args, **kwargs):
++        result = super().forward(*args, **kwargs)
++        if getattr(self.model.config, "ouro_token_exit", False) and getattr(result, "hidden_states", None) is not None:
++            result.hidden_states = self.model.ouro_exit_trace
++        # A depth4, one-token request with return_hidden_states='last' returns
++        # the prompt-conditioned action distribution from the synchronized head.
++        if hasattr(self.model, "sequence_depth_head") and getattr(result, "hidden_states", None) is not None:
++            result.hidden_states = self.model.sequence_depth_head(result.hidden_states).log_softmax(-1)
++        return result
++
++    def forward_split_prefill(self, *args, **kwargs):
++        raise ValueError("Split prefill needs recurrent scheduling and is not supported for Ouro")
++
++    def set_eagle3_layers_to_capture(self, *args, **kwargs):
++        raise ValueError("Ouro does not support speculative hidden-state capture")
++
++    set_dflash_layers_to_capture = set_eagle3_layers_to_capture
++
++    def load_weights(self, weights):
++        # The same path handles initial HF loading and slime's partial weight
++        # updates. Unknown names are errors rather than silently skipped tensors.
++        parameters = dict(self.named_parameters())
++        loaded = set()
++        for name, value in weights:
++            if name.endswith("rotary_emb.inv_freq"):
++                continue
++            for target, source, shard in self.stacked_params_mapping:
++                if source in name:
++                    mapped = name.replace(source, target)
++                    parameter = parameters[mapped]
++                    parameter.weight_loader(parameter, value, shard)
++                    loaded.add(mapped)
++                    break
++            else:
++                parameter = parameters[name]
++                loader = getattr(parameter, "weight_loader", default_weight_loader)
++                loader(parameter, value)
++                loaded.add(name)
++        return loaded
++
++
++EntryClass = OuroForCausalLM
+diff --git a/tests/test_ouro_2a.py b/tests/test_ouro_2a.py
+new file mode 100644
+index 0000000..6b074b3
+--- /dev/null
++++ b/tests/test_ouro_2a.py
+@@ -0,0 +1,113 @@
++"""Objective and sample-depth invariants for the native integration."""
++
++from types import SimpleNamespace
++
++import pytest
++import torch
++import torch.distributed as dist
++
++from slime_plugins.ouro_2a import model_forward_kwargs, post_process_rewards, policy_loss, check_on_policy
++
++
++def sample(reward, group, depth, length):
++    return SimpleNamespace(get_reward_value=lambda args: reward, group_index=group,
++                           train_metadata={"ouro_depth": depth}, response_length=length)
++
++
++def test_price_signal_keeps_its_scale_on_constant_outcome_batch():
++    args = SimpleNamespace(ouro_beta=.1, rollout_max_response_len=100, ouro_depth=None)
++    samples = [sample(0., 7, 2, 100), sample(0., 7, 4, 100)]
++    raw, advantages = post_process_rewards(args, samples)
++    assert raw == [0., 0.]
++    assert advantages == pytest.approx([.025, -.025])
++    args.ouro_beta = .2
++    assert post_process_rewards(args, samples)[1] == pytest.approx([.05, -.05])
++
++
++def test_group_centering_uses_explicit_ids_and_batch_outcome_scale():
++    args = SimpleNamespace(ouro_beta=0., rollout_max_response_len=100, ouro_depth=4)
++    samples = [sample(1., 9, 2, 20), sample(0., 3, 3, 7),
++               sample(0., 9, 4, 80), sample(0., 3, 3, 100)]
++    scale = 3 ** .5 / 4
++    assert post_process_rewards(args, samples)[1] == pytest.approx([.5 / scale, 0, -.5 / scale, 0])
++
++
++@pytest.mark.parametrize("metadata", [None, [{}], [None], [{"ouro_depth": 2}, {"ouro_depth": 4}],
++                                    [{"ouro_depth": 2.0}], [{"ouro_depth": True}]])
++def test_missing_or_mixed_depth_cannot_replay_as_default(metadata):
++    with pytest.raises(ValueError):
++        model_forward_kwargs(SimpleNamespace(ouro_depth=4), {"metadata": metadata})
++
++
++def test_actual_depth_overrides_run_default():
++    assert model_forward_kwargs(SimpleNamespace(ouro_depth=4),
++        {"metadata": [{"ouro_depth": 2}, {"ouro_depth": 2}]}) == {"ouro_depth": 2}
++
++
++def test_depth_metadata_survives_dp_partition(monkeypatch):
++    from slime.data.batch_builder import BatchBuilder
++    import slime.data.batch_builder as module
++    # Only replace object-store publication: exercise real partitioning and
++    # tensorization, which previously discarded train_metadata.
++    monkeypatch.setattr(module.ray, "put", lambda data: data)
++    args = SimpleNamespace(custom_reward_post_process_path=None,
++        custom_convert_samples_to_train_data_path=None, rollout_data_transport="object-store",
++        global_batch_size=4, micro_batch_size=1, use_dynamic_batch_size=False,
++        balance_data=False, balance_by_flops=False)
++    builder = BatchBuilder(args)
++    builder.train_parallel_config = dict(dp_size=2, cp_size=1, vpp_size=1,
++                                         microbatch_group_size_per_vp_stage=1)
++    metadata = [{"ouro_depth": k} for k in [2, 3, 4, 2]]
++    batches = builder.split_by_dp(dict(tokens=[[1, 2]] * 4, rollout_ids=list(range(4)), metadata=metadata))
++    for box in batches:
++        batch = box.inner
++        assert batch["metadata"] == [metadata[i] for i in batch["partition"]]
++
++
++def test_mismatched_sampler_is_rejected_before_update():
++    args = SimpleNamespace(num_steps_per_rollout=1, use_rollout_logprobs=False)
++    data = dict(log_probs=[torch.tensor([-1., -2.])], rollout_log_probs=[torch.tensor([-1., -2.01])])
++    with pytest.raises(ValueError, match="mismatch"):
++        check_on_policy(args, 0, data)
++
++
++@pytest.mark.parametrize("with_kl", [False, True])
++def test_native_packed_loss_matches_independent_fixed_budget_objective(tmp_path, with_kl):
++    if not torch.cuda.is_available():
++        pytest.skip("Native packed loss requires CUDA")
++    from megatron.core import parallel_state
++    torch.cuda.set_device(0)
++    dist.init_process_group("nccl", init_method=f"file://{tmp_path}/init", rank=0, world_size=1)
++    parallel_state.initialize_model_parallel(tensor_model_parallel_size=1, pipeline_model_parallel_size=1)
++    try:
++        torch.manual_seed(42)
++        logits = torch.randn(1, 7, 128, device="cuda", requires_grad=True)
++        reference = logits.detach().clone().requires_grad_(True)
++        tokens = [torch.tensor([1, 2, 3, 4], device="cuda"), torch.tensor([5, 6, 7], device="cuda")]
++        # Predict response tokens 3,4 and 7 from the preceding positions in
++        # each independent sequence, despite unequal response lengths.
++        expected_logp = reference[0, [1, 2, 5]].log_softmax(-1).gather(1,
++            torch.tensor([[3], [4], [7]], device="cuda")).flatten()
++        old = expected_logp.detach() + torch.tensor([.1, -.3, .4], device="cuda")
++        advantages = torch.tensor([1., 1., -1.], device="cuda")
++        args = SimpleNamespace(calculate_per_token_loss=False, context_parallel_size=1,
++            rollout_temperature=1., rollout_top_p=1., log_probs_chunk_size=-1, allgather_cp=False,
++            eps_clip=.2, eps_clip_high=.2, use_kl_loss=with_kl, kl_loss_coef=.001 if with_kl else 0., rollout_max_response_len=100)
++        ref = old + torch.tensor([.4, -.2, .3], device="cuda")
++        batch = dict(unconcat_tokens=tokens, total_lengths=[4, 3], response_lengths=[2, 1],
++            log_probs=[old[:2], old[2:]], advantages=[advantages[:2], advantages[2:]],
++            ref_log_probs=[ref[:2], ref[2:]],
++            loss_masks=[torch.ones(2, device="cuda"), torch.ones(1, device="cuda")])
++        actual, _ = policy_loss(args, batch, logits, lambda _: pytest.fail("Must not use length-normalized reducer"))
++        ratio = (expected_logp - old).exp()
++        expected = -torch.minimum(ratio * advantages, ratio.clamp(.8, 1.2) * advantages).sum() / 100
++        if with_kl:
++            delta = ref - expected_logp
++            expected += .001*(delta.exp()-delta-1).sum()/100
++        torch.testing.assert_close(actual, expected)
++        actual.backward()
++        expected.backward()
++        torch.testing.assert_close(logits.grad, reference.grad, atol=1e-7, rtol=1e-5)
++    finally:
++        parallel_state.destroy_model_parallel()
++        dist.destroy_process_group()
+diff --git a/tests/test_ouro_model.py b/tests/test_ouro_model.py
+new file mode 100644
+index 0000000..529ed05
+--- /dev/null
++++ b/tests/test_ouro_model.py
+@@ -0,0 +1,167 @@
++"""Compare native Megatron Ouro with the pinned Hugging Face implementation."""
++
++import os
++from types import SimpleNamespace
++
++import pytest
++import torch
++import torch.distributed as dist
++from torch.nn import functional as F
++from transformers import AutoConfig, AutoModelForCausalLM
++
++from megatron.core import parallel_state
++from megatron.core.packed_seq_params import PackedSeqParams
++from megatron.core.tensor_parallel.random import model_parallel_cuda_manual_seed
++from megatron.core.transformer.transformer_config import TransformerConfig
++
++from slime.backends.megatron_utils.hf_to_megatron.ouro import ouro_hf_tensor
++from slime.backends.megatron_utils.megatron_to_hf.ouro import convert_ouro_to_hf
++from slime_plugins.models.ouro import OuroGPTModel, ouro_block_spec
++
++NUM_GPUS = 1
++
++
++@pytest.fixture(scope="module", autouse=True)
++def distributed(tmp_path_factory):
++    if not torch.cuda.is_available():
++        pytest.skip("Ouro numerical acceptance needs one CUDA GPU")
++    torch.set_num_threads(4)
++    torch.backends.cuda.matmul.allow_tf32 = False
++    torch.backends.cudnn.allow_tf32 = False
++    torch.cuda.set_device(0)
++    rendezvous = tmp_path_factory.mktemp("ouro-dist") / "init"
++    dist.init_process_group("nccl", init_method=f"file://{rendezvous}", rank=0, world_size=1)
++    parallel_state.initialize_model_parallel(tensor_model_parallel_size=1, pipeline_model_parallel_size=1)
++    model_parallel_cuda_manual_seed(42)
++    yield
++    parallel_state.destroy_model_parallel()
++    dist.destroy_process_group()
++
++
++def models(kv_heads=4, recompute=False):
++    path = os.environ["OURO_HF_CHECKPOINT"]
++    hf_config = AutoConfig.from_pretrained(path, trust_remote_code=True)
++    for name, value in dict(num_hidden_layers=2, hidden_size=64, intermediate_size=128,
++            num_attention_heads=4, num_key_value_heads=kv_heads, head_dim=16, vocab_size=128,
++            max_position_embeddings=128, layer_types=["full_attention"] * 2).items():
++        setattr(hf_config, name, value)
++    hf_config._attn_implementation = "sdpa"
++    torch.manual_seed(42)
++    hf = AutoModelForCausalLM.from_config(hf_config, trust_remote_code=True).float().cuda()
++    config = TransformerConfig(num_layers=2, hidden_size=64, num_attention_heads=4,
++        num_query_groups=kv_heads, kv_channels=16, ffn_hidden_size=128,
++        hidden_dropout=0., attention_dropout=0., normalization="RMSNorm",
++        layernorm_epsilon=1e-6, gated_linear_unit=True, activation_func=F.silu,
++        add_bias_linear=False, attention_softmax_in_fp32=True, params_dtype=torch.float32,
++        use_cpu_initialization=True, persist_layer_norm=False, gradient_accumulation_fusion=False,
++        bias_activation_fusion=False, masked_softmax_fusion=False, bias_dropout_fusion=False,
++        apply_rope_fusion=False,
++        recompute_granularity="full" if recompute else None,
++        recompute_method="uniform" if recompute else None,
++        recompute_num_layers=1 if recompute else None)
++    native = OuroGPTModel(config=config, transformer_layer_spec=ouro_block_spec(config),
++        vocab_size=128, max_sequence_length=128, share_embeddings_and_output_weights=False,
++        position_embedding_type="rope", rotary_base=hf_config.rope_theta).cuda()
++
++    class Reader(dict):
++        def get_tensor(self, name):
++            return self[name]
++
++    with torch.no_grad():
++        covered = set()
++        conversion_args = SimpleNamespace(hidden_size=64, num_attention_heads=4,
++                                           num_query_groups=kv_heads, kv_channels=16)
++        for name, param in native.named_parameters():
++            param.copy_(ouro_hf_tensor(name, Reader(hf.state_dict()), hf_config))
++            covered.update(key for key, _ in convert_ouro_to_hf(conversion_args, name, param))
++        assert covered == set(hf.state_dict()), "Native mapping must cover the actual HF model schema"
++    return hf, native, hf_config, Reader
++
++
++@pytest.mark.parametrize("depth", [1, 2, 3, 4])
++@pytest.mark.parametrize("kv_heads", [2, 4])
++def test_logits_and_shared_parameter_gradients(depth, kv_heads):
++    hf, native, hf_config, Reader = models(kv_heads)
++    tokens = torch.tensor([[1, 15, 27, 90, 6, 32, 4, 77]], device="cuda")
++    hf.model.total_ut_steps = depth
++    expected = hf(tokens, use_cache=False, exit_at_step=depth - 1).logits
++    calls = []
++    handle = native.decoder.layers[0].register_forward_hook(lambda *args: calls.append(1))
++    actual = native(tokens, ouro_depth=depth)
++    handle.remove()
++    assert len(calls) == depth
++    assert len(native.decoder.layers) == 2
++    torch.testing.assert_close(actual, expected, atol=2e-5, rtol=2e-5)
++    labels = tokens.roll(-1, 1)
++    for logits in [expected, actual]:
++        F.cross_entropy(logits.reshape(-1, 128), labels.reshape(-1)).backward()
++    gradients = Reader({name: param.grad for name, param in hf.named_parameters()})
++    for name, parameter in native.named_parameters():
++        if name.startswith("early_exit_gate."):
++            assert parameter.grad is None
++            continue
++        expected_grad = ouro_hf_tensor(name, gradients, hf_config)
++        torch.testing.assert_close(parameter.grad, expected_grad, atol=3e-5, rtol=3e-4)
++
++
++def test_packed_sequences_are_independent():
++    hf, native, _, _ = models()
++    sequences = [torch.tensor([[1, 7, 5, 14, 2]], device="cuda"),
++                 torch.tensor([[1, 64, 9]], device="cuda")]
++    hf.model.total_ut_steps = 3
++    expected = torch.cat([hf(x, use_cache=False, exit_at_step=2).logits for x in sequences], dim=1)
++    boundaries = torch.tensor([0, 5, 8], device="cuda", dtype=torch.int32)
++    packed = PackedSeqParams(cu_seqlens_q=boundaries, cu_seqlens_kv=boundaries,
++        max_seqlen_q=5, max_seqlen_kv=5, qkv_format="thd")
++    actual = native(torch.cat(sequences, dim=1), packed_seq_params=packed, ouro_depth=3)
++    torch.testing.assert_close(actual, expected, atol=2e-5, rtol=2e-5)
++
++
++def test_invalid_depth_cannot_silently_change_policy():
++    _, native, _, _ = models()
++    for depth in [0, 5, True, 2.0, [2, 3]]:
++        with pytest.raises(ValueError, match="integer depth"):
++            native(torch.tensor([[1, 2]], device="cuda"), ouro_depth=depth)
++
++
++def test_sequence_head_uses_only_prompt_and_backpropagates_to_shared_stack():
++    _, native, _, _ = models()
++    native.learned_depth = True
++    native.sequence_depth_head = torch.nn.Linear(64, 3, device="cuda")
++    # Nonzero weights exercise gradient flow into the prompt encoder too.
++    tokens = torch.tensor([[1, 7, 5, 14, 2, 19]], device="cuda")
++    result = native(tokens, ouro_depth=2, ouro_prompt_length=3)
++    q = result.ouro_depth_log_probs
++    independent = native.sequence_depth_head(native(tokens[:, :3], ouro_depth=4,
++                                ouro_return_prompt_feature=True)).log_softmax(-1)
++    torch.testing.assert_close(q, independent)
++    changed = tokens.clone()
++    changed[:, 3:] = 8
++    torch.testing.assert_close(native(changed, ouro_depth=3, ouro_prompt_length=3).ouro_depth_log_probs, q)
++    (-q[0]).backward()
++    assert native.sequence_depth_head.weight.grad.abs().sum() > 0
++    assert native.embedding.word_embeddings.weight.grad[7].abs().sum() > 0
++    assert native.embedding.word_embeddings.weight.grad[19].abs().sum() == 0
++
++
++@pytest.mark.parametrize("depth", [2, 3, 4])
++def test_full_activation_recompute_matches_shared_parameter_gradients(depth):
++    _, ordinary, _, _ = models()
++    _, checkpointed, _, _ = models(recompute=True)
++    checkpointed.load_state_dict(ordinary.state_dict())
++    tokens = torch.tensor([[1, 7, 5, 14, 2, 19]], device="cuda")
++    boundaries = torch.tensor([0, 6], device="cuda", dtype=torch.int32)
++    packed = PackedSeqParams(cu_seqlens_q=boundaries, cu_seqlens_kv=boundaries,
++                            max_seqlen_q=6, max_seqlen_kv=6, qkv_format="thd")
++    outputs = []
++    for model in (ordinary, checkpointed):
++        model.train()
++        output = model(tokens, packed_seq_params=packed, ouro_depth=depth)
++        outputs.append(output.detach())
++        F.cross_entropy(output.reshape(-1, 128), tokens.roll(-1, 1).flatten()).backward()
++    torch.testing.assert_close(outputs[0], outputs[1], atol=0, rtol=0)
++    for (name, left), (_, right) in zip(ordinary.named_parameters(), checkpointed.named_parameters(), strict=True):
++        if name.startswith("early_exit_gate."):
++            assert left.grad is right.grad is None
++        else:
++            torch.testing.assert_close(left.grad, right.grad, atol=3e-6, rtol=3e-5)
+diff --git a/tests/test_ouro_weight_conversion.py b/tests/test_ouro_weight_conversion.py
+new file mode 100644
+index 0000000..812fdd1
+--- /dev/null
++++ b/tests/test_ouro_weight_conversion.py
+@@ -0,0 +1,73 @@
++"""Round-trip the full Ouro parameter schema, including GQA packing and gates."""
++
++from types import SimpleNamespace
++
++import pytest
++import torch
++
++from slime.backends.megatron_utils.hf_to_megatron.ouro import ouro_hf_tensor
++from slime.backends.megatron_utils.megatron_to_hf.ouro import convert_ouro_to_hf
++
++NUM_GPUS = 0
++
++
++@pytest.mark.parametrize("kv_heads", [2, 4])
++@pytest.mark.parametrize("local_norm", [False, True])
++def test_ouro_roundtrip_preserves_shared_stack_and_gate(kv_heads, local_norm):
++    hidden, heads, head_dim, ffn, layers, vocab = 16, 4, 4, 24, 2, 32
++    config = SimpleNamespace(hidden_size=hidden, num_attention_heads=heads,
++        num_key_value_heads=kv_heads, head_dim=head_dim, tie_word_embeddings=False)
++    args = SimpleNamespace(hidden_size=hidden, num_attention_heads=heads,
++        num_query_groups=kv_heads, kv_channels=head_dim)
++    generator = torch.Generator().manual_seed(7)
++    def tensor(*shape):
++        return torch.randn(*shape, generator=generator)
++
++    hf = {
++        "model.embed_tokens.weight": tensor(vocab, hidden),
++        "lm_head.weight": tensor(vocab, hidden),
++        "model.norm.weight": tensor(hidden),
++        "model.early_exit_gate.weight": tensor(1, hidden),
++        "model.early_exit_gate.bias": tensor(1),
++    }
++    names = ["embedding.word_embeddings.weight", "output_layer.weight", "decoder.final_layernorm.weight",
++             "early_exit_gate.weight", "early_exit_gate.bias"]
++    for layer in range(layers):
++        prefix = f"model.layers.{layer}"
++        for projection in "qkv":
++            hf[f"{prefix}.self_attn.{projection}_proj.weight"] = tensor(
++                (heads if projection == "q" else kv_heads) * head_dim, hidden)
++        hf[f"{prefix}.self_attn.o_proj.weight"] = tensor(hidden, heads * head_dim)
++        hf[f"{prefix}.input_layernorm.weight"] = tensor(hidden)
++        hf[f"{prefix}.input_layernorm_2.weight"] = tensor(hidden)
++        hf[f"{prefix}.post_attention_layernorm.weight"] = tensor(hidden)
++        hf[f"{prefix}.post_attention_layernorm_2.weight"] = tensor(hidden)
++        for projection in ["gate", "up"]:
++            hf[f"{prefix}.mlp.{projection}_proj.weight"] = tensor(ffn, hidden)
++        hf[f"{prefix}.mlp.down_proj.weight"] = tensor(hidden, ffn)
++        names.extend(f"decoder.layers.{layer}.{suffix}" for suffix in [
++            "self_attention.linear_qkv.weight", "self_attention.linear_proj.weight",
++            "input_layernorm.weight" if local_norm else "self_attention.linear_qkv.layer_norm_weight",
++            "pre_mlp_layernorm.weight" if local_norm else "mlp.linear_fc1.layer_norm_weight",
++            "post_self_attn_layernorm.weight", "post_mlp_layernorm.weight",
++            "mlp.linear_fc1.weight", "mlp.linear_fc2.weight"])
++
++    class Reader(dict):
++        def get_tensor(self, name):
++            return self[name]
++
++    reader = Reader(hf)
++    restored = {}
++    for name in names:
++        value = ouro_hf_tensor("module.module." + name, reader, config)
++        for key, weight in convert_ouro_to_hf(args, name, value):
++            assert key not in restored
++            restored[key] = weight
++    assert restored.keys() == hf.keys()
++    for key in hf:
++        torch.testing.assert_close(restored[key], hf[key], rtol=0, atol=0)
++
++
++def test_ouro_rejects_unknown_parameter():
++    with pytest.raises(KeyError):
++        ouro_hf_tensor("decoder.layers.0.unknown.weight", {}, SimpleNamespace())
+diff --git a/slime_plugins/models/ouro_token_exit.py b/slime_plugins/models/ouro_token_exit.py
+new file mode 100644
+--- /dev/null
++++ b/slime_plugins/models/ouro_token_exit.py
+@@ -0,0 +1,98 @@
++"""Functional replay of the *executed* token-exit trajectory (joint score).
++
++Only readouts/hazards through the recorded exit enter the objective. This lets
++all queries at a loop share last-exited K/V: the diagonal differs only for
++already exited queries, whose counterfactual readouts are deliberately unused.
++K/V crossing recurrent loops remain differentiable checkpoint outputs.
++"""
++from functools import partial
++
++import torch
++from torch.nn import functional as F
++from torch.utils.checkpoint import checkpoint
++from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
++
++
++def exit_layout(tokens, total_lengths, response_lengths, traces):
++    if not (len(total_lengths) == len(response_lengths) == len(traces)):
++        raise ValueError("Mismatched token-exit batch metadata")
++    readout = torch.full((tokens.shape[-1],), 4, device=tokens.device, dtype=torch.long)
++    cache = readout.clone()
++    offset = 0
++    for total, response, trace in zip(total_lengths, response_lengths, traces, strict=True):
++        prompt = total - response
++        if prompt < 1 or response < 1 or len(trace) != response or any(type(e) is not int or e not in (1, 2, 3, 4) for e in trace):
++            raise ValueError("Invalid per-token exit trace")
++        if offset + total > tokens.shape[-1]:
++            raise ValueError("Token-exit trace exceeds packed tokens")
++        values = torch.tensor(trace, device=tokens.device, dtype=torch.long)
++        readout[offset + prompt - 1:offset + total - 1] = values
++        # The first prediction reads the last prompt position. All prompt KV
++        # is dense, including that position, regardless of its selected readout.
++        cache[offset + prompt:offset + total - 1] = values[1:]
++        offset += total
++    return readout, cache
++
++
++def recurrent_layer(layer, hidden, previous_k, previous_v, *, loop, cache_exits, rope, packed):
++    attn = layer.self_attention
++    query, key, value = attn.get_query_key_value_tensors(layer.input_layernorm(hidden))
++    if packed is not None:
++        query, key, value = (x.squeeze(1) for x in (query, key, value))
++    kwargs = dict(config=layer.config, cu_seqlens=packed.cu_seqlens_q if packed is not None else None)
++    if packed is not None:
++        kwargs["max_seqlen"] = packed.max_seqlen_q
++    query = apply_rotary_pos_emb(query, rope, **kwargs)
++    key = apply_rotary_pos_emb(key, rope, **kwargs)
++    if previous_k is not None:
++        active = (cache_exits >= loop).reshape((-1,) + (1,) * (key.ndim - 1))
++        key = torch.where(active, key, previous_k)
++        value = torch.where(active, value, previous_v)
++    context = attn.core_attention(query, key, value, packed_seq_params=packed)
++    if packed is not None:
++        context = context.reshape(hidden.shape[0], 1, -1)
++    branch, bias = attn.linear_proj(context)
++    if bias is not None:
++        raise ValueError("Ouro token-exit attention must be bias-free")
++    hidden = hidden + layer.post_self_attn_layernorm(branch)
++    branch, bias = layer.mlp(layer.pre_mlp_layernorm(hidden))
++    if bias is not None:
++        raise ValueError("Ouro token-exit MLP must be bias-free")
++    return hidden + layer.post_mlp_layernorm(branch), key, value
++
++
++def forward(model, input_ids, packed_seq_params, total_lengths, response_lengths, traces):
++    if input_ids.shape[0] != 1 or model.config.context_parallel_size != 1:
++        raise ValueError("Token-exit replay requires packed batch=1 and CP=1")
++    readout, cache_exits = exit_layout(input_ids, total_lengths, response_lengths, traces)
++    prep = model._preprocess(input_ids, None, packed_seq_params=packed_seq_params)
++    hidden, rope = prep[:2]
++    initial = hidden
++    selected = torch.zeros_like(hidden)
++    logq = torch.zeros(input_ids.shape[-1], device=hidden.device, dtype=torch.float32)
++    states = [(None, None)] * len(model.decoder.layers)
++    use_checkpoint = torch.is_grad_enabled() and model.config.recompute_granularity == "full"
++    for loop in range(1, 5):
++        for index, layer in enumerate(model.decoder.layers):
++            function = partial(recurrent_layer, layer, loop=loop, cache_exits=cache_exits,
++                               rope=rope, packed=packed_seq_params)
++            if use_checkpoint:
++                hidden, key, value = checkpoint(function, hidden, *states[index],
++                                                use_reentrant=False, preserve_rng_state=False)
++            else:
++                hidden, key, value = function(hidden, *states[index])
++            states[index] = key, value
++        hidden = model.decoder.final_layernorm(hidden)
++        selected = torch.where((readout == loop)[:, None, None], hidden, selected)
++        if loop < 4:
++            hazard = model.early_exit_gate(hidden).squeeze(-1).squeeze(-1).float() - model.gate_shift
++            logq = logq + torch.where(readout == loop, F.logsigmoid(hazard),
++                                     torch.where(readout > loop, F.logsigmoid(-hazard), 0.))
++    output = model._postprocess(hidden_states=selected, input_ids=input_ids,
++        position_ids=None, labels=None, rotary_pos_emb=rope, rotary_pos_cos=None,
++        rotary_pos_sin=None, mtp_in_postprocess=False,
++        decoder_input=initial, attention_mask=None, packed_seq_params=packed_seq_params)
++    # Float16Module preserves an already-FP32 Tensor and its attached score.
++    output = output.float()
++    output.ouro_exit_log_probs = logq
++    return output
 diff --git a/slime_plugins/ouro_kernels.py b/slime_plugins/ouro_kernels.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..4238f2391a2b2a783a2ed1d37a80da43ef14fa7f
 --- /dev/null
 +++ b/slime_plugins/ouro_kernels.py
 @@ -0,0 +1,148 @@
@@ -1236,22 +1848,8 @@ index 0000000000000000000000000000000000000000..4238f2391a2b2a783a2ed1d37a80da43
 +        triton.next_power_of_2(dim), triton.next_power_of_2(splits),
 +        output.stride(0), output.stride(1), num_warps=4, enable_fp_fusion=False)
 +    return output
-diff --git a/slime_plugins/ouro_smoke.py b/slime_plugins/ouro_smoke.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..49559c91a77bcc96f6efa7937f534c5949057f79
---- /dev/null
-+++ b/slime_plugins/ouro_smoke.py
-@@ -0,0 +1,7 @@
-+"""Diagnostic fixture for native lifecycle checks, never an evaluation reward."""
-+
-+
-+async def reward(args, sample, **kwargs):
-+    # Guarantees a nonzero group-centered training signal in a two-sample
-+    # smoke test even when both short responses are unfinished.
-+    return float(sample.index % 2)
 diff --git a/slime_plugins/ouro_training.py b/slime_plugins/ouro_training.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..058c67588d37156f26b9477c4d1a9c29f4457e9c
 --- /dev/null
 +++ b/slime_plugins/ouro_training.py
 @@ -0,0 +1,260 @@
@@ -1515,218 +2113,8 @@ index 0000000000000000000000000000000000000000..058c67588d37156f26b9477c4d1a9c29
 +            stream.write(json.dumps(report, allow_nan=False)+"\n")
 +    _state = None
 +    return report
-diff --git a/slime_plugins/sglang_models/__init__.py b/slime_plugins/sglang_models/__init__.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..234d9b05915eec370f11cb13179b0fe60d0104c8
---- /dev/null
-+++ b/slime_plugins/sglang_models/__init__.py
-@@ -0,0 +1 @@
-+"""External SGLang architectures supplied by slime."""
-diff --git a/slime_plugins/sglang_models/ouro.py b/slime_plugins/sglang_models/ouro.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..7adf32a13af04f8019dc25c658244b90d924fc35
---- /dev/null
-+++ b/slime_plugins/sglang_models/ouro.py
-@@ -0,0 +1,196 @@
-+"""Fixed sequence-depth Ouro serving with shared weights and per-loop KV slots.
-+
-+Set SGLANG_EXTERNAL_MODEL_PACKAGE=slime_plugins.sglang_models and select the
-+depth with --json-model-override-args '{"total_ut_steps": 2}'. A serving engine
-+has one depth; changing depth for a live KV cache is intentionally unsupported.
-+"""
-+
-+import torch
-+from torch import nn
-+
-+from sglang.srt.layers.linear import QKVParallelLinear, RowParallelLinear
-+from sglang.srt.layers.radix_attention import RadixAttention
-+from sglang.srt.layers.rotary_embedding import get_rope
-+from sglang.srt.layers.vocab_parallel_embedding import VocabParallelEmbedding
-+from sglang.srt.model_loader.weight_utils import default_weight_loader
-+from sglang.srt.models.llama import LlamaForCausalLM, LlamaMLP
-+from sglang.srt.utils import add_prefix
-+from sglang.srt.runtime_context import get_parallel
-+from slime_plugins.ouro_attention import install as install_ouro_attention
-+
-+install_ouro_attention()
-+
-+
-+class OuroRMSNorm(nn.Module):
-+    def __init__(self, hidden_size, eps, fused=False):
-+        super().__init__()
-+        self.weight = nn.Parameter(torch.ones(hidden_size))
-+        self.eps = eps
-+        self.fused = fused
-+
-+    def forward(self, hidden):
-+        if self.fused:
-+            if hidden.dtype == torch.bfloat16:
-+                from sgl_kernel import rmsnorm
-+                return rmsnorm(hidden, self.weight, self.eps)
-+            from slime_plugins.ouro_kernels import rms_norm
-+            return rms_norm(hidden, self.weight, self.eps)
-+        value = hidden.float()
-+        value = value * torch.rsqrt(value.square().mean(-1, keepdim=True) + self.eps)
-+        return self.weight * value.to(hidden.dtype)
-+
-+
-+class OuroAttention(nn.Module):
-+    def __init__(self, config, layer_id, prefix):
-+        super().__init__()
-+        self.num_heads = config.num_attention_heads
-+        self.num_kv_heads = config.num_key_value_heads
-+        self.head_dim = getattr(config, "head_dim", config.hidden_size // self.num_heads)
-+        self.fused = getattr(config, "ouro_fused_ops", False)
-+        self.q_size = self.num_heads * self.head_dim
-+        self.kv_size = self.num_kv_heads * self.head_dim
-+        self.qkv_proj = QKVParallelLinear(config.hidden_size, self.head_dim,
-+            self.num_heads, self.num_kv_heads, bias=False, prefix=add_prefix("qkv_proj", prefix))
-+        self.o_proj = RowParallelLinear(self.q_size, config.hidden_size,
-+            bias=False, prefix=add_prefix("o_proj", prefix))
-+        self.rotary_emb = get_rope(self.head_dim, rotary_dim=self.head_dim,
-+            max_position=config.max_position_embeddings, base=config.rope_theta,
-+            rope_scaling=getattr(config, "rope_scaling", None), is_neox_style=True)
-+        self.attn = nn.ModuleList([
-+            RadixAttention(self.num_heads, self.head_dim, self.head_dim ** -0.5,
-+                num_kv_heads=self.num_kv_heads,
-+                layer_id=loop * config.num_hidden_layers + layer_id,
-+                prefix=add_prefix(f"attn.{loop}", prefix))
-+            for loop in range(config.total_ut_steps)
-+        ])
-+
-+    def forward(self, positions, hidden, forward_batch, loop):
-+        qkv, _ = self.qkv_proj(hidden)
-+        q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
-+        # Select the separately validated FP32 or BF16 performance kernels.
-+        # BF16's engine mismatch is measured and corrected by the TIS protocol.
-+        if self.fused and q.dtype == torch.float32:
-+            from slime_plugins.ouro_kernels import rotary
-+            q, k = rotary(positions, q, k, self.rotary_emb.cos_sin_cache, self.head_dim)
-+        elif self.fused:
-+            q, k = self.rotary_emb(positions, q, k)
-+        else:
-+            q, k = self.rotary_emb.forward_native(positions, q, k)
-+        output = self.attn[loop](q, k, v, forward_batch)
-+        return self.o_proj(output)[0]
-+
-+
-+class OuroMLP(LlamaMLP):
-+    def forward(self, hidden, forward_batch=None):
-+        gate_up, _ = self.gate_up_proj(hidden)
-+        activated = (self.act_fn(gate_up) if getattr(self,"fused",False) and hidden.dtype==torch.bfloat16
-+                     else self.act_fn.forward_native(gate_up))
-+        return self.down_proj(activated)[0]
-+
-+
-+class OuroDecoderLayer(nn.Module):
-+    def __init__(self, config, layer_id, prefix):
-+        super().__init__()
-+        self.self_attn = OuroAttention(config, layer_id, add_prefix("self_attn", prefix))
-+        self.mlp = OuroMLP(config.hidden_size, config.intermediate_size, config.hidden_act,
-+                            prefix=add_prefix("mlp", prefix))
-+        self.mlp.fused = getattr(config,"ouro_fused_ops",False)
-+        for name in ("input_layernorm", "input_layernorm_2",
-+                     "post_attention_layernorm", "post_attention_layernorm_2"):
-+            setattr(self, name, OuroRMSNorm(config.hidden_size, config.rms_norm_eps,
-+                                         getattr(config, "ouro_fused_ops", False)))
-+
-+    def forward(self, positions, hidden, forward_batch, loop):
-+        branch = self.self_attn(positions, self.input_layernorm(hidden), forward_batch, loop)
-+        hidden = hidden + self.input_layernorm_2(branch)
-+        branch = self.mlp(self.post_attention_layernorm(hidden))
-+        return hidden + self.post_attention_layernorm_2(branch)
-+
-+
-+class OuroModel(nn.Module):
-+    def __init__(self, config, quant_config=None, prefix=""):
-+        super().__init__()
-+        if get_parallel().tp_size != 1 or get_parallel().pp_group.world_size != 1:
-+            raise ValueError("Initial Ouro serving supports TP=PP=1")
-+        if quant_config is not None:
-+            raise ValueError("Ouro numerical acceptance requires unquantized weights")
-+        depth = config.total_ut_steps
-+        if type(depth) is not int or depth not in range(1, 5):
-+            raise ValueError("Ouro total_ut_steps must be an integer in [1, 4]")
-+        self.config = config
-+        self.start_layer, self.end_layer = 0, config.num_hidden_layers
-+        self.embed_tokens = VocabParallelEmbedding(config.vocab_size, config.hidden_size,
-+                                                   prefix=add_prefix("embed_tokens", prefix))
-+        self.layers = nn.ModuleList([OuroDecoderLayer(config, i, add_prefix(f"layers.{i}", prefix))
-+                                     for i in range(config.num_hidden_layers)])
-+        self.norm = OuroRMSNorm(config.hidden_size, config.rms_norm_eps,
-+                               getattr(config, "ouro_fused_ops", False))
-+        self.early_exit_gate = nn.Linear(config.hidden_size, 1)
-+        self.early_exit_gate.requires_grad_(False)
-+        if getattr(config, "ouro_learned_depth", False):
-+            self.sequence_depth_head = nn.Linear(config.hidden_size, 3)
-+            with torch.no_grad():
-+                self.sequence_depth_head.weight.zero_()
-+                self.sequence_depth_head.bias.copy_(torch.tensor([.1, .1, .8]).log())
-+
-+    def forward(self, input_ids, positions, forward_batch, input_embeds=None, pp_proxy_tensors=None):
-+        if pp_proxy_tensors is not None:
-+            raise ValueError("Ouro does not support pipeline parallel serving")
-+        if getattr(self.config, "ouro_token_exit", False):
-+            from .ouro_token_exit import forward
-+            return forward(self, input_ids, positions, forward_batch, input_embeds)
-+        hidden = self.embed_tokens(input_ids) if input_embeds is None else input_embeds
-+        for loop in range(self.config.total_ut_steps):
-+            for layer in self.layers:
-+                hidden = layer(positions, hidden, forward_batch, loop)
-+            hidden = self.norm(hidden)
-+        return hidden
-+
-+
-+class OuroForCausalLM(LlamaForCausalLM):
-+    def _init_model(self, config, quant_config=None, prefix=""):
-+        return OuroModel(config, quant_config, prefix)
-+
-+    @torch.no_grad()
-+    def forward(self, *args, **kwargs):
-+        result = super().forward(*args, **kwargs)
-+        if getattr(self.model.config, "ouro_token_exit", False) and getattr(result, "hidden_states", None) is not None:
-+            result.hidden_states = self.model.ouro_exit_trace
-+        # A depth4, one-token request with return_hidden_states='last' returns
-+        # the prompt-conditioned action distribution from the synchronized head.
-+        if hasattr(self.model, "sequence_depth_head") and getattr(result, "hidden_states", None) is not None:
-+            result.hidden_states = self.model.sequence_depth_head(result.hidden_states).log_softmax(-1)
-+        return result
-+
-+    def forward_split_prefill(self, *args, **kwargs):
-+        raise ValueError("Split prefill needs recurrent scheduling and is not supported for Ouro")
-+
-+    def set_eagle3_layers_to_capture(self, *args, **kwargs):
-+        raise ValueError("Ouro does not support speculative hidden-state capture")
-+
-+    set_dflash_layers_to_capture = set_eagle3_layers_to_capture
-+
-+    def load_weights(self, weights):
-+        # The same path handles initial HF loading and slime's partial weight
-+        # updates. Unknown names are errors rather than silently skipped tensors.
-+        parameters = dict(self.named_parameters())
-+        loaded = set()
-+        for name, value in weights:
-+            if name.endswith("rotary_emb.inv_freq"):
-+                continue
-+            for target, source, shard in self.stacked_params_mapping:
-+                if source in name:
-+                    mapped = name.replace(source, target)
-+                    parameter = parameters[mapped]
-+                    parameter.weight_loader(parameter, value, shard)
-+                    loaded.add(mapped)
-+                    break
-+            else:
-+                parameter = parameters[name]
-+                loader = getattr(parameter, "weight_loader", default_weight_loader)
-+                loader(parameter, value)
-+                loaded.add(name)
-+        return loaded
-+
-+
-+EntryClass = OuroForCausalLM
 diff --git a/slime_plugins/sglang_models/ouro_token_exit.py b/slime_plugins/sglang_models/ouro_token_exit.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..4a50a36cd13fb86f2a271d0ffe4e4fc1820e21b3
 --- /dev/null
 +++ b/slime_plugins/sglang_models/ouro_token_exit.py
 @@ -0,0 +1,112 @@
@@ -1842,374 +2230,3 @@ index 0000000000000000000000000000000000000000..4a50a36cd13fb86f2a271d0ffe4e4fc1
 +    trace[ends] = torch.stack([exits.float(),logq],dim=-1)
 +    model.ouro_exit_trace = trace if batch.capture_hidden_mode.is_full() else trace[ends]
 +    return hidden
-diff --git a/tests/test_ouro_2a.py b/tests/test_ouro_2a.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..6b074b31be14ea6491bb577ef0c387e19d4973a0
---- /dev/null
-+++ b/tests/test_ouro_2a.py
-@@ -0,0 +1,113 @@
-+"""Objective and sample-depth invariants for the native integration."""
-+
-+from types import SimpleNamespace
-+
-+import pytest
-+import torch
-+import torch.distributed as dist
-+
-+from slime_plugins.ouro_2a import model_forward_kwargs, post_process_rewards, policy_loss, check_on_policy
-+
-+
-+def sample(reward, group, depth, length):
-+    return SimpleNamespace(get_reward_value=lambda args: reward, group_index=group,
-+                           train_metadata={"ouro_depth": depth}, response_length=length)
-+
-+
-+def test_price_signal_keeps_its_scale_on_constant_outcome_batch():
-+    args = SimpleNamespace(ouro_beta=.1, rollout_max_response_len=100, ouro_depth=None)
-+    samples = [sample(0., 7, 2, 100), sample(0., 7, 4, 100)]
-+    raw, advantages = post_process_rewards(args, samples)
-+    assert raw == [0., 0.]
-+    assert advantages == pytest.approx([.025, -.025])
-+    args.ouro_beta = .2
-+    assert post_process_rewards(args, samples)[1] == pytest.approx([.05, -.05])
-+
-+
-+def test_group_centering_uses_explicit_ids_and_batch_outcome_scale():
-+    args = SimpleNamespace(ouro_beta=0., rollout_max_response_len=100, ouro_depth=4)
-+    samples = [sample(1., 9, 2, 20), sample(0., 3, 3, 7),
-+               sample(0., 9, 4, 80), sample(0., 3, 3, 100)]
-+    scale = 3 ** .5 / 4
-+    assert post_process_rewards(args, samples)[1] == pytest.approx([.5 / scale, 0, -.5 / scale, 0])
-+
-+
-+@pytest.mark.parametrize("metadata", [None, [{}], [None], [{"ouro_depth": 2}, {"ouro_depth": 4}],
-+                                    [{"ouro_depth": 2.0}], [{"ouro_depth": True}]])
-+def test_missing_or_mixed_depth_cannot_replay_as_default(metadata):
-+    with pytest.raises(ValueError):
-+        model_forward_kwargs(SimpleNamespace(ouro_depth=4), {"metadata": metadata})
-+
-+
-+def test_actual_depth_overrides_run_default():
-+    assert model_forward_kwargs(SimpleNamespace(ouro_depth=4),
-+        {"metadata": [{"ouro_depth": 2}, {"ouro_depth": 2}]}) == {"ouro_depth": 2}
-+
-+
-+def test_depth_metadata_survives_dp_partition(monkeypatch):
-+    from slime.data.batch_builder import BatchBuilder
-+    import slime.data.batch_builder as module
-+    # Only replace object-store publication: exercise real partitioning and
-+    # tensorization, which previously discarded train_metadata.
-+    monkeypatch.setattr(module.ray, "put", lambda data: data)
-+    args = SimpleNamespace(custom_reward_post_process_path=None,
-+        custom_convert_samples_to_train_data_path=None, rollout_data_transport="object-store",
-+        global_batch_size=4, micro_batch_size=1, use_dynamic_batch_size=False,
-+        balance_data=False, balance_by_flops=False)
-+    builder = BatchBuilder(args)
-+    builder.train_parallel_config = dict(dp_size=2, cp_size=1, vpp_size=1,
-+                                         microbatch_group_size_per_vp_stage=1)
-+    metadata = [{"ouro_depth": k} for k in [2, 3, 4, 2]]
-+    batches = builder.split_by_dp(dict(tokens=[[1, 2]] * 4, rollout_ids=list(range(4)), metadata=metadata))
-+    for box in batches:
-+        batch = box.inner
-+        assert batch["metadata"] == [metadata[i] for i in batch["partition"]]
-+
-+
-+def test_mismatched_sampler_is_rejected_before_update():
-+    args = SimpleNamespace(num_steps_per_rollout=1, use_rollout_logprobs=False)
-+    data = dict(log_probs=[torch.tensor([-1., -2.])], rollout_log_probs=[torch.tensor([-1., -2.01])])
-+    with pytest.raises(ValueError, match="mismatch"):
-+        check_on_policy(args, 0, data)
-+
-+
-+@pytest.mark.parametrize("with_kl", [False, True])
-+def test_native_packed_loss_matches_independent_fixed_budget_objective(tmp_path, with_kl):
-+    if not torch.cuda.is_available():
-+        pytest.skip("Native packed loss requires CUDA")
-+    from megatron.core import parallel_state
-+    torch.cuda.set_device(0)
-+    dist.init_process_group("nccl", init_method=f"file://{tmp_path}/init", rank=0, world_size=1)
-+    parallel_state.initialize_model_parallel(tensor_model_parallel_size=1, pipeline_model_parallel_size=1)
-+    try:
-+        torch.manual_seed(42)
-+        logits = torch.randn(1, 7, 128, device="cuda", requires_grad=True)
-+        reference = logits.detach().clone().requires_grad_(True)
-+        tokens = [torch.tensor([1, 2, 3, 4], device="cuda"), torch.tensor([5, 6, 7], device="cuda")]
-+        # Predict response tokens 3,4 and 7 from the preceding positions in
-+        # each independent sequence, despite unequal response lengths.
-+        expected_logp = reference[0, [1, 2, 5]].log_softmax(-1).gather(1,
-+            torch.tensor([[3], [4], [7]], device="cuda")).flatten()
-+        old = expected_logp.detach() + torch.tensor([.1, -.3, .4], device="cuda")
-+        advantages = torch.tensor([1., 1., -1.], device="cuda")
-+        args = SimpleNamespace(calculate_per_token_loss=False, context_parallel_size=1,
-+            rollout_temperature=1., rollout_top_p=1., log_probs_chunk_size=-1, allgather_cp=False,
-+            eps_clip=.2, eps_clip_high=.2, use_kl_loss=with_kl, kl_loss_coef=.001 if with_kl else 0., rollout_max_response_len=100)
-+        ref = old + torch.tensor([.4, -.2, .3], device="cuda")
-+        batch = dict(unconcat_tokens=tokens, total_lengths=[4, 3], response_lengths=[2, 1],
-+            log_probs=[old[:2], old[2:]], advantages=[advantages[:2], advantages[2:]],
-+            ref_log_probs=[ref[:2], ref[2:]],
-+            loss_masks=[torch.ones(2, device="cuda"), torch.ones(1, device="cuda")])
-+        actual, _ = policy_loss(args, batch, logits, lambda _: pytest.fail("Must not use length-normalized reducer"))
-+        ratio = (expected_logp - old).exp()
-+        expected = -torch.minimum(ratio * advantages, ratio.clamp(.8, 1.2) * advantages).sum() / 100
-+        if with_kl:
-+            delta = ref - expected_logp
-+            expected += .001*(delta.exp()-delta-1).sum()/100
-+        torch.testing.assert_close(actual, expected)
-+        actual.backward()
-+        expected.backward()
-+        torch.testing.assert_close(logits.grad, reference.grad, atol=1e-7, rtol=1e-5)
-+    finally:
-+        parallel_state.destroy_model_parallel()
-+        dist.destroy_process_group()
-diff --git a/tests/test_ouro_model.py b/tests/test_ouro_model.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..529ed05b040b09a3e3149910379fcb7a012ffbbf
---- /dev/null
-+++ b/tests/test_ouro_model.py
-@@ -0,0 +1,167 @@
-+"""Compare native Megatron Ouro with the pinned Hugging Face implementation."""
-+
-+import os
-+from types import SimpleNamespace
-+
-+import pytest
-+import torch
-+import torch.distributed as dist
-+from torch.nn import functional as F
-+from transformers import AutoConfig, AutoModelForCausalLM
-+
-+from megatron.core import parallel_state
-+from megatron.core.packed_seq_params import PackedSeqParams
-+from megatron.core.tensor_parallel.random import model_parallel_cuda_manual_seed
-+from megatron.core.transformer.transformer_config import TransformerConfig
-+
-+from slime.backends.megatron_utils.hf_to_megatron.ouro import ouro_hf_tensor
-+from slime.backends.megatron_utils.megatron_to_hf.ouro import convert_ouro_to_hf
-+from slime_plugins.models.ouro import OuroGPTModel, ouro_block_spec
-+
-+NUM_GPUS = 1
-+
-+
-+@pytest.fixture(scope="module", autouse=True)
-+def distributed(tmp_path_factory):
-+    if not torch.cuda.is_available():
-+        pytest.skip("Ouro numerical acceptance needs one CUDA GPU")
-+    torch.set_num_threads(4)
-+    torch.backends.cuda.matmul.allow_tf32 = False
-+    torch.backends.cudnn.allow_tf32 = False
-+    torch.cuda.set_device(0)
-+    rendezvous = tmp_path_factory.mktemp("ouro-dist") / "init"
-+    dist.init_process_group("nccl", init_method=f"file://{rendezvous}", rank=0, world_size=1)
-+    parallel_state.initialize_model_parallel(tensor_model_parallel_size=1, pipeline_model_parallel_size=1)
-+    model_parallel_cuda_manual_seed(42)
-+    yield
-+    parallel_state.destroy_model_parallel()
-+    dist.destroy_process_group()
-+
-+
-+def models(kv_heads=4, recompute=False):
-+    path = os.environ["OURO_HF_CHECKPOINT"]
-+    hf_config = AutoConfig.from_pretrained(path, trust_remote_code=True)
-+    for name, value in dict(num_hidden_layers=2, hidden_size=64, intermediate_size=128,
-+            num_attention_heads=4, num_key_value_heads=kv_heads, head_dim=16, vocab_size=128,
-+            max_position_embeddings=128, layer_types=["full_attention"] * 2).items():
-+        setattr(hf_config, name, value)
-+    hf_config._attn_implementation = "sdpa"
-+    torch.manual_seed(42)
-+    hf = AutoModelForCausalLM.from_config(hf_config, trust_remote_code=True).float().cuda()
-+    config = TransformerConfig(num_layers=2, hidden_size=64, num_attention_heads=4,
-+        num_query_groups=kv_heads, kv_channels=16, ffn_hidden_size=128,
-+        hidden_dropout=0., attention_dropout=0., normalization="RMSNorm",
-+        layernorm_epsilon=1e-6, gated_linear_unit=True, activation_func=F.silu,
-+        add_bias_linear=False, attention_softmax_in_fp32=True, params_dtype=torch.float32,
-+        use_cpu_initialization=True, persist_layer_norm=False, gradient_accumulation_fusion=False,
-+        bias_activation_fusion=False, masked_softmax_fusion=False, bias_dropout_fusion=False,
-+        apply_rope_fusion=False,
-+        recompute_granularity="full" if recompute else None,
-+        recompute_method="uniform" if recompute else None,
-+        recompute_num_layers=1 if recompute else None)
-+    native = OuroGPTModel(config=config, transformer_layer_spec=ouro_block_spec(config),
-+        vocab_size=128, max_sequence_length=128, share_embeddings_and_output_weights=False,
-+        position_embedding_type="rope", rotary_base=hf_config.rope_theta).cuda()
-+
-+    class Reader(dict):
-+        def get_tensor(self, name):
-+            return self[name]
-+
-+    with torch.no_grad():
-+        covered = set()
-+        conversion_args = SimpleNamespace(hidden_size=64, num_attention_heads=4,
-+                                           num_query_groups=kv_heads, kv_channels=16)
-+        for name, param in native.named_parameters():
-+            param.copy_(ouro_hf_tensor(name, Reader(hf.state_dict()), hf_config))
-+            covered.update(key for key, _ in convert_ouro_to_hf(conversion_args, name, param))
-+        assert covered == set(hf.state_dict()), "Native mapping must cover the actual HF model schema"
-+    return hf, native, hf_config, Reader
-+
-+
-+@pytest.mark.parametrize("depth", [1, 2, 3, 4])
-+@pytest.mark.parametrize("kv_heads", [2, 4])
-+def test_logits_and_shared_parameter_gradients(depth, kv_heads):
-+    hf, native, hf_config, Reader = models(kv_heads)
-+    tokens = torch.tensor([[1, 15, 27, 90, 6, 32, 4, 77]], device="cuda")
-+    hf.model.total_ut_steps = depth
-+    expected = hf(tokens, use_cache=False, exit_at_step=depth - 1).logits
-+    calls = []
-+    handle = native.decoder.layers[0].register_forward_hook(lambda *args: calls.append(1))
-+    actual = native(tokens, ouro_depth=depth)
-+    handle.remove()
-+    assert len(calls) == depth
-+    assert len(native.decoder.layers) == 2
-+    torch.testing.assert_close(actual, expected, atol=2e-5, rtol=2e-5)
-+    labels = tokens.roll(-1, 1)
-+    for logits in [expected, actual]:
-+        F.cross_entropy(logits.reshape(-1, 128), labels.reshape(-1)).backward()
-+    gradients = Reader({name: param.grad for name, param in hf.named_parameters()})
-+    for name, parameter in native.named_parameters():
-+        if name.startswith("early_exit_gate."):
-+            assert parameter.grad is None
-+            continue
-+        expected_grad = ouro_hf_tensor(name, gradients, hf_config)
-+        torch.testing.assert_close(parameter.grad, expected_grad, atol=3e-5, rtol=3e-4)
-+
-+
-+def test_packed_sequences_are_independent():
-+    hf, native, _, _ = models()
-+    sequences = [torch.tensor([[1, 7, 5, 14, 2]], device="cuda"),
-+                 torch.tensor([[1, 64, 9]], device="cuda")]
-+    hf.model.total_ut_steps = 3
-+    expected = torch.cat([hf(x, use_cache=False, exit_at_step=2).logits for x in sequences], dim=1)
-+    boundaries = torch.tensor([0, 5, 8], device="cuda", dtype=torch.int32)
-+    packed = PackedSeqParams(cu_seqlens_q=boundaries, cu_seqlens_kv=boundaries,
-+        max_seqlen_q=5, max_seqlen_kv=5, qkv_format="thd")
-+    actual = native(torch.cat(sequences, dim=1), packed_seq_params=packed, ouro_depth=3)
-+    torch.testing.assert_close(actual, expected, atol=2e-5, rtol=2e-5)
-+
-+
-+def test_invalid_depth_cannot_silently_change_policy():
-+    _, native, _, _ = models()
-+    for depth in [0, 5, True, 2.0, [2, 3]]:
-+        with pytest.raises(ValueError, match="integer depth"):
-+            native(torch.tensor([[1, 2]], device="cuda"), ouro_depth=depth)
-+
-+
-+def test_sequence_head_uses_only_prompt_and_backpropagates_to_shared_stack():
-+    _, native, _, _ = models()
-+    native.learned_depth = True
-+    native.sequence_depth_head = torch.nn.Linear(64, 3, device="cuda")
-+    # Nonzero weights exercise gradient flow into the prompt encoder too.
-+    tokens = torch.tensor([[1, 7, 5, 14, 2, 19]], device="cuda")
-+    result = native(tokens, ouro_depth=2, ouro_prompt_length=3)
-+    q = result.ouro_depth_log_probs
-+    independent = native.sequence_depth_head(native(tokens[:, :3], ouro_depth=4,
-+                                ouro_return_prompt_feature=True)).log_softmax(-1)
-+    torch.testing.assert_close(q, independent)
-+    changed = tokens.clone()
-+    changed[:, 3:] = 8
-+    torch.testing.assert_close(native(changed, ouro_depth=3, ouro_prompt_length=3).ouro_depth_log_probs, q)
-+    (-q[0]).backward()
-+    assert native.sequence_depth_head.weight.grad.abs().sum() > 0
-+    assert native.embedding.word_embeddings.weight.grad[7].abs().sum() > 0
-+    assert native.embedding.word_embeddings.weight.grad[19].abs().sum() == 0
-+
-+
-+@pytest.mark.parametrize("depth", [2, 3, 4])
-+def test_full_activation_recompute_matches_shared_parameter_gradients(depth):
-+    _, ordinary, _, _ = models()
-+    _, checkpointed, _, _ = models(recompute=True)
-+    checkpointed.load_state_dict(ordinary.state_dict())
-+    tokens = torch.tensor([[1, 7, 5, 14, 2, 19]], device="cuda")
-+    boundaries = torch.tensor([0, 6], device="cuda", dtype=torch.int32)
-+    packed = PackedSeqParams(cu_seqlens_q=boundaries, cu_seqlens_kv=boundaries,
-+                            max_seqlen_q=6, max_seqlen_kv=6, qkv_format="thd")
-+    outputs = []
-+    for model in (ordinary, checkpointed):
-+        model.train()
-+        output = model(tokens, packed_seq_params=packed, ouro_depth=depth)
-+        outputs.append(output.detach())
-+        F.cross_entropy(output.reshape(-1, 128), tokens.roll(-1, 1).flatten()).backward()
-+    torch.testing.assert_close(outputs[0], outputs[1], atol=0, rtol=0)
-+    for (name, left), (_, right) in zip(ordinary.named_parameters(), checkpointed.named_parameters(), strict=True):
-+        if name.startswith("early_exit_gate."):
-+            assert left.grad is right.grad is None
-+        else:
-+            torch.testing.assert_close(left.grad, right.grad, atol=3e-6, rtol=3e-5)
-diff --git a/tests/test_ouro_weight_conversion.py b/tests/test_ouro_weight_conversion.py
-new file mode 100644
-index 0000000000000000000000000000000000000000..812fdd1e67f3eb3c38282e05b3b0051779af5559
---- /dev/null
-+++ b/tests/test_ouro_weight_conversion.py
-@@ -0,0 +1,73 @@
-+"""Round-trip the full Ouro parameter schema, including GQA packing and gates."""
-+
-+from types import SimpleNamespace
-+
-+import pytest
-+import torch
-+
-+from slime.backends.megatron_utils.hf_to_megatron.ouro import ouro_hf_tensor
-+from slime.backends.megatron_utils.megatron_to_hf.ouro import convert_ouro_to_hf
-+
-+NUM_GPUS = 0
-+
-+
-+@pytest.mark.parametrize("kv_heads", [2, 4])
-+@pytest.mark.parametrize("local_norm", [False, True])
-+def test_ouro_roundtrip_preserves_shared_stack_and_gate(kv_heads, local_norm):
-+    hidden, heads, head_dim, ffn, layers, vocab = 16, 4, 4, 24, 2, 32
-+    config = SimpleNamespace(hidden_size=hidden, num_attention_heads=heads,
-+        num_key_value_heads=kv_heads, head_dim=head_dim, tie_word_embeddings=False)
-+    args = SimpleNamespace(hidden_size=hidden, num_attention_heads=heads,
-+        num_query_groups=kv_heads, kv_channels=head_dim)
-+    generator = torch.Generator().manual_seed(7)
-+    def tensor(*shape):
-+        return torch.randn(*shape, generator=generator)
-+
-+    hf = {
-+        "model.embed_tokens.weight": tensor(vocab, hidden),
-+        "lm_head.weight": tensor(vocab, hidden),
-+        "model.norm.weight": tensor(hidden),
-+        "model.early_exit_gate.weight": tensor(1, hidden),
-+        "model.early_exit_gate.bias": tensor(1),
-+    }
-+    names = ["embedding.word_embeddings.weight", "output_layer.weight", "decoder.final_layernorm.weight",
-+             "early_exit_gate.weight", "early_exit_gate.bias"]
-+    for layer in range(layers):
-+        prefix = f"model.layers.{layer}"
-+        for projection in "qkv":
-+            hf[f"{prefix}.self_attn.{projection}_proj.weight"] = tensor(
-+                (heads if projection == "q" else kv_heads) * head_dim, hidden)
-+        hf[f"{prefix}.self_attn.o_proj.weight"] = tensor(hidden, heads * head_dim)
-+        hf[f"{prefix}.input_layernorm.weight"] = tensor(hidden)
-+        hf[f"{prefix}.input_layernorm_2.weight"] = tensor(hidden)
-+        hf[f"{prefix}.post_attention_layernorm.weight"] = tensor(hidden)
-+        hf[f"{prefix}.post_attention_layernorm_2.weight"] = tensor(hidden)
-+        for projection in ["gate", "up"]:
-+            hf[f"{prefix}.mlp.{projection}_proj.weight"] = tensor(ffn, hidden)
-+        hf[f"{prefix}.mlp.down_proj.weight"] = tensor(hidden, ffn)
-+        names.extend(f"decoder.layers.{layer}.{suffix}" for suffix in [
-+            "self_attention.linear_qkv.weight", "self_attention.linear_proj.weight",
-+            "input_layernorm.weight" if local_norm else "self_attention.linear_qkv.layer_norm_weight",
-+            "pre_mlp_layernorm.weight" if local_norm else "mlp.linear_fc1.layer_norm_weight",
-+            "post_self_attn_layernorm.weight", "post_mlp_layernorm.weight",
-+            "mlp.linear_fc1.weight", "mlp.linear_fc2.weight"])
-+
-+    class Reader(dict):
-+        def get_tensor(self, name):
-+            return self[name]
-+
-+    reader = Reader(hf)
-+    restored = {}
-+    for name in names:
-+        value = ouro_hf_tensor("module.module." + name, reader, config)
-+        for key, weight in convert_ouro_to_hf(args, name, value):
-+            assert key not in restored
-+            restored[key] = weight
-+    assert restored.keys() == hf.keys()
-+    for key in hf:
-+        torch.testing.assert_close(restored[key], hf[key], rtol=0, atol=0)
-+
-+
-+def test_ouro_rejects_unknown_parameter():
-+    with pytest.raises(KeyError):
-+        ouro_hf_tensor("decoder.layers.0.unknown.weight", {}, SimpleNamespace())

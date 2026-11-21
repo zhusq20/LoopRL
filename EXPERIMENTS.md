@@ -7,7 +7,17 @@
 
 原生小模型独立串行 oracle 已核对并行重放的读出、gate 概率及全部参数梯度，也覆盖跨 loop KV 梯度、packed 隔离和激活检查点。完整 2.6B 的 FP32 真实退出采样/训练联合 log 概率最大差约 1.29e-5；BF16 两条 128-token 轨迹的 TIS ESS 均超过 99.9%，grad/no-grad 差为 0，gate 与主模型梯度非零。logit shift=3 的平均深度约 3.8，包含 1/2/3/4 退出。报告见 [native2b/20261121](results/native2b/20261121)。前两次服务测试分别因 hidden-state 返回模式和 ForwardBatch 接口错误失败，修正后通过，失败日志保留。
 
-`runs/native2b-pilot-20261121` 正在执行两步真实 MATH、2048-token、DP2、每步 32 回答的端到端试跑。正式 256 回答/步的 gate 队列尚未启动；checkpoint、恢复与正式批量验收待完成。固定四轮基线继续运行。
+`runs/native2b-pilot-20261121` 两步真实 MATH、2048-token、DP2、每步 32 回答已通过 [验收](results/native2b/20261121/pilot-acceptance.json)。两步平均深度分别为 3.9119/3.8978；joint 与 gate 的 grad/no-grad 差均为 0。gate FP32 主权重最大变化 7.16e-6，Adam 矩非零，scheduler 样本数为 64。第一步学习率为 0，更新仅推进矩与 schedule；第二步才产生实际权重变化。主模型 BF16 final norm 尚未跨过量化间隔，FP32 主权重已有 1.19e-7 变化。
+
+第一次恢复测试发现 CLI 相对路径在源码快照 `chdir` 后失效，slime 回退 HF 基座。该运行在采样阶段被主动停止，不计作恢复成功；[停止记录](results/native2b/20261121/rejected-resume.json) 保留。入口现提前绝对化路径、检查 model+rollout 边界完整性，并在参数解析后拒绝意外 finetune/no-load-optimizer。新 helper 在更新前逐元素核对 gate BF16 模型、FP32 主权重和 Adam 分片。
+
+第二次恢复因短运行边界改变默认 WD 调度长度而被 Megatron 拒绝；已改为新 Ouro 任务按原始总步数构建调度，恢复显式采用保存的调度器，保持恒定 WD=0.1。第三次已通过 gate 模型/FP32 主权重/Adam 分片的精确恢复检查，但对采样引擎实读发现 gate 仍等于基座：非 offload 初始化在加载 ref 后未切回 actor，而 NCCL updater 直接遍历 live model、忽略传入的 backup getter。版本一致检查不足以发现此问题。第三次在采样阶段主动停止；[记录](results/native2b/20261121/rejected-resume-weight-sync.json)。更新入口现保证广播前切回 actor，并增加实际调用路径的回归测试；第四次恢复已通过 gate 模型、FP32 主权重与 Adam 分片精确比对，三个采样引擎实读权重与训练检查点完全一致；1182 个 BF16 gate 权重元素区别于基座。[实际同步报告](results/native2b/20261121/gate-weight-sync.json)。恢复后的第 3 步与保存已完成，[续训验收](results/native2b/20261121/resume-acceptance.json) 通过：Adam 步数 3、scheduler 样本 96、gate 主权重相对基座最大变化 2.14e-5，joint/gate 重放误差均为 0，TIS ESS 99.92%。这验证状态恢复与续训，不等于完整运行逐位一致。52 项定向回归测试通过；原生和 SGLang 补丁的正向/反向应用检查通过。
+
+旧固定四轮速度升级运行同样在非 offload 恢复首批经过这条同步路径，不能继续作为严格配对的正式参照。保留第 15 次更新的 checkpoint 和日志，旧队列已停止，`runs/native2b-fixed-formal-20261121` 已从原始基座重新运行 BF16 固定四轮 β=0，与本轮 gate 组保持相同初始 checkpoint、140 步、32×8、2048-token 和 seed。旧结果仅保留为工程历史。
+
+17:22 正式 gate 队列已启动，目录 `runs/native2b-formal-20261121`：先运行 β=0，随后依次运行 β=0.02、0.05、0.1、0.2，每组均从相同原始基座初始化。两卡训练、三个采样副本、微批次 4、每步 256 回答；首个完整批次的运行验收仍待完成。启动前证据绑定见 [training-validation.json](results/native2b/20261121/training-validation.json)，它明确区分已验证的 32 回答 pilot 和待验证的 256 回答正式批次。
+
+**CUDA Graph 的当前限制：**固定四轮参照保持开启；2b 暂时关闭现有整模型 decode graph。当前实现每轮按 gate 结果压缩活跃请求，包含动态索引、CPU 元数据更新与重新构造 attention 元数据，尚未接入图重放。逐 token gate 并非原则上不能使用 CUDA Graph，后续可实现单轮图和活跃 batch 分桶；不能只打开旧开关就认为正确。实际执行轮数与端到端耗时分开报告，目前没有 2b 墙钟加速结论。固定组与 gate 组还使用不同训练/采样卡分配，队列总耗时不能直接充当模型推理速度对照，最终需在相同硬件预算下单独测量。
 
 ## 取消均匀混合深度，改做 gate 对照（2026-11-21 16:19）
 

@@ -1,0 +1,170 @@
+{
+  "passed": true,
+  "failures": [],
+  "protocol": {
+    "backend": "slime_native_megatron_sglang",
+    "diagnostic_reward": false,
+    "arm": "token_exit",
+    "total_steps": 140,
+    "prompts": 4,
+    "group_size": 8,
+    "max_new_tokens": 2048,
+    "beta": 0.1,
+    "price_warmup": 0.3,
+    "seed": 20261121,
+    "precision": "bf16",
+    "optimizer": "AdamW",
+    "adam_betas": [
+      0.9,
+      0.99
+    ],
+    "weight_decay": 0.1,
+    "learning_rate": 1e-06,
+    "gate_learning_rate": 0.0001,
+    "lr_warmup_fraction": 0.1,
+    "clip_grad": 0.1,
+    "kl_coef": 0.001,
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "reward": "looprl.rewards.score_answer; math-verify==0.8.0",
+    "batched_decode": true,
+    "activation_recompute": {
+      "granularity": "full",
+      "method": "uniform",
+      "layers": 1
+    },
+    "shared_depth_weight_sync": true,
+    "train_sha256": "36487522f643cdbace7ede47acf8cdc9473d7ba41f71361542267a9d05541b80",
+    "validation_sha256": "98dbdd0bb831d07cafe4612e6fb67b4b398fdf07eb81419937ca12930c69e3b4",
+    "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+    "checkpoint_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+    "checkpoint_config_sha256": "ad4b51dffae60bebeeac5e1d5055e78d01fc01b1a29cd89cd2e50edb848f645a",
+    "serving": {
+      "attention_implementation": "bf16-fast",
+      "max_running_requests": 32,
+      "kv_token_capacity": 65536,
+      "cuda_graph": false,
+      "memory_fraction": 0.85,
+      "depth4_replicas": 1,
+      "serving_replicas": 3,
+      "radix_cache": false
+    },
+    "rollout_correction": {
+      "mode": "tis",
+      "clip_low": 0.0,
+      "clip_high": 2.0,
+      "level": "token"
+    },
+    "training_execution": {
+      "reuse_old_log_probs": true,
+      "micro_batch_size": 4,
+      "data_parallel_size": 2,
+      "group_by_depth": true
+    },
+    "token_exit": {
+      "scheme": "2b",
+      "exits": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "gate_shift": 3.0,
+      "final_exit_forced": true,
+      "prompt_kv": "dense_four_loops",
+      "past_kv": "last_exited",
+      "objective": "sampled_joint_exit_token_ppo",
+      "kappa": 1.0,
+      "compute_price": "executed_prefill_plus_decode_loop_tokens",
+      "cost_normalizer": 8192,
+      "reference_kl": "joint_exit_token_on_recorded_history",
+      "correction": "joint_action_tokenwise_TIS"
+    }
+  },
+  "run": "runs/native2b-resume-v4-20261121",
+  "steps": [
+    {
+      "step": 2,
+      "metrics": {
+        "train/loss": 0.04421312361955643,
+        "train/pg_loss": 0.044212762266397476,
+        "train/kl_loss": 0.0003565714869182557,
+        "train/tis_weight_mean": 0.9999180436134338,
+        "train/tis_clip_fraction": 0.0,
+        "train/tis_ess_fraction": 0.9992505311965942,
+        "train/mismatch_mean_abs": 0.010336719453334808,
+        "train/mismatch_k3": 0.00037725328002125025,
+        "train/grad_norm": 1.1758857249738712,
+        "train/lr-pg_0": 2.1428571428571428e-07,
+        "train/lr-pg_1": 2.142857142857143e-05,
+        "train/lr-pg_2": 2.142857142857143e-05,
+        "train/lr-pg_3": 2.1428571428571428e-07,
+        "train/global_batch_size": 32,
+        "train/step": 2
+      }
+    }
+  ],
+  "rollout_metrics": [
+    {
+      "step": 2,
+      "beta": 0.004761904761904762,
+      "samples": 32,
+      "reward_mean": 0.3125,
+      "mean_depth": 3.903138457523163,
+      "exit_counts": {
+        "1": 454,
+        "2": 1029,
+        "3": 2518,
+        "4": 57303
+      },
+      "mean_response_tokens": 1915.75,
+      "mean_executed_loop_tokens": 7843.4375,
+      "truncation_rate": 0.6875,
+      "nonzero_advantages": 32
+    }
+  ],
+  "consistency": [
+    {
+      "step": 2,
+      "correction": "tis",
+      "reference_finite": true,
+      "tokens": 61304,
+      "samples": 32,
+      "audit_samples": 8,
+      "data_parallel_size": 2,
+      "old_policy_source": "detached_training_forward",
+      "grad_no_grad_max_error": 0.0,
+      "sampler_recompute_max_error": 1.0272389650344849,
+      "tis_weight_mean": 0.9999180250778905,
+      "tis_clip_fraction": 0.0,
+      "tis_ess_fraction": 0.9992436446833921,
+      "mismatch_mean_abs": 0.010414611884108041,
+      "mismatch_k3": 0.00038080432933661516,
+      "policy_space": "joint_exit_token",
+      "gate_grad_no_grad_max_error": 0.0,
+      "gate_sampler_recompute_max_error": 0.12436676025390625
+    }
+  ],
+  "checkpoint": {
+    "path": "runs/native2b-resume-v4-20261121/checkpoints/iter_0000002",
+    "final_norm_max_delta": 0.0,
+    "master_final_norm_max_delta": 2.384185791015625e-07,
+    "model_dtype": "torch.bfloat16",
+    "master_dtype": "torch.float32",
+    "optimizer_moments": {
+      "optimizer.state.exp_avg.decoder.final_layernorm.weight": 0.0001788226218195632,
+      "optimizer.state.exp_avg_sq.decoder.final_layernorm.weight": 3.1719654458584046e-08,
+      "optimizer.state.exp_avg.early_exit_gate.weight": 6.221895455382764e-05,
+      "optimizer.state.exp_avg_sq.early_exit_gate.weight": 8.759364789057145e-09
+    },
+    "adam_steps": [
+      3.0
+    ],
+    "scheduler_samples": 96,
+    "gate_master_max_delta": 2.141404547728598e-05,
+    "gate_model_dtype": "torch.bfloat16"
+  },
+  "real_math_correct": 10.0,
+  "samples": 32,
+  "limitation": "Engineering and training acceptance; no held-out improvement claim; strict resume checked separately"
+}
