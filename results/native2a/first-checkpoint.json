@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "scope": "First two completed updates only; not full ten-step acceptance",
+  "run": "runs/native2a-acceptance-v4-20261121",
+  "checkpoint": "runs/native2a-acceptance-v4-20261121/checkpoints/iter_0000001",
+  "final_norm_max_delta": 1.0132789611816406e-06,
+  "frozen_token_gate_unchanged": true,
+  "adam_steps": [
+    2.0
+  ],
+  "optimizer_moments": {
+    "optimizer.state.exp_avg.decoder.final_layernorm.weight": 0.00026781411725096405,
+    "optimizer.state.exp_avg_sq.decoder.final_layernorm.weight": 9.707979842232817e-08
+  },
+  "live_depth_engine_versions": {
+    "15000": "3",
+    "15132": "3",
+    "15264": "3"
+  },
+  "scheduler_samples": 24
+}

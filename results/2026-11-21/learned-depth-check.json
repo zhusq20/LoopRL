@@ -1,0 +1,49 @@
+{
+  "completed_steps": 2,
+  "head_weight_initially_zero": true,
+  "head_weight_abs_max": 7.422655471600592e-05,
+  "head_weight_l2_norm": 0.004687807988375425,
+  "head_bias": [
+    -2.302464723587036,
+    -2.3025388717651367,
+    -0.22321312129497528
+  ],
+  "checkpoint": "runs/stage2a-learned-check-20261121/checkpoint.pt",
+  "metrics": [
+    {
+      "step": 0,
+      "beta": 0.0,
+      "cost_coefficient": 0.0,
+      "reward_mean": 0.0,
+      "reward_std": 0.0,
+      "reward_scale": 1.0,
+      "loss": 0.0,
+      "grad_norm_before_clip": 0.0,
+      "rollout_update_logp_max_error": 0.0,
+      "grad_enabled_logp_max_error": 0.0,
+      "mean_response_tokens": 32.0,
+      "mean_loop_tokens": 74.66666666666667,
+      "mean_depth": 2.3333332538604736,
+      "seconds": 42.65592163614929,
+      "truncation_rate": 1.0
+    },
+    {
+      "step": 1,
+      "beta": 0.0015625,
+      "cost_coefficient": 1.220703125e-05,
+      "reward_mean": 0.0,
+      "reward_std": 0.0,
+      "reward_scale": 1.0,
+      "loss": -1.4551915228366852e-11,
+      "grad_norm_before_clip": 0.0073936935514211655,
+      "rollout_update_logp_max_error": 0.0,
+      "grad_enabled_logp_max_error": 0.0,
+      "mean_response_tokens": 32.0,
+      "mean_loop_tokens": 106.66666666666667,
+      "mean_depth": 3.3333332538604736,
+      "seconds": 59.55548665672541,
+      "truncation_rate": 1.0
+    }
+  ],
+  "interpretation": "Engineering acceptance only: all 32-token responses truncated and outcome rewards zero; validates cost-driven update, not task improvement."
+}

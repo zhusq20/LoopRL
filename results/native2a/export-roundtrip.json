@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "tensors": 389,
+  "bitwise_equal": true,
+  "source": "/tmp/looprl-native-smoke-f/checkpoints/iter_0000001",
+  "export": "/tmp/looprl-native-export-check",
+  "scope": "export/re-import round trip of native model weights"
+}

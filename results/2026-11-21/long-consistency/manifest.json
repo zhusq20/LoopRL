@@ -1,0 +1,17 @@
+{
+  "scope": "Fixed text and gradient checks only; FP32 validation does not resolve BF16 or prove reward gains.",
+  "model_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "source_paths": {
+    "long-input.jsonl": "runs/stage0-pilot-20261121/depth4/samples.jsonl:record0",
+    "precision-input.jsonl": "runs/stage2a-smoke-20261121-v2/rollouts.jsonl:record2"
+  },
+  "sha256": {
+    "fp32-depth2-3.json": "f96247beee65de34972d97a64972e9aa6e5ad75e86ea1a724b2c67bc50baae3d",
+    "fp32-depth4.json": "c2a3078c82b9e0c9dff339ae0d387e9571d04f7a217647b20995e55dbb51d352",
+    "long-input.jsonl": "56fdc42d8d013b26df5e7948e6dc3c67a6872b2ac281c249ef3aa69c75c3f802",
+    "original-depth4-check.py": "53ddc2ad3a2d665c5b91225d66d8068d554241bf9c8994708943173b200d4520",
+    "original-precision-grid.py": "c1261caf5903d42b6ccc9030d4143d0ad240f5fcd182985919180d0912a566ad",
+    "precision-grid.jsonl": "670f529073cef33253a39d916a14ebf4c7f93205ebc9dc7a00d258cd2642262a",
+    "precision-input.jsonl": "d623f842faff6013fc956b2e22948050566ab4fb165f04b341a0757b3d42a05c"
+  }
+}

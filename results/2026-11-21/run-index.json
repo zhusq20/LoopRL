@@ -1,0 +1,77 @@
+{
+  "snapshot_unix": 1795222488.2815027,
+  "stage0": {
+    "launch": "runs/stage0-pilot-20261121/launch.json",
+    "progress": "runs/stage0-pilot-20261121/progress.json",
+    "planned_samples": 64,
+    "workers": [
+      {
+        "pid": 161066,
+        "gpu": 2,
+        "depth": 1
+      },
+      {
+        "pid": 161067,
+        "gpu": 3,
+        "depth": 2
+      },
+      {
+        "pid": 161068,
+        "gpu": 4,
+        "depth": 3
+      },
+      {
+        "pid": 161069,
+        "gpu": 5,
+        "depth": 4
+      }
+    ]
+  },
+  "stratified_smoke": {
+    "pid": 176855,
+    "gpu": 1,
+    "output": "runs/stage2a-smoke-20261121-v4",
+    "log": "runs/stage2a-smoke-20261121-v4.log",
+    "status": "completed"
+  },
+  "learned_depth_check": {
+    "status": "completed",
+    "output": "runs/stage2a-learned-check-20261121",
+    "checkpoint": "runs/stage2a-learned-check-20261121/checkpoint.pt"
+  },
+  "m7": {
+    "status": "completed",
+    "output": "runs/m7-probe-20261121"
+  },
+  "backend": "mixed; see individual run manifests",
+  "slime_training": true,
+  "slime_long_acceptance": {
+    "output": "runs/slime-ouro-acceptance-20261121",
+    "status": {
+      "status": "completed",
+      "completed_steps": 2,
+      "backend": "slime_custom_ouro",
+      "finished_unix": 1795221881.187166
+    },
+    "evidence": "results/2026-11-21/slime-acceptance/summary.json"
+  },
+  "slime_resume": {
+    "part1": "runs/slime-resume-part1-20261121",
+    "part2": "runs/slime-resume-part2-20261121",
+    "control": "runs/slime-resume-control-20261121",
+    "evidence": "results/2026-11-21/slime-resume/restore-proof.json",
+    "status": "continued_training_completed; strict_optimizer_comparison_failed",
+    "comparison": "results/2026-11-21/slime-resume-comparison.json"
+  },
+  "long_consistency": {
+    "status": "passed",
+    "precision": "fp32",
+    "depths": [
+      2,
+      3,
+      4
+    ],
+    "tokens": 2048,
+    "evidence": "results/2026-11-21/long-consistency/manifest.json"
+  }
+}

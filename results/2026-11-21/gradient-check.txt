@@ -1,0 +1,10 @@
+1) hazard gate gradient, autograd vs closed form, max abs diff: 6.938893903907228e-18
+   all loops agree -> gate gradient norm: 0.0
+
+2) relative error of scheme 2's gradient  |g_true - g_marg| / |g_true|
+   process              m     bias      corr(pos1)  corr(pos2)  residual after adding corr
+   full-state         1.0   6.57e-16  4.51e-16    2.51e-16    7.62e-16   (sum p = 1.000000)
+   dynamic (ragged)   0.0   6.57e-16  4.51e-16    2.51e-16    7.62e-16   (sum p = 1.000000)
+   dynamic (ragged)   0.1   6.41e-03  6.41e-03    3.56e-16    1.11e-15   (sum p = 1.000000)
+   dynamic (ragged)   0.3   1.93e-02  1.93e-02    2.68e-16    9.91e-16   (sum p = 1.000000)
+   dynamic (ragged)   1.0   9.78e-02  9.78e-02    1.83e-16    1.55e-15   (sum p = 1.000000)

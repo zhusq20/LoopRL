@@ -1,0 +1,177 @@
+{
+  "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+  "dtype": "float32",
+  "torch": "2.13.0+cu130",
+  "physical_layers": 48,
+  "hf_tensors": 533,
+  "parameters": 2667974657,
+  "cases": [
+    {
+      "length": 128,
+      "depth": 2,
+      "decoder_calls": 2,
+      "max_logit_error": 4.482269287109375e-05,
+      "max_logprob_error": 1.52587890625e-05,
+      "argmax_agreement": 1.0,
+      "seconds": 0.8481503650546074
+    },
+    {
+      "length": 128,
+      "depth": 3,
+      "decoder_calls": 3,
+      "max_logit_error": 0.00011801719665527344,
+      "max_logprob_error": 1.049041748046875e-05,
+      "argmax_agreement": 1.0,
+      "seconds": 0.21322483755648136
+    },
+    {
+      "length": 128,
+      "depth": 4,
+      "decoder_calls": 4,
+      "max_logit_error": 3.30507755279541e-05,
+      "max_logprob_error": 5.7220458984375e-06,
+      "argmax_agreement": 1.0,
+      "seconds": 0.28244232200086117
+    },
+    {
+      "length": 2048,
+      "depth": 2,
+      "decoder_calls": 2,
+      "max_logit_error": 0.0,
+      "max_logprob_error": 0.0,
+      "argmax_agreement": 1.0,
+      "seconds": 1.08548978343606
+    },
+    {
+      "length": 2048,
+      "depth": 3,
+      "decoder_calls": 3,
+      "max_logit_error": 0.0,
+      "max_logprob_error": 0.0,
+      "argmax_agreement": 1.0,
+      "seconds": 1.616038255393505
+    },
+    {
+      "length": 2048,
+      "depth": 4,
+      "decoder_calls": 4,
+      "max_logit_error": 0.0,
+      "max_logprob_error": 0.0,
+      "argmax_agreement": 1.0,
+      "seconds": 2.14774208702147
+    }
+  ],
+  "gradients": [
+    {
+      "depth": 2,
+      "length": 16,
+      "max_gradient_error": 0.00031280517578125,
+      "relative_l2_error": 7.4155286525562945e-06
+    },
+    {
+      "depth": 3,
+      "length": 16,
+      "max_gradient_error": 0.00021219253540039062,
+      "relative_l2_error": 6.279342782193311e-06
+    },
+    {
+      "depth": 4,
+      "length": 16,
+      "max_gradient_error": 0.000240325927734375,
+      "relative_l2_error": 6.612863784103378e-06
+    }
+  ],
+  "serving_cases": [
+    {
+      "source": "results/native/sglang-depth2.json",
+      "depth": 2,
+      "index": 0,
+      "prompt_length": 28,
+      "response_length": 8,
+      "max_native_logprob_error": 4.291534423828125e-06,
+      "max_hf_logprob_error": 6.079673767089844e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth2.json",
+      "depth": 2,
+      "index": 1,
+      "prompt_length": 31,
+      "response_length": 8,
+      "max_native_logprob_error": 9.5367431640625e-07,
+      "max_hf_logprob_error": 1.7285346984863281e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth2.json",
+      "depth": 2,
+      "index": 2,
+      "prompt_length": 28,
+      "response_length": 8,
+      "max_native_logprob_error": 2.2649765014648438e-06,
+      "max_hf_logprob_error": 1.1324882507324219e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth3.json",
+      "depth": 3,
+      "index": 0,
+      "prompt_length": 28,
+      "response_length": 8,
+      "max_native_logprob_error": 4.410743713378906e-06,
+      "max_hf_logprob_error": 5.245208740234375e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth3.json",
+      "depth": 3,
+      "index": 1,
+      "prompt_length": 31,
+      "response_length": 8,
+      "max_native_logprob_error": 5.0067901611328125e-06,
+      "max_hf_logprob_error": 1.9073486328125e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth3.json",
+      "depth": 3,
+      "index": 2,
+      "prompt_length": 28,
+      "response_length": 8,
+      "max_native_logprob_error": 5.245208740234375e-06,
+      "max_hf_logprob_error": 6.079673767089844e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth4.json",
+      "depth": 4,
+      "index": 0,
+      "prompt_length": 28,
+      "response_length": 8,
+      "max_native_logprob_error": 4.827976226806641e-06,
+      "max_hf_logprob_error": 3.4570693969726562e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth4.json",
+      "depth": 4,
+      "index": 1,
+      "prompt_length": 31,
+      "response_length": 8,
+      "max_native_logprob_error": 1.3113021850585938e-06,
+      "max_hf_logprob_error": 2.7418136596679688e-06,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native/sglang-depth4.json",
+      "depth": 4,
+      "index": 2,
+      "prompt_length": 28,
+      "response_length": 8,
+      "max_native_logprob_error": 4.082918167114258e-06,
+      "max_hf_logprob_error": 3.4868717193603516e-06,
+      "cached_tokens": 0
+    }
+  ],
+  "passed": true
+}

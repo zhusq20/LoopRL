@@ -1,0 +1,5 @@
+{
+  "passed": true,
+  "files": 21,
+  "scope": "clean pinned checkout apply, reverse-check, exact working-source comparison"
+}

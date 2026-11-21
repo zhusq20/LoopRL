@@ -1,0 +1,32 @@
+[
+  {
+    "pid": 189677,
+    "gpu": 6,
+    "previous_cpu_affinity": [
+      0,
+      96
+    ],
+    "cpu_affinity": [
+      24,
+      25,
+      26,
+      27
+    ],
+    "unix": 1795221744.7564662
+  },
+  {
+    "pid": 190311,
+    "gpu": 0,
+    "previous_cpu_affinity": [
+      0,
+      96
+    ],
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "unix": 1795221744.7569497
+  }
+]

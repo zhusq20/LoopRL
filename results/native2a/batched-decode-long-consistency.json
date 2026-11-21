@@ -1,0 +1,53 @@
+{
+  "checkpoint": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+  "dtype": "float32",
+  "torch": "2.13.0+cu130",
+  "physical_layers": 48,
+  "hf_tensors": 533,
+  "parameters": 2667974657,
+  "cases": [
+    {
+      "length": 128,
+      "depth": 4,
+      "decoder_calls": 4,
+      "max_logit_error": 3.30507755279541e-05,
+      "max_logprob_error": 5.7220458984375e-06,
+      "argmax_agreement": 1.0,
+      "seconds": 0.9617654923349619
+    }
+  ],
+  "gradients": [],
+  "serving_cases": [
+    {
+      "source": "results/native2a/batched-decode-long-sglang.json",
+      "depth": 4,
+      "index": 0,
+      "prompt_length": 28,
+      "response_length": 2048,
+      "max_native_logprob_error": 0.00020374823361635208,
+      "max_hf_logprob_error": 0.00020374823361635208,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native2a/batched-decode-long-sglang.json",
+      "depth": 4,
+      "index": 1,
+      "prompt_length": 31,
+      "response_length": 2048,
+      "max_native_logprob_error": 2.9742717742919922e-05,
+      "max_hf_logprob_error": 2.9742717742919922e-05,
+      "cached_tokens": 0
+    },
+    {
+      "source": "results/native2a/batched-decode-long-sglang.json",
+      "depth": 4,
+      "index": 2,
+      "prompt_length": 28,
+      "response_length": 2048,
+      "max_native_logprob_error": 0.00024593062698841095,
+      "max_hf_logprob_error": 0.00024593062698841095,
+      "cached_tokens": 27
+    }
+  ],
+  "passed": true
+}

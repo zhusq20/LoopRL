@@ -1,0 +1,23 @@
+{
+  "total_passed": 60,
+  "suites": {
+    "model": 16,
+    "protocol_loss_optimizer": 25,
+    "checkpoint_reader": 1,
+    "batched_decode": 3,
+    "activation_recompute": 3,
+    "validation_selection": 5,
+    "shared_depth_weight_sync": 5,
+    "paired_evaluation": 2
+  },
+  "logs": {
+    "model": "model-tests.log",
+    "protocol_loss_optimizer": "protocol-loss-optimizer-tests.log",
+    "checkpoint_reader": "checkpoint-reader-tests.log",
+    "batched_decode": "batched-decode-tests.log",
+    "activation_recompute": "recompute-tests.log",
+    "validation_selection": "selection-tests.log",
+    "shared_depth_weight_sync": "weight-sync-tests.log",
+    "paired_evaluation": "evaluation-tests.log"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "args": {
+    "model": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+    "rollouts": "runs/stage0-pilot-20261121/depth4/samples.jsonl",
+    "record": 0,
+    "output": "runs/long-consistency/fp32-shallow",
+    "device": "cuda:0",
+    "precision": "fp32",
+    "depths": [
+      2,
+      3
+    ],
+    "lengths": [
+      2048
+    ],
+    "tolerance": 0.001,
+    "backward": true
+  },
+  "source_sha256": "450db60895d873973e57c229352fdbdfcd29e1a0d092a8ad33521284a7f8709d",
+  "model_revision": "f1edd81e7ac41355db670500ceaf204e0f73af68",
+  "torch": "2.6.0+cu126",
+  "records": [
+    {
+      "depth": 2,
+      "tokens": 2048,
+      "prompt_tokens": 58,
+      "max_abs_error": 3.349781036376953e-05,
+      "mean_abs_error": 1.2618419304999406e-06,
+      "rms_error": 3.0704782147950027e-06,
+      "ratio_max_abs_deviation": 3.349781036376953e-05,
+      "forward_seconds": 87.84327098540962,
+      "grad_forward_max_abs_error": 0.0,
+      "grad_norm_before_clip": 2.6015079021453857,
+      "backward_seconds": 2.428632916882634,
+      "peak_memory_gib": 20.832557201385498
+    },
+    {
+      "depth": 3,
+      "tokens": 2048,
+      "prompt_tokens": 58,
+      "max_abs_error": 2.562999725341797e-05,
+      "mean_abs_error": 1.399748498442932e-06,
+      "rms_error": 3.4428248909534886e-06,
+      "ratio_max_abs_deviation": 2.5570392608642578e-05,
+      "forward_seconds": 127.44620683044195,
+      "grad_forward_max_abs_error": 0.0,
+      "grad_norm_before_clip": 2.793959379196167,
+      "backward_seconds": 3.5895529575645924,
+      "peak_memory_gib": 21.63783073425293
+    }
+  ],
+  "passed": true,
+  "scope": "Fixed recorded text; numerical/gradient validation, not on-policy RL or accuracy."
+}

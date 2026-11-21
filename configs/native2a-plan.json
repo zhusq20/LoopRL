@@ -1,0 +1,54 @@
+{
+  "status": "protocol_and_execution_plan; formal_sweep_not_yet_started",
+  "model": "Ouro-2.6B-Thinking",
+  "backend": "native_slime_megatron_sglang",
+  "precision": "float32",
+  "activation_recompute": {"granularity": "full", "method": "uniform", "layers": 1},
+  "batched_decode": true,
+  "optimizer": "AdamW",
+  "adam_betas": [0.9, 0.99],
+  "weight_decay": 0.1,
+  "learning_rate": 0.000001,
+  "gate_learning_rate": 0.0001,
+  "gradient_clip": 0.1,
+  "reference_kl_coefficient": 0.001,
+  "temperature": 1.0,
+  "top_p": 1.0,
+  "formal_steps": 140,
+  "formal_prompts_per_step": 32,
+  "formal_group_size": 8,
+  "max_new_tokens": 2048,
+  "price_warmup_fraction": 0.3,
+  "seed": 20261121,
+  "validation": {
+    "source": "first 256 examples after shuffling pinned MATH train with the training seed",
+    "excluded_from_training": true,
+    "evaluation": {"repeats": 2, "max_new_tokens": 2048, "seed": 42, "dtype": "float32", "temperature": 1.0, "top_p": 1.0, "backend": "sglang_native_ouro"},
+    "selection_reference_cost_per_loop_token": 0.00001220703125,
+    "selection_rule": "Choose priced stratified beta maximizing validation mean(correct - reference_cost_per_loop_token * response_loop_tokens), averaging fixed depths 2/3/4 equally. Tie: lower beta. Never use MATH-500/test for this selection.",
+    "note": "Uniform stratified rollout fixes mean depth near 3; its mean depth cannot identify the best beta. Measure learned-policy depths after training the head."
+  },
+  "acceptance_gates": [
+    "real_math_reward_and_2048_token_multi_depth_training",
+    "all_depth_engines_share_updated_weights",
+    "sampling_recompute_and_grad_replay_max_logprob_error_at_most_0.001",
+    "same_checkpoint_boundary_resume_comparison",
+    "learned_head_end_to_end_update_save_restore",
+    "formal_batch_32_by_8_memory_and_throughput_measurement"
+  ],
+  "arms": [
+    {"name": "fixed4-beta0", "arm": "fixed", "beta": 0.0},
+    {"name": "stratified-beta0", "arm": "stratified", "beta": 0.0},
+    {"name": "stratified-beta002", "arm": "stratified", "beta": 0.02},
+    {"name": "stratified-beta005", "arm": "stratified", "beta": 0.05},
+    {"name": "stratified-beta010", "arm": "stratified", "beta": 0.1},
+    {"name": "stratified-beta020", "arm": "stratified", "beta": 0.2}
+  ],
+  "adaptive_followups": [
+    "Train learned-depth from the same base checkpoint at the validation-selected beta.",
+    "Train fixed4 at that identical beta and at the nearest other scanned beta in log space (tie: lower beta).",
+    "Compare H4 at fixed depths 2/3; compare H5 using held-out accuracy versus executed loop-tokens, including depth-head prefill."
+  ],
+  "budget_rule": "When generation budget changes, preserve beta/(4*max_new_tokens).",
+  "reporting": "Report paired question-level uncertainty, truncation, response length, executed compute, throughput, and checkpoint/source hashes. Engineering acceptance is not algorithm benefit."
+}

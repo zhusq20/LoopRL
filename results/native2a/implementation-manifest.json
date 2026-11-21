@@ -1,0 +1,28 @@
+{
+  "source_sha256": {
+    "configs/native2a-plan.json": "61f4f726aec538fbcc06b492c18707259c1343dc6fe312d423c5388fd6909c57",
+    "integrations/slime/native/megatron-adam-resume.patch": "652c0857ff8bc918a50794211ff825f78b6233cee9cfea96761436fa5f867a19",
+    "integrations/slime/native/runtime-lock.txt": "1b5f333d0c5206e9d146e1c5efefc1aeabea3806e185e9b353b3086238f93b59",
+    "integrations/slime/native/sglang-ouro.patch": "79cdc43b1a96ace76c7c726e59a8c804511c99e0364b21e930b1f05b977cad33",
+    "integrations/slime/ouro-native.patch": "33b4e5790f336b62294ff77657be3908de152110b0997d5ff6d0f677d39cebe6",
+    "looprl/native_2a.py": "19252e5ae3973a74c68c734e755646a7bd3bfa91a46feaff95fcb9f5780dc462",
+    "scripts/advance_native_2a.py": "b88711a9dff5d47710986e09d2850be0117895a90b630ce166d1c4b1dcdd3c3b",
+    "scripts/check_native_2a_recompute.py": "14123de3a2c632d3e452c16b93680fcd4a47b9e40f9aed13cfa0cfa1bd080c42",
+    "scripts/check_native_depth_head.py": "74e0cca4578fab20436d3810a26c091dbf53f9b97a00991c9da5a7b5e453f85e",
+    "scripts/compare_native_2a_evaluations.py": "5732e71bb72bc84aac8341cdfd9229f461cbd3cf39580d52a1abcfa06910ed0f",
+    "scripts/compare_native_2a_resume.py": "29fae2b226bb010a60c0409b1164654db1976206317714df2bead4160a58acb3",
+    "scripts/evaluate_native_2a.py": "1007f2721b5b5d4e82eee8e5abe0e4d69faaa7f6ec1a6432c2ccb3918ffaf3fe",
+    "scripts/export_native_2a.py": "82c4027b2ea5beaab70e6ffcf3a5e027711aadcd8475a0ccf53457330483c9b1",
+    "scripts/run_native_2a.py": "6cec22da9323cac514ea3409231715a2eaa8c8db365a8d5487bf6ec8a33567ae",
+    "scripts/select_native_2a_beta.py": "bc0b46a055d86e6d0285882ae9da3118413d0cc5310584626281a81699d7aa7c",
+    "scripts/summarize_native_2a.py": "0c22538ba2a611e2a56c157261dc307b1e93519e1f28361d61265b95294f0c5a"
+  },
+  "versions": {
+    "torch": "2.13.0",
+    "transformers": "5.12.1",
+    "math-verify": "0.8.0",
+    "ray": "2.60.0"
+  },
+  "slime_revision": "79aa41a884ab0bf65222c94418f6357d3c31192b",
+  "scope": "Native 2a implementation; run-specific source snapshots remain authoritative for running actors"
+}

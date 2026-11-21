@@ -1,0 +1,27 @@
+diff --git a/python/sglang/srt/configs/model_config.py b/python/sglang/srt/configs/model_config.py
+--- a/python/sglang/srt/configs/model_config.py
++++ b/python/sglang/srt/configs/model_config.py
+@@ -1400,6 +1400,11 @@
+         if "NanbeigeForCausalLM" in self.hf_config.architectures:
+             num_loops = getattr(self.hf_text_config, "num_loops", 1)
+             self.num_attention_layers = int(self.num_hidden_layers * int(num_loops))
++        if "OuroForCausalLM" in self.hf_config.architectures:
++            depth = self.hf_text_config.total_ut_steps
++            if type(depth) is not int or depth not in range(1, 5):
++                raise ValueError("Ouro total_ut_steps must be an integer in [1, 4]")
++            self.num_attention_layers = self.num_hidden_layers * depth
+         if "WhisperForConditionalGeneration" in self.hf_config.architectures:
+             # Whisper has unique layer ID scheme:
+             # - Encoder self-attention: 0 to encoder_layers-1 (no KV cache)
+diff --git a/python/sglang/srt/model_executor/model_runner_components/layer_setup.py b/python/sglang/srt/model_executor/model_runner_components/layer_setup.py
+--- a/python/sglang/srt/model_executor/model_runner_components/layer_setup.py
++++ b/python/sglang/srt/model_executor/model_runner_components/layer_setup.py
+@@ -18,6 +18,8 @@
+ 
+ 
+ def _get_loop_num(hf_config: Any) -> int:
++    if "OuroForCausalLM" in (getattr(hf_config, "architectures", None) or []):
++        return hf_config.total_ut_steps
+     # Nanbeige uses num_loops; IQuestLoopCoder uses loop_num.
+     return int(getattr(hf_config, "loop_num", getattr(hf_config, "num_loops", 1)) or 1)
+ 

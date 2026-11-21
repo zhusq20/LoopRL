@@ -1,0 +1,9 @@
+{
+  "source": "runs/slime-resume-part1-20261121/checkpoints/step-000001.pt",
+  "local_path": "/tmp/looprl-resume-validation/first-step.pt",
+  "bytes": 32016461702,
+  "sha256": "c5b8a2659f4f3f249b41cc958cc03418d7f49f88ef4f929460fa0147382d84ae",
+  "seconds": 128.60185803845525,
+  "local_sha256": "c5b8a2659f4f3f249b41cc958cc03418d7f49f88ef4f929460fa0147382d84ae",
+  "verified": true
+}

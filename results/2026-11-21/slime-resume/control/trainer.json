@@ -1,0 +1,13 @@
+{
+  "pid": 197715,
+  "ray_gpu_ids": [
+    "3"
+  ],
+  "precision": "fp32",
+  "parameter_count": 2667974657,
+  "physical_decoder_layers": 48,
+  "max_loops": 4,
+  "gradient_checkpointing": true,
+  "optimizer": "AdamW",
+  "optimizer_parameter_dtype": "torch.float32"
+}

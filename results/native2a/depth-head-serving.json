@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "before": [
+    -2.3025851249694824,
+    -2.3025851249694824,
+    -0.2231435477733612
+  ],
+  "after": [
+    -1.6094379425048828,
+    -1.2039728164672852,
+    -0.6931471824645996
+  ],
+  "sync": "(True, 'Success')",
+  "prompt_tokens": 28,
+  "scope": "real SGLang head initialization, serving and partial weight update"
+}

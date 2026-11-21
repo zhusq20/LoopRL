@@ -1,0 +1,76 @@
+{
+  "status": {
+    "status": "completed",
+    "completed_steps": 2,
+    "backend": "slime_custom_ouro",
+    "finished_unix": 1795221881.187166
+  },
+  "checkpoint": {
+    "path": "/ossfs/workspace/LoopRL/runs/slime-ouro-acceptance-20261121/checkpoints/step-000002.pt",
+    "completed_steps": 2
+  },
+  "checkpoint_bytes": 32016385306,
+  "checkpoint_completed_steps": 2,
+  "checkpoint_weight_version": 2,
+  "model_state_tensors": 533,
+  "optimizer_state_parameters": 531,
+  "weight_sync_versions": [
+    0,
+    1,
+    2
+  ],
+  "metrics": [
+    {
+      "step": 0,
+      "weight_version": 1,
+      "beta": 0.0,
+      "precision": "fp32",
+      "backend": "slime_custom_ouro",
+      "reward_mean": 1.0,
+      "truncation_rate": 0.0,
+      "response_lengths": [
+        1833,
+        1645
+      ],
+      "depths": [
+        4,
+        2
+      ],
+      "loss": 0.0,
+      "grad_norm_before_clip": 0.0,
+      "sampler_trainer_logp_max_error": 3.337860107421875e-05,
+      "grad_forward_logp_max_error": 0.0,
+      "lm_probe_update_l2": 8.788570994511247e-06,
+      "depth_prior_update_l2": null,
+      "peak_memory_gib": 50.55193042755127,
+      "training_seconds": 10.392618164420128
+    },
+    {
+      "step": 1,
+      "weight_version": 2,
+      "beta": 0.1,
+      "precision": "fp32",
+      "backend": "slime_custom_ouro",
+      "reward_mean": 0.0,
+      "truncation_rate": 1.0,
+      "response_lengths": [
+        2048,
+        2048
+      ],
+      "depths": [
+        4,
+        2
+      ],
+      "loss": -1.862645149230957e-09,
+      "grad_norm_before_clip": 0.10991775989532471,
+      "sampler_trainer_logp_max_error": 0.00011610984802246094,
+      "grad_forward_logp_max_error": 0.0,
+      "lm_probe_update_l2": 0.0023750474210828543,
+      "depth_prior_update_l2": null,
+      "peak_memory_gib": 60.417012214660645,
+      "training_seconds": 14.361575286835432
+    }
+  ],
+  "scope": "Two actual native slime training-loop updates with the single-rank HF Ouro backend. No accuracy-improvement claim.",
+  "checkpoint_format_note": "This run started before strict resume data-hash validation was added. Its original checkpoint omits data_sha256; the separate resume test uses the current format. Preserve and use the per-run source snapshot for this historical artifact."
+}

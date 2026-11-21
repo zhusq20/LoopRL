@@ -1,0 +1,17 @@
+{
+  "suites": [
+    {
+      "suite": "model-tests",
+      "passed": 15
+    },
+    {
+      "suite": "2a-tests",
+      "passed": 12
+    },
+    {
+      "suite": "adam-checkpoint-tests",
+      "passed": 6
+    }
+  ],
+  "total_passed": 33
+}

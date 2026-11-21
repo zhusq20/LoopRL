@@ -1,0 +1,40 @@
+{
+  "max_abs": 2.9802322387695312e-08,
+  "changed_tensors": 388,
+  "model_l2_sq": 1.7856657466758212e-12,
+  "tensors": [
+    {
+      "name": "model.embed_tokens.weight",
+      "max_abs": 3.725290298461914e-09
+    },
+    {
+      "name": "model.layers.0.self_attn.q_proj.weight",
+      "max_abs": 7.450580596923828e-09
+    },
+    {
+      "name": "model.layers.0.self_attn.k_proj.weight",
+      "max_abs": 1.4901161193847656e-08
+    },
+    {
+      "name": "model.layers.0.self_attn.v_proj.weight",
+      "max_abs": 3.725290298461914e-09
+    },
+    {
+      "name": "model.layers.0.self_attn.o_proj.weight",
+      "max_abs": 3.725290298461914e-09
+    },
+    {
+      "name": "model.layers.0.mlp.gate_proj.weight",
+      "max_abs": 7.450580596923828e-09
+    },
+    {
+      "name": "model.layers.0.mlp.up_proj.weight",
+      "max_abs": 7.450580596923828e-09
+    },
+    {
+      "name": "model.layers.0.mlp.down_proj.weight",
+      "max_abs": 7.450580596923828e-09
+    }
+  ],
+  "prior_max_abs": 0.0
+}

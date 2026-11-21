@@ -1,0 +1,77 @@
+[2026-11-21 09:54:03] arguments.py:203 - --tokenizer-model not set, use --hf-checkpoint as tokenizer model.
+  disable_checkpoint_metadata_cache ............... True
+  exit_on_missing_checkpoint ...................... False
+  hf_checkpoint ................................... /tmp/looprl-models/Ouro-2.6B-Thinking
+  load ............................................ /tmp/looprl-native-smoke-f/checkpoints
+  pretrained_checkpoint ........................... None
+  save ............................................ /tmp/looprl-native-resume-d/checkpoints
+  sglang_checkpoint_engine_wait_weights_before_ready  False
+  sglang_enable_int8_mamba_checkpoint ............. False
+  sglang_modelopt_checkpoint_restore_path ......... None
+  sglang_modelopt_checkpoint_save_path ............ None
+  sglang_weight_loader_prefetch_checkpoints ....... False
+  update_weight_local_checkpoint_dir .............. None
+  use_checkpoint_args ............................. False
+  use_checkpoint_opt_param_scheduler .............. False
+  use_mp_args_from_checkpoint_args ................ False
+  use_tokenizer_model_from_checkpoint_args ........ True
+(MegatronTrainRayActor pid=282184) /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to load in a single process.
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:55:08] utils.py:1218 - make_tp_sharded_tensor_for_checkpoint received extra kwargs: ['allow_shape_mismatch']
+(MegatronTrainRayActor pid=282184) /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/logger.py:90: UserWarning: The argument order of load has been changed. Please check the document to avoid future breakages.
+(MegatronTrainRayActor pid=282184) /tmp/looprl-sglang-venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:483: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to load in a single process.
+(SGLangEngine pid=281154) [2026-11-21 09:55:38] init custom process group: master_address=10.10.12.112, master_port=56993, rank_offset=1, rank=1, world_size=2, group_name=slime-pp_0, backend=nccl
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] Weight version changed. old_version='default' new_version='1' num_recorded=0
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:55:39] timer.py:32 - Timer update_weights end (elapsed: 1.0s)
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:55:46] ouro_2a.py:27 - Ouro rollout 1 sampler/recompute max logprob error 1.6212463e-05
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:55:48] model.py:996 - step 1: {'train/loss': 0.0, 'train/pg_loss': 0.0, 'train/kl_loss': 0.0, 'train/grad_norm': 16.29111104474663, 'train/lr-pg_0': 1e-06, 'train/lr-pg_1': 1e-06, 'train/global_batch_size': 2, 'train/step': 1}
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:55:48] utils.py:1218 - make_tp_sharded_tensor_for_checkpoint received extra kwargs: ['allow_shape_mismatch']
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] Weight version changed. old_version='1' new_version='2' num_recorded=0
+(MegatronTrainRayActor pid=282184) sharded_state_dict metadata loaded from the checkpoint: {'distrib_optim_sharding_type': 'fully_reshardable', 'distrib_optim_fully_reshardable_mem_efficient': False, 'singleton_local_shards': False, 'chained_optim_avoid_prefix': True}
+(MegatronTrainRayActor pid=282184)  loading distributed checkpoint from /tmp/looprl-native-smoke-f/checkpoints at iteration 0
+(MegatronTrainRayActor pid=282184)  checkpoint version 3.1
+(MegatronTrainRayActor pid=282184)   successfully loaded checkpoint from /tmp/looprl-native-smoke-f/checkpoints [ t 1/1, gtp_remat 1/1, p 1/1 ] at iteration 0
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57394 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57408 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57414 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57416 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57428 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57438 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57450 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57466 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57476 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57482 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57484 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57494 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57500 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57502 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57506 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57514 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57522 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57526 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57532 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57540 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:55:39] INFO:     10.10.12.112:57546 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:55:48.356560] saving checkpoint at iteration       1 to /tmp/looprl-native-resume-d/checkpoints in torch_dist format
+(MegatronTrainRayActor pid=282184)   [2026-11-21 09:57:29.897804] successfully saved checkpoint from iteration       1 to /tmp/looprl-native-resume-d/checkpoints [ t 1/1, gtp_remat 1/1, p 1/1 ]
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60810 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60824 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60828 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60842 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60854 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60858 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60872 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60882 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60886 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60894 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60898 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60910 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60918 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK(MegatronTrainRayActor pid=282184) 
+(MegatronTrainRayActor pid=282184) [2026-11-21 09:57:31] timer.py:32 - Timer update_weights end (elapsed: 0.3s)
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60928 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60938 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60946 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60948 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60956 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60966 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60972 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK
+(SGLangEngine pid=281154) [2026-11-21 09:57:31] INFO:     10.10.12.112:60974 - "POST /update_weights_from_distributed HTTP/1.1" 200 OK

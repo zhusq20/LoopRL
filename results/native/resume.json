@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "diagnostic_reward": true,
+  "run": "/tmp/looprl-native-resume-d",
+  "steps": [
+    {
+      "step": 1,
+      "metrics": {
+        "train/loss": 0.0,
+        "train/pg_loss": 0.0,
+        "train/kl_loss": 0.0,
+        "train/grad_norm": 16.29111104474663,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 2,
+        "train/step": 1
+      }
+    }
+  ],
+  "samples": [
+    {
+      "rollout_id": 1,
+      "sample_index": 2,
+      "depth": 2,
+      "response_length": 64,
+      "max_logprob_error": 1.621246337890625e-05
+    },
+    {
+      "rollout_id": 1,
+      "sample_index": 3,
+      "depth": 2,
+      "response_length": 64,
+      "max_logprob_error": 1.239776611328125e-05
+    }
+  ],
+  "checkpoint": "/tmp/looprl-native-resume-d/checkpoints/iter_0000001",
+  "checkpoint_iteration": 1,
+  "final_norm_changed_elements": 2048,
+  "final_norm_max_parameter_delta": 2.0265579223632812e-06,
+  "optimizer_moment_maxima": {
+    "exp_avg": 0.0019273834768682718,
+    "exp_avg_sq": 1.0474061127752066e-05
+  },
+  "frozen_exit_gate_unchanged": true,
+  "limitation": "Synthetic reward, fixed depth, TP=PP=CP=1; not evidence of algorithm benefit",
+  "optimizer_step": 2,
+  "scheduler_num_steps": 4,
+  "resume": {
+    "checkpoint": "/tmp/looprl-native-smoke-f/checkpoints/iter_0000000",
+    "iteration": 0,
+    "optimizer_step_before": 1,
+    "final_norm_max_delta_after_resume": 1.0132789611816406e-06,
+    "limitation": "Verifies restoration and continued updates, not bitwise equivalence to a continuous run"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "versions": {
+    "15000": {
+      "weight_version": "1"
+    },
+    "15132": {
+      "weight_version": "1"
+    },
+    "15264": {
+      "weight_version": "1"
+    }
+  },
+  "checked_unix": 1795229365.7060146,
+  "run": "runs/native2a-acceptance-v4-20261121",
+  "scope": "Initial NCCL publication to all three depth engines"
+}

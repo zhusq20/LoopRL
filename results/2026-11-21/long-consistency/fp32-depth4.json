@@ -1,0 +1,38 @@
+{
+  "source": "runs/stage0-pilot-20261121/depth4/samples.jsonl",
+  "records": [
+    {
+      "tokens": 512,
+      "prompt_tokens": 58,
+      "depth": 4,
+      "precision": "fp32",
+      "max_abs_error": 9.679794311523438e-05,
+      "mean_abs_error": 2.913156549766427e-06,
+      "rms_error": 9.090701496461406e-06,
+      "ratio_max_abs_deviation": 9.679794311523438e-05,
+      "forward_seconds": 45.23251053132117,
+      "grad_forward_max_abs_error": 0.0,
+      "grad_norm_before_clip": 15.204815864562988,
+      "backward_seconds": 1.4958235882222652,
+      "peak_memory_gib": 20.396798133850098,
+      "passed": true
+    },
+    {
+      "tokens": 2048,
+      "prompt_tokens": 58,
+      "depth": 4,
+      "precision": "fp32",
+      "max_abs_error": 0.0002123117446899414,
+      "mean_abs_error": 3.916272362403106e-06,
+      "rms_error": 1.3184634553908836e-05,
+      "ratio_max_abs_deviation": 0.0002123117446899414,
+      "forward_seconds": 176.86806535720825,
+      "grad_forward_max_abs_error": 0.0,
+      "grad_norm_before_clip": 4.736737251281738,
+      "backward_seconds": 4.783925758674741,
+      "peak_memory_gib": 22.440840244293213,
+      "passed": true
+    }
+  ],
+  "semantics": "Fixed recorded text replay, no task reward or accuracy conclusion."
+}

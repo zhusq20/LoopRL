@@ -1,0 +1,159 @@
+# 方案二实现与首轮实验
+
+## 原生 2a 真实 reward 推进（2026-11-21，运行中）
+
+用户已授权按下一步计划执行 2a。新入口为 `scripts/run_native_2a.py`，使用原生 Megatron actor 和三个共享更新权重的 SGLang 深度引擎；新增真实 MATH 判分、绝对步数的价格升温、冻结初始策略 KL，以及运行源码快照。正式协议见 `configs/native2a-plan.json`，采用 FP32、标准 AdamW、temperature=top_p=1，所有对照统一协议。正式扫描尚未开始。
+
+- `runs/native2a-acceptance-20261121` 在首批回答判分阶段失败，未执行模型更新：math-verify 的 signal 超时不支持 Ray 工作线程。已改为独立进程判分并通过工作线程回归测试，未移除超时保护。
+- `runs/native2a-acceptance-v2-20261121` 首步完成：12 条回答中 2 条答对，截断率 83.3%，非零梯度范数 0.796，三个深度重算最大 logp 差 7.15e-5。第二步在带梯度 forward 时显存不足而失败，未达到验收标准。已保留失败日志，未缩短生成预算或放宽精度门槛。
+- `runs/native2a-acceptance-v3-20261121` 被新加的权重版本检查拒绝，未进入更新：上游 slime 的多模型入口仅更新第一个可训练 server，深度 3/4 仍为 `default`，深度 2 为 `1`。因此 v2 也不能作为多深度权重同步验收。现已为 Ouro 显式共享策略增加全部深度组的同步/恢复视图，保留其他模型的原有行为。
+- `runs/native2a-acceptance-v4-20261121` 正在运行 10 步、每步 2 题 × 6 条回答、2048-token、目标 β=0.1 的分层深度验收。截至 11:01（北京时间）已完成前 2 步并保存 `iter_0000001`，第三轮采样已启动。两步 sampler/recompute 最大 logp 差分别为 7.15e-5、1.11e-4，梯度范数为 0.682、0.00915。第一批 1/12 答对，第二批全错且截断，不能据此声称任务收益。
+- 第一份 checkpoint 已实读验收：final norm 最大变化 1.01e-6，Adam 一、二阶矩非零、步数为 2，scheduler 已消费 24 条样本，冻结 token gate 逐位不变。三个深度引擎已同步版本 `3`，报告 `results/native2a/first-checkpoint.json`。激活重算修复了此前第二步的显存失败；完整 10 步验收及严格恢复对照仍未完成。
+- `runs/native2a-baseline-20261121` 正在运行同批 32 道 MATH-500 × 2 次采样 × 2/3/4 深度的原生基座评测，上限 8192 token、top-p=1。与旧 top-p=0.7 的 8 题先导不可直接作增益对照。
+- 原生 prompt 深度头、一次/trajectory 的动作损失、独立学习率及保存/同步路径已实现，端到端训练仍待验收。完整 2.6B 上非零深度头的 SGLang/Megatron logq 最大差 5.96e-7，head 与共享 LM 梯度均非零，报告 `results/native2a/depth-head-consistency.json`。
+- 60 项定向检查通过，记录 `results/native2a/tests.json`。原生 checkpoint 的 533 个模型张量已成功导出为评测用 HF 格式，重新导入后的全部 389 个原生参数与源 checkpoint 逐位一致；它仍来自原生训练。
+- FP32 批量 decode 已通过 ragged mask 单测、128/2048-token 双请求与缓存重用对照；2048-token 的最大 logp 差 0.000246，低于既定 0.001。v2 显存失败批次里最长的四轮样本（总长 2458、回答 2048）单独使用原生重算完成 backward，带梯度/无梯度 logp 差为 0，峰值 allocated 23.03 GiB；该数值不含完整 trainer、冻结参考备份及 Adam 状态。
+- `scripts/advance_native_2a.py` 首次队列已按预期在 v3 失败后停止。修复后的队列等待 v4：通过后依次执行同边界恢复对照、学习深度头训练/恢复、32×8 batch 实测，最后才进入六个 140 步基础对照臂。当前状态见 `runs/native2a-queue-v2-20261121/status.json`；任一命令或数值检查失败立即停止后续阶段，不静默重试或覆盖证据。训练扫描结束仍不等于 H4/H5 得到验证。
+- 验证集选择入口 `scripts/select_native_2a_beta.py` 检查完整配对数据、正式训练 checkpoint 的臂/价格/步数和预先固定的训练集留出划分；拒绝错误数据、遗漏/重复样本及错误 checkpoint。
+- `scripts/compare_native_2a_evaluations.py` 在题目层面重采样，报告配对准确率、回答长度、实际 loop-token 计算量和截断率差的区间；同题重复回答不会被误当成独立题目。不同生成预算的结果拒绝作配对比较。
+
+待完成：10 步验收、同一 checkpoint 边界的恢复对照、学习深度头端到端训练/恢复、正式 32×8 batch 吞吐验收，以及验证集选价后的 140 步扫描和同价固定深度对照。均匀分层采样的平均深度天然接近 3，因此选 β 改用预先固定单位计算价格下的验证集效用；测试集不参与选择。
+
+**2026-11-21 路线修正：用户要求正式实现落在 slime 代码上。现有自定义 HF trainer/sampler 保留为数值参考，后续先补 Megatron/SGLang 原生 Ouro 接入，再推进正式 2a 扫描。原生模型、采样、深度元数据与损失已接通：33 项测试通过，完整 2.6B 的 2/3/4 轮 logits/梯度对齐，SGLang 与 Megatron 重算最大 log 概率差 5.25e-6；固定深度原生两步训练、NCCL 同步与 checkpoint 参数/Adam 状态检查已通过（合成诊断 reward），恢复续训也已通过（尚未验收逐位一致），详见 [原生接入进度](integrations/slime/native/README.md)。**
+
+本文件是 README 实验计划的执行记录。正式主模型沿用第 12 节已确定的 **Ouro-2.6B-Thinking**。2026-11-21 已完成参考路径的两步学习深度头和三步分层深度验收；进一步将参考后端接入 slime 训练编排（trainer/sampler 仍为自定义 HF 实现），在 FP32 路径通过固定文本的 2048-token 一致性检查，并完成两步长序列端到端训练、checkpoint 保存、权重同步和恢复续训。恢复与独立连续训练的模型/采样数值对照通过，优化器状态的严格跨运行对照未通过，详见下文。尚未得到 H4/H5 成立的证据，也没有启动 140 步的完整扫描或方案 2b 正式训练。
+
+## 已实现的范围
+
+| 文件 | 对应计划与功能 |
+|---|---|
+| `looprl/objectives.py` | 2a 序列深度策略损失；2b hazard、概率混合、后验校正项、分开 PPO 裁剪；β 升温、全 batch 原始 outcome 标准差、排除当前位置成本 |
+| `looprl/ouro.py` | 真正只执行 k 个 loop 的固定深度；逐 loop 采样早退；可导 Ragged KV 重放；Q-exit/置信度基线；prompt 末位线性深度头 |
+| `looprl/experiments.py` | 2a 固定 4、多深度分层、学习深度先验三种训练臂；冻结初始参考策略 KL；固定/动态/学习深度评测；M1–M5 汇总 |
+| `looprl/history.py` | M7：同一文本上，完整历史与 ragged 历史的全词表 `KL(π_ragged || π_dense)`，含原生 gate 采样和 4/1 交替退出 |
+| `looprl/data.py`、`rewards.py` | 固定版本的 MATH train / MATH-500；数据哈希；最后一个 boxed 答案的数学等价判分；未结束的思考不计正确 |
+| `looprl/slime_hooks.py` | slime 的 reward 与计价后处理 hook，按完整 rollout batch 归一化 |
+| `looprl/slime_train.py`、`slime_backend.py` | slime 原生训练循环 + 单训练 GPU / 单 HF 采样 GPU 的 Ouro 后端；权重同步、冻结参考、整段重算、checkpoint 恢复 |
+| `looprl/consistency.py` | 固定文本、多个序列长度和深度的缓存/整段 log 概率与反向传播验收 |
+| `integrations/slime/`、`scripts/prepare_slime.py` | 固定 slime revision、最小入口补丁、安装与复现说明 |
+| `scripts/launch_stage0.py` | 先检查 GPU 空闲，再启动有限规模的配对先导评测；记录每个进程 PID、参数和日志 |
+
+官方 Ouro `exit_at_step` 只在算满各 loop 后挑选读出；本项目不以它计固定深度节省。官方 `use_weighted_exit` 混合 logits，也不用于这里的 `Σ q_t P_t`。适配层直接使用每个 loop 的隐藏状态和原生 gate，最后一个 exit 接收剩余概率质量。
+
+## 已完成的验收
+
+- 24 项测试通过。除原有的 hazard 梯度、一致读出时 gate 梯度为零、极端 logits、β 不被归一化约掉、当前位置成本排除、深度动作只计一次、ragged 补位及其梯度、答案判分和配对评测汇总外，新增真实 slime `BatchBuilder`/训练入口集成、过期权重拒绝、参数探针、恢复配置和非有限数值拒绝检查。
+- 两位置、四 exit 的穷举测试覆盖 **带价格** 的梯度：在独立 baseline、旧策略点、不发生 clipping 时，`κ=1` 分解与联合策略目标的梯度一致。原仓库 `scripts/exit_marginal_check.py` 也通过，残差在约 `1e-15`。
+- 实际 2.6B 权重的 1/2/3/4 loop 调用计数正确；固定深度隐藏状态与全深度对应读出完全相同。
+- 真实早退采样与 ragged replay 的逐 token 联合 log 概率最大误差为 `1.19e-7`（gate shift 0）和 `8.17e-4`（shift 2），此次各 8 token。
+- 同一 Ouro 实现的小尺寸实例中，全部 exit=4 时 dense/ragged 读出差为 `2.38e-7`；早退后的最后位置 loss 对历史 prompt embedding 的梯度非零。
+- 实际 2.6B 的学习深度头训练完成两步并保存 checkpoint。两步的 sampler/无梯度重放/带梯度重放 logp 最大误差均为 **0**；第二步产生非零梯度（裁剪前范数 `0.007394`），并确认初始为零的深度头权重发生更新。32-token 回答全部截断、outcome reward 全零，因此仅证明计价信号和训练链路有效，不证明数学能力提升。详见 [验收数据](results/2026-11-21/learned-depth-check.json)。
+
+首轮 M7 只取两题各 32 token，结果是机制探针，不能外推为准确率或训练增益：
+
+| 题目 | 原生 gate 采样，平均 KL | 4/1 交替，平均 KL |
+|---|---:|---:|
+| `test/precalculus/697.json` | 0.003047 | 0.016212 |
+| `test/algebra/101.json` | 0.004325 | 0.031294 |
+
+当前结果提示需要保留校正项及其消融，但还不足以选择最终 κ。
+
+## 首轮任务记录
+
+1. **阶段 0 配对先导评测（已完成 64/64）**：8 道随机固定的 MATH-500 题 × 2 次采样 × 固定深度 1/2/3/4，共 64 条回答；temperature=1，top-p=0.7，最大生成长度 4096。深度 4 额外记录 M1/M2/M3，合并四臂后统计 M4/M5。原 GPU 2/3/4/5 已释放。运行目录 `runs/stage0-pilot-20261121/`，完整结果为 `summary.json`。2/3/4 轮分别答对 12/16、13/16、12/16，截断率为 25%、18.75%、25%；只作基座先导，不构成训练收益。
+2. **阶段 2a 工程冒烟验证（已完成）**：MATH train，3 步，每步 2 题 × 3 条分层深度 rollout，64-token 上限。目标 β=0.003125，使单价与正式 `β=0.1, Lmax=2048` 相同。有效尝试为 `runs/stage2a-smoke-20261121-v4/`，使用缓存重放和标准 AdamW；原 GPU 1 已释放。
+3. **学习深度头验收（已完成）**：在 GPU 6 上执行 2 步、每步 1 题 × 3 条回答、32-token 上限、β=0.0015625 的 `learned` 臂，验证线性深度头能和 LM 一起优化。目录为 `runs/stage2a-learned-check-20261121/`，模型、深度头与优化器保存在 `checkpoint.pt`。
+
+4096 仍可能截断 Thinking 的回答；必须报告截断比例。8 题、两次采样的先导结果不能替代 README 第 9 节的长预算、Avg@16 和重复评测。32/64-token 训练仅检查数据—采样—梯度—更新链路，尤其不能用其 reward 判断 H4/H5。
+
+## 暴露的问题与处理
+
+**BF16 训练/采样数值一致性。** 8-token 验收中，缓存采样与整段 teacher forcing 的最大 logp 差为 0.0984；扩展至真实 128-token 样本后达到 0.245591，超过 0.15 阈值，程序在优化器更新前拒绝继续。已保留失败日志 `runs/stage2a-smoke-20261121-v2.log`，没有放宽阈值。后续短程验收改为 `--replay-mode cached --logprob-tolerance 0.001`，并分别检查无梯度重算与带梯度重算。128-token 缓存重放在首步更新前显存达到 140451 MiB，已主动停止该次任务（v3），缩到 64 token；代码也限制此模式最多 64 token。新增 FP32 整段重算路径已通过下述 2048-token 检查；BF16 的数值问题本身仍未解决。
+
+**优化器。** 系统 bitsandbytes CUDA 库要求 `GLIBC_2.34`，本环境加载失败。第一轮任务在采样期间被停止，尚未做更新。参考验证显式切换到标准 AdamW；正式计划的 AdamW 8bit 需要兼容的环境。两种优化器不可混作同一正式对照。
+
+**slime。** 固定版本 `THUDM/slime@79aa41a884ab0bf65222c94418f6357d3c31192b` 没有现成的 Ouro Megatron 模型转换。现已实现保留共享循环权重的 HF Ouro trainer/sampler，运行实际 slime 训练循环、`RayTrainGroup` 和 `BatchBuilder`，通过文件校验、参数探针与版本号同步模型和深度头。新任务标记 `backend=slime_custom_ouro, slime_training=true`；先前参考任务仍标记 `hf_reference`。当前仅支持一个 trainer rank，Megatron/SGLang 与分布式吞吐优化尚未完成。详见 [接入说明](integrations/slime/README.md)。
+
+**数学口径。** `κ=1` 的“精确梯度”指旧策略点的未裁剪 score 分解。分开 PPO clipping 在参数更新后并不等于一个精确的联合 PPO 比值。README 的组内均值含样本自身，沿用 GRPO 的有限组估计偏差；穷举恒等式使用动作无关 baseline，不声称消除了这个偏差。
+
+**零方差 batch。** 若整个 batch 的原始 0/1 reward 都相同，`σ_R=0`，本实现改用单位尺度 1，保留价格梯度与 β 成比例，避免除极小 ε 放大价格信号。这是计划未指定边界条件的显式选择，会记录 `reward_scale`。
+
+**自回归位置与计算账。** `e[j]` 属于预测 `response[j]` 的 query。j=0 的 query 是 prompt 末位，prompt 始终 dense，故它的 e 仅选择读出；j≥1 时 e 控制输入 token `response[j-1]` 留下的 KV。采样、重放、M7 均遵守这一索引。计划中的计价仍为 `Σ e[j]`；实际执行计算另外报告 `prefill_loop_tokens + Σ e[j] − e[0]`。学习序列深度的 prompt 四轮特征计算也计入 prefill，避免把额外开销隐去。Ragged KV 当前以深层缓存补位实现真实计算早退，尚未优化缓存内存占用。
+
+## 2048-token 一致性与 slime 接入验收
+
+在相同的 128-token 固定文本上，BF16 缓存/整段最大 logp 差为 0.096032；仅输出 head 使用 FP32 为 0.067005，SDPA math backend 为 0.097054；整个模型使用 FP32 并禁用 TF32 后降至 0.00001341。这是定位数值问题的对照，不是训练效果对照。
+
+FP32 进一步使用同一条记录的前 2048 token，保持实际共享循环权重，整段训练启用非重入 gradient checkpointing：
+
+| 实际深度 | 缓存/整段最大 logp 差 | 带梯度/无梯度重算差 | 反向传播峰值显存 |
+|---|---:|---:|---:|
+| 2 | 0.00003350 | 0 | 20.83 GiB |
+| 3 | 0.00002563 | 0 | 21.64 GiB |
+| 4 | 0.00021231 | 0 | 22.44 GiB |
+
+均低于预设 `0.001` 阈值，梯度有限且非零。这里显存不含冻结参考与 AdamW 状态；完整训练的实测峰值约 60.4 GiB，学习深度臂约 60.5 GiB。深度 4 另有 512-token 检查通过。这组结果只验证 2a 固定序列深度在该文本上的一致性，不包含长序列 ragged 2b 验收。[原始数值与固定输入](results/2026-11-21/long-consistency/manifest.json) 已保留。
+
+长序列端到端任务为 `runs/slime-ouro-acceptance-20261121/`：MATH train，两步，每步一题两条回答，深度 2/4，最大生成 2048，FP32。两步均完成，checkpoint 已保存，权重版本 0→1→2 全部通过同步校验。[完整验收摘要与源码快照](results/2026-11-21/slime-acceptance/summary.json) 已保留。
+
+| 更新 | 长度（深度 4 / 2） | β | 原始 reward | 采样/训练最大误差 | 梯度范数（裁剪前） |
+|---|---|---:|---|---:|---:|
+| 第 1 步 | 1833 / 1645 | 0 | 1 / 1 | 0.00003338 | 0 |
+| 第 2 步 | 2048 / 2048 | 0.1 | 0 / 0 | 0.00011611 | 0.109918 |
+
+两步带梯度/无梯度重算差均为 0。第一步只有 AdamW weight decay 引起参数变化；第二步两条回答均截断，原始 reward 相同，计价差异产生非零策略梯度，LM 参数探针更新 L2 为 0.002375。旧策略点的组均值会使标量 loss 接近零，不代表梯度为零。这些结果证明真实长序列训练链路成立，不能说明准确率提升。
+
+该次长序列任务在严格恢复数据哈希校验加入前启动，其历史 checkpoint 未含 `data_sha256`；随 run 保存了当时的源码。恢复测试使用随后生成的当前格式 checkpoint。后续运行会直接保存当前格式，不能把不同代码版本的 checkpoint 混用。
+
+恢复验收另用 `learned` 臂、32-token 上限、两步、每题三条回答：`slime-resume-part1-20261121` 完成第一步后保存，`slime-resume-part2-20261121` 从第一步恢复并完成第二步；`slime-resume-control-20261121` 连续完成两步。保持总步数、价格调度、数据选择和随机种子相同。恢复前后的整份模型/深度头权重文件 SHA-256 完全相同，见 [恢复校验](results/2026-11-21/slime-resume/restore-proof.json)。恢复后的三条回答与连续训练的 token IDs 一致，采样 logp 最大差约 0.00000906。
+
+独立连续运行与中断运行在**恢复前的第一步**已有最大 2.98e-8 的权重差，深度头完全相同；因此不声称跨运行逐位可复现。最终状态对照同时报告逐位差异和绝对误差，预先使用模型 1e-7、优化器状态 1e-10、采样 logp 1e-5 的诊断容差；训练自身的 0.001 阈值没有改变。
+
+最终共比较 2136 个 tensor、8,003,943,919 个元素，见 [完整对照结果](results/2026-11-21/slime-resume-comparison.json)：模型最大差 5.96e-8，深度头 3.85e-8，采样 logp 9.06e-6，均在对应容差内；AdamW 状态最大差 6.53e-9，201 个状态 tensor 超过 1e-10 的严格阈值，因此整体 `passed=false`、`bitwise_equal=false`。未放宽阈值。恢复前已存在的跨运行浮点差异尚未与恢复后的差异单独隔离；后续需使用同一 checkpoint 边界的确定性对照。当前结论是能够恢复并继续训练、模型和采样结果数值接近，不能声称优化器状态的严格跨运行复现已经通过。
+
+运行中另发现两个吞吐问题：多个 worker 被绑定在 CPU 0/96 上，现按 GPU 分配不同 CPU 核；共享盘 mmap 加载约 30 GiB checkpoint 产生大量小块读，现先顺序复制到本地后加载。对活动任务的 CPU 调整已记录在各 run 的 `resource-adjustments.json`。独立实测顺序复制/校验用时约 129 秒；这些检查也说明当前后端的 I/O 与串行采样成本仍需优化，不能直接外推正式训练吞吐。
+
+## 复现命令
+
+隔离环境安装，不改已有服务的 Python 环境：
+
+```bash
+python -m venv --system-site-packages .venv
+.venv/bin/pip install -e '.[ouro,test]'
+# 本机 Jinja2 元数据与实际版本不一致，需要在隔离环境重新安装：
+.venv/bin/pip install --ignore-installed --no-deps jinja2==3.1.6
+.venv/bin/python -m pytest -q
+.venv/bin/python scripts/exit_marginal_check.py
+.venv/bin/python -m looprl prepare-data --output data
+```
+
+本轮使用 `/tmp/looprl-venv/bin/python` 和 `/tmp/looprl-models/Ouro-2.6B-Thinking`。远端加载默认锁定模型 revision `f1edd81e7ac41355db670500ceaf204e0f73af68`。每个 run 的 manifest 保存数据、源码哈希和版本；新 run 同时保存源码副本，已有目录拒绝覆盖。
+
+```bash
+CUDA_VISIBLE_DEVICES=1 .venv/bin/python -m looprl preflight --output runs/preflight-new
+CUDA_VISIBLE_DEVICES=6 .venv/bin/python -m looprl history-probe \
+  --data data/math500.jsonl --limit 2 --max-new-tokens 32 --output runs/m7-new
+CUDA_VISIBLE_DEVICES=1 .venv/bin/python -m looprl train \
+  --data data/math_train.jsonl --arm stratified --steps 3 \
+  --prompts-per-step 2 --group-size 3 --limit 12 --max-new-tokens 64 \
+  --beta 0.003125 --optimizer adamw --replay-mode cached \
+  --logprob-tolerance 0.001 --output runs/stage2a-smoke-new
+```
+
+每个任务实际状态以 run 内 `status.json` 及阶段 0 的 `progress.json` 为准。空闲后可用 launcher 重做配对先导评测；launcher 会拒绝占用超过 1 GiB 的 GPU。评测完成后合并：
+
+```bash
+.venv/bin/python -m looprl summarize \
+  runs/stage0-pilot-20261121/depth{1,2,3,4}/samples.jsonl \
+  --output runs/stage0-pilot-20261121/summary.json
+```
+
+本轮还启动了只读监控 `python -m looprl.monitor --launch runs/stage0-pilot-20261121/launch.json --watch`，每 30 秒更新 `progress.json`，所有 worker 退出后写 `summary.json` 并自行结束。它不停止任何 GPU 进程；其 `summary.json` 的 `metrics` 字段是合并指标。手动 `summarize` 输出直接是指标字典。
+
+训练数据共 7498 条：源 MATH train 中两条缺少可抽取 boxed 答案，暂时过滤；MATH-500 保留 500 条。准备时核对 train/test 的题目文本没有完全重合。原始下载、过滤后的文件均记录哈希，不能把 MATH-500 输入用于训练。正式 β 扫描配置在 `configs/stage2a.json`，这是实验规格，不是已完成的实验记录。
+
+## 下一步的完成门槛
+
+先完成 Megatron/SGLang 原生 Ouro 模型、采样、权重同步与损失适配；现有 HF 参考用于对照其数值。随后隔离严格恢复复现中的优化器差异，统一原生训练/采样的精度、解码和优化器协议，并完成正式 batch 规模和吞吐验收，再开始 2a 的完整多深度/β 扫描，同时训练同 β 的 GRPO@4 长度计价对照；学习先验的工作点不能从测试集挑选。阶段 0 的 64 条先导已完成，仍需扩大配对评测、补长预算基线和 M6 同设置对照。更长序列需单独验收，不能从两步试运行外推。只有阶段 2 为正，才启动 2b 的 κ=1/0 正式对照。当前 2b 已有损失、采样和 KV 重放实现，但没有正式训练驱动或结果。
+
+实现依据：[Ouro 固定版本源码](https://huggingface.co/ByteDance/Ouro-2.6B-Thinking/blob/f1edd81e7ac41355db670500ceaf204e0f73af68/modeling_ouro.py)、[slime 固定版本 batch builder](https://github.com/THUDM/slime/blob/79aa41a884ab0bf65222c94418f6357d3c31192b/slime/data/batch_builder.py)。

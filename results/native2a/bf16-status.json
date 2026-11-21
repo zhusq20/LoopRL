@@ -1,0 +1,16 @@
+{
+  "passed": false,
+  "adopted": false,
+  "cases": [
+    {
+      "length": 128,
+      "depth": 4,
+      "decoder_calls": 4,
+      "max_logit_error": 0.904296875,
+      "max_logprob_error": 0.34139251708984375,
+      "argmax_agreement": 0.9765625,
+      "seconds": 1.0051242765039206
+    }
+  ],
+  "reason": "BF16 native/HF alignment failed the unchanged 0.001 criterion; production remains FP32."
+}

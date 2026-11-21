@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.16, pytest-8.4.2, pluggy-1.7.0
+rootdir: /ossfs/workspace/LoopRL/third_party/slime
+configfile: pyproject.toml
+plugins: platformdirs-4.14.8, anyio-4.16.0
+collected 12 items
+
+third_party/slime/tests/test_ouro_2a.py ............                     [100%]
+
+============================== slowest durations ===============================
+5.30s call     tests/test_ouro_2a.py::test_native_packed_loss_matches_independent_fixed_budget_objective
+0.44s call     tests/test_ouro_2a.py::test_depth_metadata_survives_dp_partition
+
+(34 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================= 12 passed, 30 warnings in 6.96s ========================

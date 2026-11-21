@@ -1,0 +1,19 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/hyper_comm_grid.py:20: UserWarning: absl.logging is not installed. Using logging.getLogger(__name__) instead. Please install absl.logging with `pip install absl-py` to use absl.logging.
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+`torch_dtype` is deprecated! Use `dtype` instead!
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/transformer/transformer_config.py:4445: UserWarning: full scope is deprecated. Use empty cuda_graph_modules to capture the whole layer.
+  warnings.warn(
+WARNING:megatron.core.models.gpt.gpt_model:GPTModel IS DEPRECATED. GPTModel is only accepting critical bug fixes, no new features. Please reference the migration guide `docs/user-guide/hybrid-model-migration.md` for details on how to use `HybridModel`
+{"length": 128, "depth": 4, "decoder_calls": 4, "max_logit_error": 3.30507755279541e-05, "max_logprob_error": 5.7220458984375e-06, "argmax_agreement": 1.0, "seconds": 0.9617654923349619}
+{"source": "results/native2a/batched-decode-long-sglang.json", "depth": 4, "index": 0, "prompt_length": 28, "response_length": 2048, "max_native_logprob_error": 0.00020374823361635208, "max_hf_logprob_error": 0.00020374823361635208, "cached_tokens": 0}
+{"source": "results/native2a/batched-decode-long-sglang.json", "depth": 4, "index": 1, "prompt_length": 31, "response_length": 2048, "max_native_logprob_error": 2.9742717742919922e-05, "max_hf_logprob_error": 2.9742717742919922e-05, "cached_tokens": 0}
+{"source": "results/native2a/batched-decode-long-sglang.json", "depth": 4, "index": 2, "prompt_length": 28, "response_length": 2048, "max_native_logprob_error": 0.00024593062698841095, "max_hf_logprob_error": 0.00024593062698841095, "cached_tokens": 27}

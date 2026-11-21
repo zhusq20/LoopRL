@@ -1,0 +1,30 @@
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/__init__.py:25: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:114: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/optimizer.py:30: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/optimizer/clip_grads.py:32: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/hyper_comm_grid.py:20: UserWarning: absl.logging is not installed. Using logging.getLogger(__name__) instead. Please install absl.logging with `pip install absl-py` to use absl.logging.
+  warnings.warn(
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+`torch_dtype` is deprecated! Use `dtype` instead!
+/tmp/looprl-native-sources/Megatron-LM-ae76c60e6c35d913867d6dd7bad0f30b128b54e7/megatron/core/transformer/transformer_config.py:4445: UserWarning: full scope is deprecated. Use empty cuda_graph_modules to capture the whole layer.
+  warnings.warn(
+WARNING:megatron.core.models.gpt.gpt_model:GPTModel IS DEPRECATED. GPTModel is only accepting critical bug fixes, no new features. Please reference the migration guide `docs/user-guide/hybrid-model-migration.md` for details on how to use `HybridModel`
+{"length": 128, "depth": 4, "decoder_calls": 4, "max_logit_error": 0.904296875, "max_logprob_error": 0.34139251708984375, "argmax_agreement": 0.9765625, "seconds": 1.0051242765039206}
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/ossfs/workspace/LoopRL/scripts/check_ouro_native.py", line 183, in <module>
+[rank0]:     main()
+[rank0]:   File "/ossfs/workspace/LoopRL/scripts/check_ouro_native.py", line 52, in main
+[rank0]:     run(args)
+[rank0]:   File "/ossfs/workspace/LoopRL/scripts/check_ouro_native.py", line 114, in run
+[rank0]:     torch.testing.assert_close(actual, expected, atol=1e-3, rtol=1e-4)
+[rank0]:   File "/tmp/looprl-native-venv/lib/python3.12/site-packages/torch/testing/_comparison.py", line 1631, in assert_close
+[rank0]:     raise error_metas[0].to_error(msg)
+[rank0]: AssertionError: Tensor-likes are not close!
+
+[rank0]: Mismatched elements: 5470857 / 6291456 (87.0%)
+[rank0]: Greatest absolute difference: 0.904296875 at index (0, 48, 31894) (up to 0.001 allowed)
+[rank0]: Greatest relative difference: 134347.796875 at index (0, 12, 2967) (up to 0.0001 allowed)

@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.16, pytest-8.4.2, pluggy-1.7.0
+rootdir: /ossfs/workspace/LoopRL/third_party/slime
+configfile: pyproject.toml
+collected 15 items
+
+third_party/slime/tests/test_ouro_model.py ..........                    [ 66%]
+third_party/slime/tests/test_ouro_weight_conversion.py .....             [100%]
+
+============================== slowest durations ===============================
+1.59s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[2-1]
+0.25s setup    tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[2-1]
+0.06s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[4-4]
+0.06s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[2-4]
+0.05s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[4-3]
+0.05s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[2-3]
+0.05s call     tests/test_ouro_model.py::test_packed_sequences_are_independent
+0.05s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[2-2]
+0.05s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[4-2]
+0.04s call     tests/test_ouro_model.py::test_logits_and_shared_parameter_gradients[4-1]
+0.02s call     tests/test_ouro_model.py::test_invalid_depth_cannot_silently_change_policy
+0.01s teardown tests/test_ouro_model.py::test_invalid_depth_cannot_silently_change_policy
+
+(33 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================= 15 passed, 142 warnings in 7.28s =======================

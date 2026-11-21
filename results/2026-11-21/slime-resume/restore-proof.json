@@ -1,0 +1,7 @@
+{
+  "restored_version": 1,
+  "before_sha256": "74169eb589665aee7d5e19c31c79fc1559cb71d04add929405890cbd7cb86e13",
+  "restored_sha256": "74169eb589665aee7d5e19c31c79fc1559cb71d04add929405890cbd7cb86e13",
+  "weight_artifact_exactly_restored": true,
+  "scope": "Checks serialized model and depth-prior weights before the resumed update; optimizer/final-state comparison is separate."
+}

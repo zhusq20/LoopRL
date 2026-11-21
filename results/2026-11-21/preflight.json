@@ -1,0 +1,63 @@
+{
+  "model": "/tmp/looprl-models/Ouro-2.6B-Thinking",
+  "parameters": 2667974657,
+  "fixed": {
+    "1": {
+      "executed_loops": 1,
+      "hidden_readout_error": 0.0,
+      "rollout_update_logp_max_error": 0.005550932139158249,
+      "tokens": 8
+    },
+    "2": {
+      "executed_loops": 2,
+      "hidden_readout_error": 0.0,
+      "rollout_update_logp_max_error": 0.0012273788452148438,
+      "tokens": 8
+    },
+    "3": {
+      "executed_loops": 3,
+      "hidden_readout_error": 0.0,
+      "rollout_update_logp_max_error": 0.000365452840924263,
+      "tokens": 8
+    },
+    "4": {
+      "executed_loops": 4,
+      "hidden_readout_error": 0.0,
+      "rollout_update_logp_max_error": 0.09842407703399658,
+      "tokens": 8
+    }
+  },
+  "ragged": {
+    "0.0": {
+      "exits": [
+        4,
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1
+      ],
+      "joint_logp_max_error": 1.1920928955078125e-07
+    },
+    "2.0": {
+      "exits": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "joint_logp_max_error": 0.0008174777030944824
+    }
+  },
+  "tiny_ouro": {
+    "dense_ragged_logp_max_error": 2.384185791015625e-07,
+    "prefix_embedding_gradient_norm": 18.78177833557129
+  },
+  "passed": true
+}

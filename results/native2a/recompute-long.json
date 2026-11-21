@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "source": "runs/native2a-acceptance-v2-20261121/rollouts.jsonl",
+  "step": 1,
+  "index": 19,
+  "total_tokens": 2458,
+  "response_tokens": 2048,
+  "depth": 4,
+  "grad_no_grad_max_logprob_error": 0.0,
+  "final_norm_gradient": 0.1966671347618103,
+  "peak_allocated_gib": 23.02509307861328,
+  "seconds": 5.548139119520783,
+  "limitation": "Single native trajectory backward; excludes full trainer, reference backup and optimizer state"
+}

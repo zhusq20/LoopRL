@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "before": [
+    -2.3025851249694824,
+    -2.3025851249694824,
+    -0.2231435477733612
+  ],
+  "after": [
+    -1.6094379425048828,
+    -1.2039728164672852,
+    -0.6931471824645996
+  ],
+  "sync": "(True, 'Success')",
+  "prompt_tokens": 28,
+  "nonzero_head_logprob_max_error": 5.960464477539062e-07,
+  "head_gradient_norm": 60.164424896240234,
+  "lm_gradient_norm": 5.279388904571533,
+  "scope": "real SGLang head initialization/sync and full 2.6B Megatron prompt-feature/gradient check"
+}
