@@ -52,6 +52,20 @@ index c6bd7e5e4d1d9a5483d307290e37bf8a7b4254d0..6055c6d0b4fb2d4598570c54858f3dd4
      args.ckpt_fully_parallel_load = True
      # placeholders
      if args.seq_length is None:
+diff --git a/slime/backends/megatron_utils/checkpoint.py b/slime/backends/megatron_utils/checkpoint.py
+index 44e9d7d30cde7f0b76c3a84d67d23013482e0a3b..ddb8fd33e63cc752c36f7e2d4159195a2a6c5cf1 100644
+--- a/slime/backends/megatron_utils/checkpoint.py
++++ b/slime/backends/megatron_utils/checkpoint.py
+@@ -187,6 +187,9 @@ def load_checkpoint(ddp_model, optimizer, opt_param_scheduler, checkpointing_con
+             opt_param_scheduler.load_state_dict(
+                 torch.load(checkpoint / "opt_param_scheduler.pt", map_location="cpu", weights_only=True)
+             )
++        if getattr(args, 'ouro_token_exit', False) and optimizer is not None and not args.finetune:
++            from slime_plugins.ouro_training import audit_gate_restore
++            audit_gate_restore(args, ddp_model, optimizer, opt_param_scheduler, result[0])
+         return result
+     else:
+         return _load_checkpoint_hf(
 diff --git a/slime/backends/megatron_utils/hf_to_megatron/__init__.py b/slime/backends/megatron_utils/hf_to_megatron/__init__.py
 index b0f41a999e1c6cb0c7ab39ab570e7d79fa751727..80d79ab00c09905cc236c35585c054d7d6d84f3e 100644
 --- a/slime/backends/megatron_utils/hf_to_megatron/__init__.py
@@ -425,7 +439,7 @@ index 269f9683317898d49093c483a87a44a3d5ca215c..ef028252d689fec413a13979be2df0db
              reset_arg(parser, "--post-mlp-layernorm", action="store_true", default=False)
 diff --git a/slime_plugins/models/ouro.py b/slime_plugins/models/ouro.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..b053bcb926fdf9a69af826df397e935e825d58e3
+index 0000000000000000000000000000000000000000..b5f1378cc2ce1066d6a1e61ff41dcd75fc8f1308
 --- /dev/null
 +++ b/slime_plugins/models/ouro.py
 @@ -0,0 +1,218 @@
@@ -556,7 +570,7 @@ index 0000000000000000000000000000000000000000..b053bcb926fdf9a69af826df397e935e
 +        super().__init__(**kwargs)
 +        self.total_ut_steps = total_ut_steps
 +        # Preserve the pretrained gate in checkpoints/sync. Sequence-depth RL
-+        # uses a separate policy; the native token gate is not optimized here.
++        # freezes it; the token-exit arm trains it as part of the joint policy.
 +        self.early_exit_gate = nn.Linear(config.hidden_size, 1, dtype=config.params_dtype)
 +        if token_exit and learned_depth:
 +            raise ValueError("Sequence depth and token exit are distinct policies")
@@ -1237,10 +1251,10 @@ index 0000000000000000000000000000000000000000..49559c91a77bcc96f6efa7937f534c59
 +    return float(sample.index % 2)
 diff --git a/slime_plugins/ouro_training.py b/slime_plugins/ouro_training.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..8c55dd4f038e45aaa679df6d04e3b0f2d68123a5
+index 0000000000000000000000000000000000000000..058c67588d37156f26b9477c4d1a9c29f4457e9c
 --- /dev/null
 +++ b/slime_plugins/ouro_training.py
-@@ -0,0 +1,202 @@
+@@ -0,0 +1,260 @@
 +"""Single-update Ouro optimizations with an independent replay audit.
 +
 +The detached training forward is the old policy only while no optimizer step
@@ -1254,6 +1268,64 @@ index 0000000000000000000000000000000000000000..8c55dd4f038e45aaa679df6d04e3b0f2
 +import torch.distributed as dist
 +
 +_state = None
++
++
++def audit_gate_restore(args, models, optimizer, scheduler, iteration):
++    """Check the live resumed gate, FP32 master and Adam shards before training."""
++    from torch.distributed.checkpoint import FileSystemReader, load
++    checkpoint = Path(args.load)
++    if not checkpoint.name.startswith('iter_'):
++        checkpoint /= f'iter_{iteration:07d}'
++    reader = FileSystemReader(checkpoint)
++    metadata = reader.read_metadata().state_dict_metadata
++    names = [f'early_exit_gate.{suffix}' for suffix in ('weight','bias')]
++    keys = list(names)
++    master_keys = {}
++    for name in names:
++        found = [f'optimizer.state.{kind}.{name}' for kind in ('param','fp32_param')
++                 if f'optimizer.state.{kind}.{name}' in metadata]
++        if len(found)!=1:raise ValueError('Missing unique saved gate master')
++        master_keys[name]=found[0]
++        keys += [found[0], f'optimizer.state.exp_avg.{name}', f'optimizer.state.exp_avg_sq.{name}']
++    saved = {key:torch.empty(metadata[key].size,dtype=metadata[key].properties.dtype) for key in keys}
++    load(saved,storage_reader=reader,no_dist=True)
++    children = getattr(optimizer,'chained_optimizers',[optimizer])
++    model_count=shard_elements=0
++    for model in models:
++        for full_name,param in model.named_parameters():
++            name=next((n for n in names if full_name.endswith(n)),None)
++            if name is None:continue
++            model_count+=1
++            if not torch.equal(param.detach().cpu(),saved[name]):
++                raise ValueError('Restored model gate differs from checkpoint')
++            main=getattr(param,'main_param',None)
++            if main is None:continue  # A different DP rank owns this shard.
++            owners=[child for child in children if main in child.optimizer.state]
++            if len(owners)!=1:raise ValueError('Missing restored gate optimizer state')
++            owner=owners[0]
++            span=owner._get_model_param_range_map(param)['param']
++            state=owner.optimizer.state[main]
++            for key,actual in [(master_keys[name],main),
++                               (f'optimizer.state.exp_avg.{name}',state['exp_avg']),
++                               (f'optimizer.state.exp_avg_sq.{name}',state['exp_avg_sq'])]:
++                expected=saved[key].flatten()[span.start:span.end]
++                if actual.dtype!=torch.float32 or not torch.equal(actual.detach().cpu().flatten(),expected):
++                    raise ValueError(f'Restored gate master/moment differs: {key}')
++            shard_elements+=main.numel()
++    if model_count!=2:raise ValueError('Expected one restored token gate')
++    count=torch.tensor(shard_elements,device='cuda',dtype=torch.long)
++    dist.all_reduce(count)
++    if int(count)!=sum(saved[n].numel() for n in names):
++        raise ValueError('Gate optimizer shard coverage is incomplete')
++    steps={g['step'] for child in children for g in child.optimizer.param_groups}
++    expected_samples=(iteration+1)*args.global_batch_size
++    if steps!={iteration+1} or scheduler.num_steps!=expected_samples:
++        raise ValueError('Gate resume optimizer or scheduler progress mismatch')
++    if dist.get_rank()==0:
++        report=dict(passed=True,iteration=iteration,checkpoint=str(checkpoint),
++                    gate_model_master_moments_exact=True,gate_elements=int(count),
++                    adam_steps=sorted(steps),scheduler_samples=expected_samples)
++        (Path(args.ouro_output)/'gate-restore.json').write_text(json.dumps(report,indent=2)+'\n')
 +
 +
 +def homogeneous_schedule(metadata, lengths, micro_batch_size):

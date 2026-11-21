@@ -81,6 +81,10 @@ def main():
         for field in ("ouro_depth", "ouro_seed", "ouro_beta"):
             if x["train_metadata"][field] != y["train_metadata"][field]:
                 failures.append(f"sample:{key}:{field}")
+        if x['train_metadata'].get('ouro_mode')=='token_exit':
+            for field in ('ouro_mode','ouro_exits','ouro_gate_shift','executed_loop_tokens'):
+                if x['train_metadata'].get(field)!=y['train_metadata'].get(field):
+                    failures.append(f'sample:{key}:{field}')
         error = max(abs(u-v) for u,v in zip(x["rollout_log_probs"], y["rollout_log_probs"], strict=True))
         logp_error = max(logp_error, error)
         bitwise &= x["rollout_log_probs"] == y["rollout_log_probs"]

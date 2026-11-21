@@ -1,4 +1,4 @@
-"""Export a single-rank native Ouro checkpoint for held-out SGLang evaluation."""
+"""Export a native Ouro checkpoint, including DP shards, for SGLang evaluation."""
 import argparse
 import json
 from pathlib import Path
@@ -54,6 +54,9 @@ def main():
         if path.is_file() and path.suffix not in (".safetensors", ".bin", ".pt"):
             shutil.copy2(path, a.output/path.name)
     config["ouro_learned_depth"] = protocol["arm"] == "learned"
+    config['ouro_token_exit'] = protocol['arm']=='token_exit'
+    if config['ouro_token_exit']:
+        config['ouro_gate_shift']=protocol['token_exit']['gate_shift']
     (a.output/"config.json").write_text(json.dumps(config, indent=2)+"\n")
     save_file(converted, str(a.output/"model.safetensors"))
     (a.output/"export.json").write_text(json.dumps(dict(source=str(checkpoint), tensors=len(converted),
